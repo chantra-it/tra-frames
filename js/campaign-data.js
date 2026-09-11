@@ -578,6 +578,215 @@ function initFirebaseAuth() {
   return null;
 }
 
+// ==========================================
+// 6-DIGIT EMAIL OTP VERIFICATION SERVICE
+// ==========================================
+const OtpService = {
+  async generateOtp(email, displayName = '') {
+    if (!email) throw new Error("Email is required for OTP generation");
+    const cleanEmail = email.trim().toLowerCase();
+    
+    // Rate limit: max 3 requests per 60 seconds
+    const rateCheck = SecurityUtils.checkRateLimit(`otp_req_${cleanEmail}`, 3, 60);
+    if (!rateCheck.allowed) {
+      const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+      const err = new Error(isKm 
+        ? `សូមរង់ចាំ ${rateCheck.waitSeconds} វិនាទីមុននឹងស្នើសុំលេខកូដថ្មី`
+        : `Please wait ${rateCheck.waitSeconds}s before requesting a new OTP.`);
+      err.code = 'otp/rate-limit';
+      throw err;
+    }
+
+    // Generate cryptographically random 6-digit number
+    let otpCode = '';
+    if (window.crypto && window.crypto.getRandomValues) {
+      const arr = new Uint32Array(1);
+      window.crypto.getRandomValues(arr);
+      otpCode = (100000 + (arr[0] % 900000)).toString();
+    } else {
+      otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    // Hash the OTP with salt for secure storage
+    const otpHash = await SecurityUtils.hashPassword(otpCode, `otp_${cleanEmail}`);
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    const record = {
+      email: cleanEmail,
+      hash: otpHash,
+      expiresAt: expiresAt,
+      attempts: 0
+    };
+
+    try {
+      sessionStorage.setItem("tra_otp_record", JSON.stringify(record));
+    } catch (e) {}
+
+    // Dispatch email
+    await this.sendOtpEmail(cleanEmail, otpCode, displayName);
+
+    return { email: cleanEmail, otpCode, expiresAt };
+  },
+
+  async sendOtpEmail(email, otpCode, displayName = '') {
+    const cleanEmail = email.trim().toLowerCase();
+    const name = displayName || cleanEmail.split('@')[0];
+
+    // Channel 1: EmailJS (if configured)
+    if (typeof emailjs !== 'undefined' && window.EMAILJS_CONFIG && window.EMAILJS_CONFIG.publicKey) {
+      try {
+        await emailjs.send(
+          window.EMAILJS_CONFIG.serviceId,
+          window.EMAILJS_CONFIG.templateId,
+          {
+            to_email: cleanEmail,
+            otp_code: otpCode,
+            user_name: name
+          },
+          window.EMAILJS_CONFIG.publicKey
+        );
+        console.log("📩 [EmailJS] OTP sent successfully to", cleanEmail);
+      } catch (e) {
+        console.warn("EmailJS delivery notice:", e);
+      }
+    }
+
+    // Channel 2: Firebase Firestore 'mail' collection (Trigger Email extension)
+    const db = initFirestore();
+    if (db) {
+      try {
+        db.collection("mail").add({
+          to: [cleanEmail],
+          message: {
+            subject: `Tra Frames - លេខកូដផ្ទៀងផ្ទាត់ OTP របស់អ្នកគឺ៖ ${otpCode}`,
+            text: `សួស្តី ${name}!\nលេខកូដសម្ងាត់ ៦ ខ្ទង់របស់អ្នកគឺ៖ ${otpCode}\nលេខកូដនេះមានសុពលភាពរយៈពេល ១០ នាទី។`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 25px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; text-align: center;">
+                <h2 style="color: #059669; margin-bottom: 6px;">Tra Frames</h2>
+                <p style="color: #64748b; font-size: 14px; margin-top: 0;">វេទិកាស៊ុមរូបថតយុទ្ធនាការ និងព្រឹត្តិការណ៍</p>
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 18px 0;">
+                <p style="color: #334155; font-size: 15px;">សួស្តី <strong>${name}</strong>,</p>
+                <p style="color: #475569; font-size: 14px;">នេះជាលេខកូដផ្ទៀងផ្ទាត់អ៊ីមែល (OTP) របស់អ្នក៖</p>
+                <div style="margin: 24px 0;">
+                  <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f172a; background: #f0fdf4; padding: 12px 24px; border-radius: 8px; border: 2px dashed #10b981; display: inline-block;">
+                    ${otpCode}
+                  </span>
+                </div>
+                <p style="color: #e11d48; font-size: 13px; font-weight: 600;">⚠️ លេខកូដនេះមានសុពលភាពរយៈពេល ១០ នាទីប៉ុណ្ណោះ។</p>
+                <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">ប្រសិនបើអ្នកមិនបានស្នើសុំលេខកូដនេះទេ សូមកុំចែករំលែកវាជាមួយនរណាម្នាក់ឡើយ។</p>
+              </div>
+            `
+          }
+        }).then(() => console.log("🔥 [Firestore Mail] Trigger Email queued for", cleanEmail))
+          .catch(e => console.warn("Firestore mail queue notice:", e));
+      } catch (e) {}
+    }
+
+    // Channel 3: Firebase Auth Action Code in background
+    const auth = initFirebaseAuth();
+    if (auth && auth.currentUser && typeof auth.currentUser.sendEmailVerification === 'function') {
+      try {
+        auth.currentUser.sendEmailVerification().catch(() => {});
+      } catch (e) {}
+    }
+
+    // Channel 4: Global notification dispatch
+    window.dispatchEvent(new CustomEvent('tra_otp_dispatched', {
+      detail: { email: cleanEmail, otpCode }
+    }));
+    console.log(`%c🔑 [Tra Frames OTP] Code generated for ${cleanEmail}: ${otpCode}`, "color: #059669; font-weight: bold; font-size: 14px;");
+  },
+
+  async verifyOtp(email, enteredCode) {
+    if (!email || !enteredCode) {
+      return { success: false, reason: 'missing_data' };
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCode = enteredCode.toString().trim();
+
+    let rawRecord = null;
+    try {
+      rawRecord = sessionStorage.getItem("tra_otp_record");
+    } catch (e) {}
+
+    if (!rawRecord) {
+      return { success: false, reason: 'expired' };
+    }
+
+    let record = null;
+    try {
+      record = JSON.parse(rawRecord);
+    } catch (e) {
+      return { success: false, reason: 'invalid' };
+    }
+
+    if (record.email !== cleanEmail) {
+      return { success: false, reason: 'email_mismatch' };
+    }
+
+    if (Date.now() > record.expiresAt) {
+      return { success: false, reason: 'expired' };
+    }
+
+    if (record.attempts >= 5) {
+      return { success: false, reason: 'max_attempts' };
+    }
+
+    const inputHash = await SecurityUtils.hashPassword(cleanCode, `otp_${cleanEmail}`);
+    if (inputHash !== record.hash) {
+      record.attempts = (record.attempts || 0) + 1;
+      try {
+        sessionStorage.setItem("tra_otp_record", JSON.stringify(record));
+      } catch (e) {}
+      return { success: false, reason: 'invalid', remainingAttempts: Math.max(0, 5 - record.attempts) };
+    }
+
+    // OTP IS VALID!
+    try {
+      sessionStorage.removeItem("tra_otp_record");
+    } catch (e) {}
+
+    // Update active user state
+    if (AuthService.currentUser) {
+      AuthService.currentUser.emailVerified = true;
+      try {
+        localStorage.setItem("tra_active_user", JSON.stringify(AuthService.currentUser));
+      } catch (e) {}
+
+      // Update local account database if local
+      if (AuthService.currentUser.isLocal) {
+        const accounts = AuthService.getLocalAccounts();
+        const acc = accounts.find(a => a.email && a.email.toLowerCase() === cleanEmail);
+        if (acc) {
+          acc.emailVerified = true;
+          try {
+            localStorage.setItem("tra_local_accounts", JSON.stringify(accounts));
+          } catch (e) {}
+        }
+      }
+
+      // Record in Cloud Firestore verified_users collection
+      const db = initFirestore();
+      if (db && AuthService.currentUser.uid) {
+        try {
+          await db.collection("verified_users").doc(AuthService.currentUser.uid).set({
+            email: cleanEmail,
+            verifiedAt: new Date().toISOString(),
+            method: "email_otp"
+          }, { merge: true });
+          console.log("🔥 [Cloud Verified] User verified in Firestore:", AuthService.currentUser.uid);
+        } catch (e) {
+          console.warn("Firestore verified_users update notice:", e);
+        }
+      }
+
+      AuthService.notifyListeners();
+    }
+
+    return { success: true };
+  }
+};
+
 const AuthService = {
   currentUser: null,
   listeners: [],
@@ -611,6 +820,21 @@ const AuthService = {
           emailVerified: isGoogle ? true : !!user.emailVerified,
           isLocal: false
         };
+
+        // Check if verified via OTP in Firestore
+        if (!this.currentUser.emailVerified) {
+          const db = initFirestore();
+          if (db) {
+            db.collection("verified_users").doc(user.uid).get().then(doc => {
+              if (doc.exists && this.currentUser && this.currentUser.uid === user.uid) {
+                this.currentUser.emailVerified = true;
+                try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
+                this.notifyListeners();
+              }
+            }).catch(() => {});
+          }
+        }
+
         try {
           localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser));
         } catch (e) {}
@@ -656,7 +880,16 @@ const AuthService = {
       try {
         await auth.currentUser.reload();
         const isGoogle = auth.currentUser.providerData && auth.currentUser.providerData.some(p => p.providerId === 'google.com');
-        const isVerified = isGoogle || !!auth.currentUser.emailVerified;
+        let isVerified = isGoogle || !!auth.currentUser.emailVerified;
+        if (!isVerified) {
+          const db = initFirestore();
+          if (db) {
+            try {
+              const doc = await db.collection("verified_users").doc(auth.currentUser.uid).get();
+              if (doc.exists) isVerified = true;
+            } catch (e) {}
+          }
+        }
         if (this.currentUser) {
           this.currentUser.emailVerified = isVerified;
           try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
@@ -668,7 +901,7 @@ const AuthService = {
       }
     }
     if (this.currentUser && this.currentUser.isLocal) {
-      return true;
+      return this.currentUser.emailVerified !== false;
     }
     return false;
   },
@@ -738,20 +971,34 @@ const AuthService = {
     if (auth) {
       try {
         const result = await auth.signInWithEmailAndPassword(cleanEmail, password);
-        const isGoogle = result.user.providerData && result.user.providerData.some(p => p.providerId === 'google.com');
-        this.currentUser = {
-          uid: result.user.uid,
-          email: result.user.email,
-          displayName: SecurityUtils.cleanText(result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'), 50),
-          photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
-          emailVerified: isGoogle ? true : !!result.user.emailVerified,
-          isLocal: false
-        };
-        try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
-        this.notifyListeners();
-        return this.currentUser;
+        if (result.user) {
+          const isGoogle = result.user.providerData && result.user.providerData.some(p => p.providerId === 'google.com');
+          let verified = isGoogle || !!result.user.emailVerified;
+          
+          if (!verified) {
+            const db = initFirestore();
+            if (db) {
+              try {
+                const doc = await db.collection("verified_users").doc(result.user.uid).get();
+                if (doc.exists) verified = true;
+              } catch (e) {}
+            }
+          }
+
+          this.currentUser = {
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: SecurityUtils.cleanText(result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'), 50),
+            photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
+            emailVerified: verified,
+            isLocal: false
+          };
+          try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
+          this.notifyListeners();
+          return this.currentUser;
+        }
       } catch (err) {
-        console.warn("Firebase Cloud Login Notice:", err);
+        console.warn("Firebase Email Login Notice:", err);
         // If Firebase Console has provider disabled or account is local, check local accounts
         if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
           const local = await this.loginLocal(cleanEmail, password);
@@ -795,7 +1042,7 @@ const AuthService = {
           try { await result.user.updateProfile({ displayName: safeDisplayName }); } catch (e) {}
         }
 
-        // Send Email Verification link
+        // Send Email Verification link in background
         let emailSent = false;
         if (result.user && typeof result.user.sendEmailVerification === 'function') {
           try {
@@ -817,6 +1064,14 @@ const AuthService = {
           isLocal: false
         };
         try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
+
+        // Dispatch 6-digit OTP code to email
+        try {
+          await OtpService.generateOtp(cleanEmail, safeDisplayName);
+        } catch (otpErr) {
+          console.warn("OTP dispatch notice:", otpErr);
+        }
+
         this.notifyListeners();
         return this.currentUser;
       } catch (err) {
@@ -850,6 +1105,7 @@ const AuthService = {
       email: cleanEmail,
       displayName: safeDisplayName,
       photoURL: '',
+      emailVerified: false,
       isLocal: true
     };
 
@@ -861,6 +1117,14 @@ const AuthService = {
     try {
       localStorage.setItem("tra_active_user", JSON.stringify(user));
     } catch (e) {}
+
+    // Dispatch 6-digit OTP code to email
+    try {
+      await OtpService.generateOtp(cleanEmail, safeDisplayName);
+    } catch (otpErr) {
+      console.warn("OTP dispatch notice:", otpErr);
+    }
+
     this.notifyListeners();
     return user;
   },
