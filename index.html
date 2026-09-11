@@ -1430,7 +1430,7 @@ const SecurityUtils = {
   sanitizeUrl(url) {
     if (!url || typeof url !== 'string') return '#';
     const trimmed = url.trim();
-    if (/^(https?:\/\/|\/|#|data:image\/[a-zA-Z+]+;base64,)/i.test(trimmed)) {
+    if (/^(https?:\/\/|\/|#|data:image\/(png|jpeg|jpg|webp|svg\+xml)[;,])/i.test(trimmed)) {
       return trimmed;
     }
     return '#';
