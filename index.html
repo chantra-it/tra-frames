@@ -7,7 +7,7 @@
   <meta name="description" content="Tra Frames - Modern, fast, and beautiful photo frame platform for social media campaigns, celebrations, and causes.">
 
   <!-- Security Hardening Meta Tags -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://firestore.googleapis.com https://*.googleapis.com https://*.firebaseio.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://firestore.googleapis.com https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src 'self' https://tra-frames.firebaseapp.com https://accounts.google.com https://*.firebaseapp.com;">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -1221,6 +1221,223 @@ svg {
   object-fit: cover;
 }
 
+/* ========================================= */
+/* USER AUTHENTICATION & PROFILE STYLES      */
+/* ========================================= */
+.btn-google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.8rem 1.25rem;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  border: 1.5px solid #dadce0;
+  color: #3c4043;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.08);
+}
+
+[data-theme="dark"] .btn-google {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.btn-google:hover {
+  background: #f8fafd;
+  border-color: #c2c7d0;
+  box-shadow: 0 2px 6px rgba(60, 64, 67, 0.15);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .btn-google:hover {
+  background: #273548;
+  border-color: #475569;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0.85rem 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.auth-tabs {
+  display: flex;
+  border-bottom: 1.5px solid var(--border-color);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.auth-tab {
+  padding: 0.5rem 1rem 0.75rem 1rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -2px;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  transition: all 0.15s ease;
+}
+
+.auth-tab.active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+}
+
+/* User Profile Navbar Badge */
+.user-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem 0.35rem 0.35rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  user-select: none;
+}
+
+.user-profile-badge:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-secondary);
+}
+
+.user-avatar-img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--accent-soft);
+}
+
+.user-avatar-placeholder {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.user-name-text {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  z-index: 10001;
+  animation: fadeIn 0.15s ease;
+}
+
+.user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.user-dropdown-item:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.user-dropdown-item.danger:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+[data-theme="dark"] .user-dropdown-item.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+/* Auth Gate Card (Shown when visiting #create without login) */
+.auth-gate-card {
+  max-width: 520px;
+  margin: 2rem auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.auth-gate-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.auth-gate-icon svg {
+  width: 32px !important;
+  height: 32px !important;
+}
+
 </style>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><circle cx='12' cy='12' r='10'/></svg>">
 </head>
@@ -1265,6 +1482,9 @@ svg {
           <!-- Icon injected by app.js -->
         </button>
 
+        <!-- Auth State Button / User Profile -->
+        <div id="navAuthContainer" style="display: flex; align-items: center;"></div>
+
         <!-- Quick Create Button -->
         <button class="btn btn-primary" style="padding: 0.55rem 1.15rem; font-size: 0.88rem;" onclick="window.location.hash='#create'">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
@@ -1302,9 +1522,10 @@ svg {
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Firebase Cloud Database SDK -->
+  <!-- Firebase Cloud Database & Auth SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
   <!-- Scripts -->
   <script>
@@ -1337,8 +1558,12 @@ const Icons = {
   back: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`,
   telegram: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="m20.665 3.717-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701h-.002l-.313 4.674c.458 0 .66-.21.916-.458l2.2-2.138 4.576 3.38c.843.465 1.45.226 1.66-.782l2.997-14.116c.307-1.233-.473-1.793-1.282-1.327z"/></svg>`,
   facebook: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
-  xTwitter: `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
-  avatar: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+  avatar: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  google: `<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>`,
+  logIn: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>`,
+  logOut: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>`,
+  mail: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
+  lock: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
 };
 
 function getIcon(name) {
@@ -1447,7 +1672,26 @@ const translations = {
     aspectRatio: "សមាមាត្ររូប",
     square11: "ការ៉េ 1:1 (Profile)",
     portrait45: "បញ្ឈរ 4:5 (Instagram)",
-    story916: "Story 9:16 (Reels/Status)"
+    story916: "Story 9:16 (Reels/Status)",
+    signIn: "ចូលគណនី",
+    signUp: "ចុះឈ្មោះ",
+    signOut: "ចាកចេញ",
+    signInWithGoogle: "ចូលដោយប្រើ Google",
+    signInWithEmail: "ចូលដោយប្រើ Email",
+    email: "អ៊ីមែល (Email)",
+    password: "ពាក្យសម្ងាត់ (Password)",
+    fullName: "ឈ្មោះពេញ (Display Name)",
+    dontHaveAccount: "មិនទាន់មានគណនី?",
+    alreadyHaveAccount: "មានគណនីរួចហើយ?",
+    createAccount: "បង្កើតគណនីថ្មី",
+    loginRequiredTitle: "សូមចូលគណនីជាមុនសិន",
+    loginRequiredDesc: "ដើម្បីបង្កើតយុទ្ធនាការ ឬ Upload ស៊ុមរូបថតផ្ទាល់ខ្លួន សូមចូលគណនី Google ឬ Email របស់អ្នក។",
+    loginSuccess: "ចូលគណនីបានជោគជ័យ!",
+    logoutSuccess: "បានចាកចេញពីគណនី!",
+    signupSuccess: "ចុះឈ្មោះបានជោគជ័យ!",
+    loginFailed: "ការចូលគណនីមិនជោគជ័យ សូមព្យាយាមម្តងទៀត",
+    supporterNoLoginTip: "ចំណាំ៖ អ្នកគាំទ្រដែលប្រើស៊ុមរូបថត មិនបាច់ Login ទេ!",
+    orDivider: "ឬ"
   },
   en: {
     appName: "Tra Frames",
@@ -1548,7 +1792,26 @@ const translations = {
     aspectRatio: "Aspect Ratio",
     square11: "Square 1:1 (Profile)",
     portrait45: "Portrait 4:5 (Instagram)",
-    story916: "Story 9:16 (Reels/Status)"
+    story916: "Story 9:16 (Reels/Status)",
+    signIn: "Sign In",
+    signUp: "Sign Up",
+    signOut: "Sign Out",
+    signInWithGoogle: "Continue with Google",
+    signInWithEmail: "Sign in with Email",
+    email: "Email Address",
+    password: "Password",
+    fullName: "Full Name",
+    dontHaveAccount: "Don't have an account?",
+    alreadyHaveAccount: "Already have an account?",
+    createAccount: "Create New Account",
+    loginRequiredTitle: "Sign In Required",
+    loginRequiredDesc: "Please sign in with your Google or Email account to create and manage campaigns.",
+    loginSuccess: "Signed in successfully!",
+    logoutSuccess: "Signed out successfully!",
+    signupSuccess: "Account created successfully!",
+    loginFailed: "Sign in failed. Please check credentials and try again.",
+    supporterNoLoginTip: "Note: Supporters wearing frames never need to log in!",
+    orDivider: "OR"
   }
 };
 
@@ -2045,6 +2308,112 @@ function initFirestore() {
   return null;
 }
 
+let firebaseAuth = null;
+function initFirebaseAuth() {
+  if (firebaseAuth) return firebaseAuth;
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      firebaseAuth = firebase.auth();
+      return firebaseAuth;
+    }
+  } catch (err) {
+    console.warn("Firebase Auth connection notice:", err);
+  }
+  return null;
+}
+
+const AuthService = {
+  currentUser: null,
+  listeners: [],
+  initialized: false,
+
+  init() {
+    if (this.initialized) return;
+    const auth = initFirebaseAuth();
+    if (!auth) return;
+
+    this.initialized = true;
+    auth.onAuthStateChanged((user) => {
+      this.currentUser = user ? {
+        uid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || user.email?.split('@')[0] || 'User',
+        photoURL: user.photoURL || '',
+      } : null;
+
+      console.log("👤 Tra Frames Auth:", this.currentUser ? `Signed in as ${this.currentUser.displayName}` : "Guest");
+      this.notifyListeners();
+    });
+  },
+
+  onAuthStateChanged(callback) {
+    this.listeners.push(callback);
+    callback(this.currentUser);
+  },
+
+  notifyListeners() {
+    this.listeners.forEach(cb => {
+      try { cb(this.currentUser); } catch (e) { console.error(e); }
+    });
+  },
+
+  isAuthenticated() {
+    return !!this.currentUser;
+  },
+
+  async loginWithGoogle() {
+    const auth = initFirebaseAuth();
+    if (!auth) throw new Error("Firebase Auth is not available.");
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.addScope('profile');
+    provider.addScope('email');
+    provider.setCustomParameters({ prompt: 'select_account' });
+    try {
+      const result = await auth.signInWithPopup(provider);
+      return result.user;
+    } catch (err) {
+      console.error("Google Sign-In Error:", err);
+      throw err;
+    }
+  },
+
+  async loginWithEmail(email, password) {
+    const auth = initFirebaseAuth();
+    if (!auth) throw new Error("Firebase Auth is not available.");
+    try {
+      const result = await auth.signInWithEmailAndPassword(email, password);
+      return result.user;
+    } catch (err) {
+      console.error("Email Login Error:", err);
+      throw err;
+    }
+  },
+
+  async signUpWithEmail(email, password, displayName) {
+    const auth = initFirebaseAuth();
+    if (!auth) throw new Error("Firebase Auth is not available.");
+    try {
+      const result = await auth.createUserWithEmailAndPassword(email, password);
+      if (displayName && result.user) {
+        await result.user.updateProfile({ displayName });
+      }
+      return result.user;
+    } catch (err) {
+      console.error("Email Sign-Up Error:", err);
+      throw err;
+    }
+  },
+
+  async logout() {
+    const auth = initFirebaseAuth();
+    if (!auth) return;
+    await auth.signOut();
+  }
+};
+
 const CampaignService = {
   getCampaigns() {
     let userCampaigns = [];
@@ -2078,16 +2447,19 @@ const CampaignService = {
       .replace(/[^a-z0-9-]+/g, "")
       .replace(/^-+|-+$/g, "") || "campaign-" + Date.now();
 
+    const user = AuthService.currentUser;
     const newCampaign = {
       ...campaignData,
       id: campaignData.id || "user-" + Date.now(),
+      creatorUid: user ? user.uid : (campaignData.creatorUid || null),
+      creatorEmail: user ? user.email : (campaignData.creatorEmail || null),
       titleKm: SecurityUtils.escapeHtml(campaignData.titleKm || ''),
       titleEn: SecurityUtils.escapeHtml(campaignData.titleEn || ''),
       slug: safeSlug,
       category: ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'].includes(campaignData.category)
         ? campaignData.category
         : 'celebration',
-      creator: SecurityUtils.escapeHtml(campaignData.creator || 'Anonymous'),
+      creator: SecurityUtils.escapeHtml(campaignData.creator || (user ? user.displayName : 'Anonymous')),
       descriptionKm: SecurityUtils.escapeHtml(campaignData.descriptionKm || ''),
       descriptionEn: SecurityUtils.escapeHtml(campaignData.descriptionEn || ''),
       caption: SecurityUtils.escapeHtml(campaignData.caption || ''),
@@ -2199,7 +2571,12 @@ const CampaignService = {
   getUserCampaigns() {
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
+      const allUserCampaigns = stored ? JSON.parse(stored) : [];
+      const user = AuthService.currentUser;
+      if (user) {
+        return allUserCampaigns.filter(c => !c.creatorUid || c.creatorUid === user.uid);
+      }
+      return allUserCampaigns;
     } catch (e) {
       return [];
     }
@@ -2970,16 +3347,28 @@ class TwibbonApp {
     // 1. Apply theme
     document.documentElement.setAttribute('data-theme', this.theme);
 
-    // 2. Setup hash routing
+    // 2. Initialize Firebase Auth
+    if (typeof AuthService !== 'undefined') {
+      AuthService.init();
+      AuthService.onAuthStateChanged((user) => {
+        this.updateNavAuth(user);
+        if (this.currentView === 'create' || this.currentView === 'my-campaigns') {
+          this.renderCurrentView();
+        }
+      });
+    }
+
+    // 3. Setup hash routing
     window.addEventListener('hashchange', () => this.handleRoute());
 
-    // 3. Listen for language changes
+    // 4. Listen for language changes
     document.addEventListener('languageChanged', () => {
       this.updateStaticTranslations();
+      this.updateNavAuth(AuthService ? AuthService.currentUser : null);
       this.renderCurrentView();
     });
 
-    // 4. Initial route resolution
+    // 5. Initial route resolution
     this.updateStaticTranslations();
     this.handleRoute();
   }
@@ -3019,6 +3408,209 @@ class TwibbonApp {
     }
 
     this.updateThemeIcons();
+  }
+
+  updateNavAuth(user) {
+    const container = document.getElementById('navAuthContainer');
+    if (!container) return;
+
+    if (!user) {
+      container.innerHTML = `
+        <button class="btn btn-outline" id="btnNavSignIn" style="padding: 0.42rem 0.95rem; font-size: 0.85rem;" onclick="app.openAuthModal()">
+          ${Icons.logIn} <span>${t('signIn')}</span>
+        </button>
+      `;
+    } else {
+      const initial = (user.displayName || user.email || 'U')[0].toUpperCase();
+      const displayName = SecurityUtils.escapeHtml(user.displayName || user.email.split('@')[0]);
+      container.innerHTML = `
+        <div class="user-profile-badge" id="userProfileBadge" onclick="app.toggleUserDropdown(event)">
+          ${user.photoURL 
+            ? `<img src="${SecurityUtils.sanitizeUrl(user.photoURL)}" class="user-avatar-img" alt="${displayName}" onerror="this.outerHTML='<div class=\\'user-avatar-placeholder\\'>${initial}</div>'" />`
+            : `<div class="user-avatar-placeholder">${initial}</div>`
+          }
+          <span class="user-name-text">${displayName}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+          
+          <div class="user-dropdown" id="userDropdownMenu" style="display: none;">
+            <div style="padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.78rem; color: var(--text-muted); word-break: break-all;">
+              ${SecurityUtils.escapeHtml(user.email)}
+            </div>
+            <button class="user-dropdown-item" onclick="window.location.hash='#my-campaigns'">
+              ${Icons.avatar} <span>${t('myCampaigns')}</span>
+            </button>
+            <button class="user-dropdown-item" onclick="window.location.hash='#create'">
+              ${Icons.plus} <span>${t('createCampaign')}</span>
+            </button>
+            <button class="user-dropdown-item danger" onclick="app.handleSignOut()">
+              ${Icons.logOut} <span>${t('signOut')}</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  toggleUserDropdown(e) {
+    e.stopPropagation();
+    const dropdown = document.getElementById('userDropdownMenu');
+    if (!dropdown) return;
+    const isVisible = dropdown.style.display === 'flex';
+    dropdown.style.display = isVisible ? 'none' : 'flex';
+
+    if (!isVisible) {
+      const closeDropdown = () => {
+        dropdown.style.display = 'none';
+        document.removeEventListener('click', closeDropdown);
+      };
+      setTimeout(() => document.addEventListener('click', closeDropdown), 0);
+    }
+  }
+
+  async handleSignOut() {
+    try {
+      await AuthService.logout();
+      this.showToast(t('logoutSuccess'), 'success');
+      if (this.currentView === 'create' || this.currentView === 'my-campaigns') {
+        window.location.hash = '#explore';
+      }
+    } catch (err) {
+      this.showToast("Error signing out", 'error');
+    }
+  }
+
+  openAuthModal(onSuccessCallback) {
+    const existing = document.getElementById('authModalOverlay');
+    if (existing) existing.remove();
+
+    const isKm = getLanguage() === 'km';
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'authModalOverlay';
+    overlay.innerHTML = `
+      <div class="modal-card" style="max-width: 440px;">
+        <div class="modal-header">
+          <h3>${Icons.avatar} <span>${t('signIn')} / ${t('signUp')}</span></h3>
+          <button class="modal-close-btn" onclick="document.getElementById('authModalOverlay').remove()">&times;</button>
+        </div>
+
+        <div style="background: var(--accent-soft); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 0.75rem 1rem; font-size: 0.84rem; color: var(--accent-primary); line-height: 1.5;">
+          💡 <strong>${t('supporterNoLoginTip')}</strong>
+        </div>
+
+        <!-- Google Sign-In Primary Button -->
+        <button class="btn-google" id="btnAuthGoogle">
+          ${Icons.google} <span>${t('signInWithGoogle')}</span>
+        </button>
+
+        <div class="auth-divider">
+          <span>${t('orDivider')}</span>
+        </div>
+
+        <!-- Auth Tabs (Sign In / Sign Up) -->
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tabSignIn">${t('signIn')}</button>
+          <button class="auth-tab" id="tabSignUp">${t('createAccount')}</button>
+        </div>
+
+        <form id="authEmailForm" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="form-group" id="groupDisplayName" style="display: none;">
+            <label class="form-label">${t('fullName')}</label>
+            <input type="text" id="authDisplayNameInput" class="form-input" placeholder="e.g. Sok Chantra" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">${t('email')} *</label>
+            <input type="email" id="authEmailInput" class="form-input" placeholder="name@example.com" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">${t('password')} *</label>
+            <input type="password" id="authPasswordInput" class="form-input" placeholder="••••••••" required minlength="6" />
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="padding: 0.85rem; font-size: 1rem; margin-top: 0.25rem;">
+            <span>${t('signIn')}</span>
+          </button>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    let isSignUp = false;
+    const tabSignIn = overlay.querySelector('#tabSignIn');
+    const tabSignUp = overlay.querySelector('#tabSignUp');
+    const groupName = overlay.querySelector('#groupDisplayName');
+    const btnSubmit = overlay.querySelector('#btnAuthSubmit span');
+
+    tabSignIn.addEventListener('click', () => {
+      isSignUp = false;
+      tabSignIn.classList.add('active');
+      tabSignUp.classList.remove('active');
+      groupName.style.display = 'none';
+      btnSubmit.textContent = t('signIn');
+    });
+
+    tabSignUp.addEventListener('click', () => {
+      isSignUp = true;
+      tabSignUp.classList.add('active');
+      tabSignIn.classList.remove('active');
+      groupName.style.display = 'flex';
+      btnSubmit.textContent = t('signUp');
+    });
+
+    // Handle Google Login
+    overlay.querySelector('#btnAuthGoogle').addEventListener('click', async () => {
+      try {
+        await AuthService.loginWithGoogle();
+        overlay.remove();
+        this.showToast(t('loginSuccess'), 'success');
+        if (onSuccessCallback) onSuccessCallback();
+      } catch (err) {
+        console.error(err);
+        if (err.code === 'auth/unauthorized-domain') {
+          this.showToast("Domain មិនទាន់អនុញ្ញាតក្នុង Firebase Console ទេ សូម Add frame.tra4me.com", 'error');
+        } else if (err.code !== 'auth/popup-closed-by-user') {
+          this.showToast(t('loginFailed'), 'error');
+        }
+      }
+    });
+
+    // Handle Email Login / Sign-up
+    overlay.querySelector('#authEmailForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = overlay.querySelector('#authEmailInput').value.trim();
+      const password = overlay.querySelector('#authPasswordInput').value;
+      const name = overlay.querySelector('#authDisplayNameInput').value.trim();
+
+      try {
+        if (isSignUp) {
+          await AuthService.signUpWithEmail(email, password, name);
+          this.showToast(t('signupSuccess'), 'success');
+        } else {
+          await AuthService.loginWithEmail(email, password);
+          this.showToast(t('loginSuccess'), 'success');
+        }
+        overlay.remove();
+        if (onSuccessCallback) onSuccessCallback();
+      } catch (err) {
+        console.error(err);
+        let msg = t('loginFailed');
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+          msg = isKm ? "អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវទេ" : "Incorrect email or password.";
+        } else if (err.code === 'auth/email-already-in-use') {
+          msg = isKm ? "អ៊ីមែលនេះមានគណនីរួចហើយ សូមជ្រើសរើស ចូលគណនី" : "Email already registered. Please sign in.";
+        } else if (err.code === 'auth/weak-password') {
+          msg = isKm ? "ពាក្យសម្ងាត់ត្រូវមានយ៉ាងតិច ៦ តួអក្សរ" : "Password must be at least 6 characters.";
+        }
+        this.showToast(msg, 'error');
+      }
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
   }
 
   getShareableLink(campaign) {
@@ -3666,13 +4258,56 @@ class TwibbonApp {
   loadCreateView(presetFrameId) {
     this.currentView = 'create';
     const container = document.getElementById('appContent');
-    let initialFrame = PRESET_FRAMES.graduation;
 
+    // Route Guard: Require Login to Create or Upload Campaigns
+    if (typeof AuthService !== 'undefined' && !AuthService.isAuthenticated()) {
+      container.innerHTML = `
+        <div class="auth-gate-card">
+          <div class="auth-gate-icon">${Icons.lock}</div>
+          <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);">${t('loginRequiredTitle')}</h2>
+          <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem;">${t('loginRequiredDesc')}</p>
+          
+          <div style="display: flex; flex-direction: column; gap: 0.85rem; max-width: 360px; margin: 0 auto; width: 100%;">
+            <button class="btn-google" id="btnGateGoogle">${Icons.google} <span>${t('signInWithGoogle')}</span></button>
+            <button class="btn btn-outline" id="btnGateEmail">${Icons.mail} <span>${t('signInWithEmail')}</span></button>
+          </div>
+          
+          <div style="background: var(--accent-soft); border-radius: var(--radius-md); padding: 0.65rem 1rem; font-size: 0.84rem; color: var(--accent-primary); font-weight: 600; margin-top: 0.5rem;">
+            💡 ${t('supporterNoLoginTip')}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('btnGateGoogle').addEventListener('click', async () => {
+        try {
+          await AuthService.loginWithGoogle();
+          this.showToast(t('loginSuccess'), 'success');
+          this.loadCreateView(presetFrameId);
+        } catch (err) {
+          if (err.code === 'auth/unauthorized-domain') {
+            this.showToast("Domain មិនទាន់អនុញ្ញាតក្នុង Firebase Console ទេ សូម Add frame.tra4me.com", 'error');
+          } else if (err.code !== 'auth/popup-closed-by-user') {
+            this.showToast(t('loginFailed'), 'error');
+          }
+        }
+      });
+
+      document.getElementById('btnGateEmail').addEventListener('click', () => {
+        this.openAuthModal(() => this.loadCreateView(presetFrameId));
+      });
+      return;
+    }
+
+    let initialFrame = PRESET_FRAMES.graduation;
     if (presetFrameId && PRESET_FRAMES[presetFrameId]) {
       initialFrame = PRESET_FRAMES[presetFrameId];
     } else if (presetFrameId === 'designer' && window._designerExportedFrame) {
       initialFrame = window._designerExportedFrame;
     }
+
+    const defaultCreator = (AuthService && AuthService.currentUser) 
+      ? SecurityUtils.escapeHtml(AuthService.currentUser.displayName || AuthService.currentUser.email.split('@')[0])
+      : '';
 
     container.innerHTML = `
       <div style="max-width: 720px; margin: 0 auto;">
@@ -3708,7 +4343,7 @@ class TwibbonApp {
 
           <div class="form-group">
             <label class="form-label">${t('creator')} / Organization *</label>
-            <input type="text" id="campaignCreator" class="form-input" placeholder="e.g., Youth Union, Tech Team" required />
+            <input type="text" id="campaignCreator" class="form-input" value="${defaultCreator}" placeholder="e.g., Youth Union, Tech Team" required />
           </div>
 
           <div class="form-group">
@@ -3960,6 +4595,46 @@ class TwibbonApp {
   loadMyCampaignsView() {
     this.currentView = 'my-campaigns';
     const container = document.getElementById('appContent');
+
+    // Route Guard: Require login to view user campaigns
+    if (typeof AuthService !== 'undefined' && !AuthService.isAuthenticated()) {
+      container.innerHTML = `
+        <div class="auth-gate-card">
+          <div class="auth-gate-icon">${Icons.avatar}</div>
+          <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);">${t('myCampaigns')}</h2>
+          <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem;">${t('loginRequiredDesc')}</p>
+          
+          <div style="display: flex; flex-direction: column; gap: 0.85rem; max-width: 360px; margin: 0 auto; width: 100%;">
+            <button class="btn-google" id="btnMyGateGoogle">${Icons.google} <span>${t('signInWithGoogle')}</span></button>
+            <button class="btn btn-outline" id="btnMyGateEmail">${Icons.mail} <span>${t('signInWithEmail')}</span></button>
+          </div>
+          
+          <div style="background: var(--accent-soft); border-radius: var(--radius-md); padding: 0.65rem 1rem; font-size: 0.84rem; color: var(--accent-primary); font-weight: 600; margin-top: 0.5rem;">
+            💡 ${t('supporterNoLoginTip')}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('btnMyGateGoogle').addEventListener('click', async () => {
+        try {
+          await AuthService.loginWithGoogle();
+          this.showToast(t('loginSuccess'), 'success');
+          this.loadMyCampaignsView();
+        } catch (err) {
+          if (err.code === 'auth/unauthorized-domain') {
+            this.showToast("Domain មិនទាន់អនុញ្ញាតក្នុង Firebase Console ទេ សូម Add frame.tra4me.com", 'error');
+          } else if (err.code !== 'auth/popup-closed-by-user') {
+            this.showToast(t('loginFailed'), 'error');
+          }
+        }
+      });
+
+      document.getElementById('btnMyGateEmail').addEventListener('click', () => {
+        this.openAuthModal(() => this.loadMyCampaignsView());
+      });
+      return;
+    }
+
     const myCampaigns = CampaignService.getUserCampaigns();
 
     container.innerHTML = `
