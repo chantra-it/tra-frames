@@ -100,14 +100,16 @@ class TwibbonApp {
         </button>
       `;
     } else {
-      const initial = (user.displayName || user.email || 'U')[0].toUpperCase();
+      const initial = SecurityUtils.cleanText(((user.displayName || user.email || 'U').trim()[0] || 'U').toUpperCase(), 1).replace(/[^A-Z0-9]/g, 'U');
       const displayName = SecurityUtils.escapeHtml(user.displayName || user.email.split('@')[0]);
       container.innerHTML = `
         <div class="user-profile-badge" id="userProfileBadge" onclick="app.toggleUserDropdown(event)">
-          ${user.photoURL 
-            ? `<img src="${SecurityUtils.sanitizeUrl(user.photoURL)}" class="user-avatar-img" alt="${displayName}" onerror="this.outerHTML='<div class=\\'user-avatar-placeholder\\'>${initial}</div>'" />`
-            : `<div class="user-avatar-placeholder">${initial}</div>`
-          }
+          <div class="user-avatar-wrap">
+            ${user.photoURL 
+              ? `<img src="${SecurityUtils.sanitizeUrl(user.photoURL)}" class="user-avatar-img" alt="${displayName}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" /><div class="user-avatar-placeholder" style="display:none;">${initial}</div>`
+              : `<div class="user-avatar-placeholder">${initial}</div>`
+            }
+          </div>
           <span class="user-name-text">${displayName}</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
           
@@ -341,12 +343,21 @@ class TwibbonApp {
   }
 
   getShareableLink(campaign) {
-    const slug = campaign.slug || campaign.id;
+    if (!campaign) return window.location.href;
+    const slug = encodeURIComponent(String(campaign.slug || campaign.id || '').trim());
     if (window.location.protocol === 'file:') {
-      // Running locally: provide network IP address so phones and other devices can connect!
-      return `http://192.168.1.156:5000/#campaign/${slug}`;
+      return `https://frame.tra4me.com/#campaign/${slug}`;
     }
     return `${window.location.origin}${window.location.pathname}#campaign/${slug}`;
+  }
+
+  openShareModalById(identifier) {
+    if (!identifier) return;
+    const cleanId = String(identifier).trim();
+    const campaign = CampaignService.getCampaignBySlugOrId(cleanId);
+    if (campaign) {
+      this.openShareModal(campaign);
+    }
   }
 
   openShareModal(campaign) {
@@ -518,7 +529,7 @@ class TwibbonApp {
             type="text" 
             class="hero-search-input" 
             placeholder="${t('searchPlaceholder')}"
-            value="${this.searchQuery}"
+            value="${SecurityUtils.escapeHtml(this.searchQuery || '')}"
             id="campaignSearchInput"
           />
           ${this.searchQuery ? `
@@ -659,7 +670,7 @@ class TwibbonApp {
             <button class="btn btn-primary btn-use-frame" onclick="window.location.hash='#campaign/${slug}'">
               ${Icons.camera} <span>${t('useFrame')}</span>
             </button>
-            <button class="btn btn-secondary btn-card-share" title="${t('shareCampaign')}" onclick="event.stopPropagation(); app.openShareModal(CampaignService.getCampaignBySlugOrId('${slug}'))">
+            <button class="btn btn-secondary btn-card-share" title="${t('shareCampaign')}" onclick="event.stopPropagation(); app.openShareModalById(decodeURIComponent('${encodeURIComponent(campaign.slug || campaign.id || '')}'))">
               ${Icons.share}
             </button>
           </div>
@@ -1374,7 +1385,10 @@ class TwibbonApp {
     if (creatorInput) {
       creatorInput.addEventListener('input', (e) => {
         const val = e.target.value.trim();
-        if (liveCardCreator) liveCardCreator.innerHTML = `${Icons.avatar} <span>${t('by')} ${val || (isKm ? 'ឈ្មោះអ្នកបង្កើត' : 'Creator')}</span>`;
+        const safeVal = SecurityUtils.cleanText(val, 50);
+        if (liveCardCreator) {
+          liveCardCreator.innerHTML = `${Icons.avatar} <span>${t('by')} ${safeVal || (isKm ? 'ឈ្មោះអ្នកបង្កើត' : 'Creator')}</span>`;
+        }
       });
     }
 
@@ -1722,7 +1736,7 @@ class TwibbonApp {
                     <button class="btn btn-primary" style="flex: 1;" onclick="window.location.hash='#campaign/${safeSlug}'">
                       ${Icons.camera} <span>${t('viewCampaign')}</span>
                     </button>
-                    <button class="btn-icon" style="color: #ef4444;" title="${t('delete')}" onclick="app.deleteUserCampaign('${safeId}')">
+                    <button class="btn-icon" style="color: #ef4444;" title="${t('delete')}" onclick="app.deleteUserCampaign(decodeURIComponent('${encodeURIComponent(c.id || '')}'))">
                       ${Icons.trash}
                     </button>
                   </div>
@@ -1735,9 +1749,10 @@ class TwibbonApp {
     `;
   }
 
-  deleteUserCampaign(id) {
+  async deleteUserCampaign(id) {
+    if (!id) return;
     if (confirm(t('deleteConfirm'))) {
-      CampaignService.deleteCampaign(id);
+      await CampaignService.deleteCampaign(id);
       this.showToast("Campaign deleted");
       this.loadMyCampaignsView();
     }
@@ -1754,10 +1769,15 @@ class TwibbonApp {
 
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-      <span>${type === 'success' ? Icons.check : '!'}</span>
-      <span>${message}</span>
-    `;
+    
+    const iconSpan = document.createElement('span');
+    iconSpan.innerHTML = (type === 'success' ? Icons.check : '!');
+    
+    const textSpan = document.createElement('span');
+    textSpan.textContent = String(message || '');
+
+    toast.appendChild(iconSpan);
+    toast.appendChild(textSpan);
 
     container.appendChild(toast);
     setTimeout(() => {
