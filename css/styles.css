@@ -2031,6 +2031,26 @@ button, input, textarea, select {
 /* =========================================================
    IN-APP FRAME DESIGNER
    ========================================================= */
+.designer-mobile-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  margin-bottom: 0.75rem;
+}
+
+.designer-mobile-title {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: center;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .designer-top-nav {
   margin-bottom: 1.25rem;
 }
@@ -2550,25 +2570,14 @@ button, input, textarea, select {
     padding: 1.1rem 0.85rem calc(6rem + env(safe-area-inset-bottom, 16px)) 0.85rem;
   }
 
-  /* Designer View on Mobile: compact header and scaled canvas */
-  .designer-top-nav {
-    margin-bottom: 0.65rem !important;
+  /* Designer View on Mobile: Native App Top Bar, hide big desktop headers */
+  .designer-mobile-bar {
+    display: flex !important;
   }
 
+  .designer-top-nav,
   .designer-header-wrap {
-    margin-bottom: 0.85rem !important;
-  }
-
-  .designer-title {
-    font-size: clamp(1.2rem, 4.5vw, 1.45rem) !important;
-    line-height: 1.35 !important;
-    margin-bottom: 0.25rem !important;
-  }
-
-  .designer-subtitle {
-    font-size: 0.82rem !important;
-    line-height: 1.5 !important;
-    margin-bottom: 0.4rem !important;
+    display: none !important;
   }
 
   /* Responsive Canvas Size on Mobile: leaves room for editing tools below */
