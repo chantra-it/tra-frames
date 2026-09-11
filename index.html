@@ -2579,17 +2579,41 @@ const AuthService = {
 
   init() {
     if (this.initialized) return;
+    this.initialized = true;
+
+    // 1. Check local session storage first
+    try {
+      const activeStored = localStorage.getItem("tra_active_user");
+      if (activeStored) {
+        this.currentUser = JSON.parse(activeStored);
+        this.notifyListeners();
+      }
+    } catch (e) {}
+
+    // 2. Connect to Firebase Auth
     const auth = initFirebaseAuth();
     if (!auth) return;
 
-    this.initialized = true;
     auth.onAuthStateChanged((user) => {
-      this.currentUser = user ? {
-        uid: user.uid,
-        email: user.email || '',
-        displayName: user.displayName || user.email?.split('@')[0] || 'User',
-        photoURL: user.photoURL || '',
-      } : null;
+      if (user) {
+        this.currentUser = {
+          uid: user.uid,
+          email: user.email || '',
+          displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Creator'),
+          photoURL: user.photoURL || '',
+          isLocal: false
+        };
+        try {
+          localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser));
+        } catch (e) {}
+      } else {
+        if (this.currentUser && !this.currentUser.isLocal) {
+          this.currentUser = null;
+          try {
+            localStorage.removeItem("tra_active_user");
+          } catch (e) {}
+        }
+      }
 
       console.log("👤 Tra Frames Auth:", this.currentUser ? `Signed in as ${this.currentUser.displayName}` : "Guest");
       this.notifyListeners();
@@ -2629,35 +2653,134 @@ const AuthService = {
 
   async loginWithEmail(email, password) {
     const auth = initFirebaseAuth();
-    if (!auth) throw new Error("Firebase Auth is not available.");
-    try {
-      const result = await auth.signInWithEmailAndPassword(email, password);
-      return result.user;
-    } catch (err) {
-      console.error("Email Login Error:", err);
-      throw err;
+    if (auth) {
+      try {
+        const result = await auth.signInWithEmailAndPassword(email, password);
+        this.currentUser = {
+          uid: result.user.uid,
+          email: result.user.email,
+          displayName: result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'),
+          photoURL: result.user.photoURL || '',
+          isLocal: false
+        };
+        try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
+        this.notifyListeners();
+        return this.currentUser;
+      } catch (err) {
+        console.warn("Firebase Cloud Login Notice:", err);
+        // If Firebase Console has provider disabled or account is local, check local accounts
+        if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+          const local = this.loginLocal(email, password);
+          if (local) return local;
+        }
+        throw err;
+      }
     }
+    return this.loginLocal(email, password);
   },
 
   async signUpWithEmail(email, password, displayName) {
     const auth = initFirebaseAuth();
-    if (!auth) throw new Error("Firebase Auth is not available.");
-    try {
-      const result = await auth.createUserWithEmailAndPassword(email, password);
-      if (displayName && result.user) {
-        await result.user.updateProfile({ displayName });
+    if (auth) {
+      try {
+        const result = await auth.createUserWithEmailAndPassword(email, password);
+        if (displayName && result.user) {
+          try { await result.user.updateProfile({ displayName }); } catch (e) {}
+        }
+        this.currentUser = {
+          uid: result.user.uid,
+          email: result.user.email,
+          displayName: displayName || result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'),
+          photoURL: result.user.photoURL || '',
+          isLocal: false
+        };
+        try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
+        this.notifyListeners();
+        return this.currentUser;
+      } catch (err) {
+        console.warn("Firebase Cloud Sign-Up Notice:", err);
+        // If Firebase Console has Email/Password disabled (OPERATION_NOT_ALLOWED), fallback to seamless Local Account!
+        if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/network-request-failed') {
+          return this.signUpLocal(email, password, displayName);
+        }
+        throw err;
       }
-      return result.user;
-    } catch (err) {
-      console.error("Email Sign-Up Error:", err);
+    }
+    return this.signUpLocal(email, password, displayName);
+  },
+
+  signUpLocal(email, password, displayName) {
+    const accounts = this.getLocalAccounts();
+    const existing = accounts.find(a => a.email && a.email.toLowerCase() === email.toLowerCase());
+    if (existing) {
+      const err = new Error("Email already registered");
+      err.code = 'auth/email-already-in-use';
       throw err;
+    }
+    const user = {
+      uid: "local-" + Date.now(),
+      email: email,
+      displayName: displayName || email.split('@')[0] || 'Creator',
+      photoURL: '',
+      isLocal: true
+    };
+    accounts.push({ ...user, passwordHash: btoa(encodeURIComponent(password)) });
+    try {
+      localStorage.setItem("tra_local_accounts", JSON.stringify(accounts));
+    } catch (e) {}
+    this.currentUser = user;
+    try {
+      localStorage.setItem("tra_active_user", JSON.stringify(user));
+    } catch (e) {}
+    this.notifyListeners();
+    return user;
+  },
+
+  loginLocal(email, password) {
+    const accounts = this.getLocalAccounts();
+    const hash = btoa(encodeURIComponent(password));
+    const found = accounts.find(a => a.email && a.email.toLowerCase() === email.toLowerCase() && a.passwordHash === hash);
+    if (!found) {
+      const err = new Error("Invalid email or password");
+      err.code = 'auth/invalid-credential';
+      throw err;
+    }
+    const user = {
+      uid: found.uid,
+      email: found.email,
+      displayName: found.displayName,
+      photoURL: found.photoURL || '',
+      isLocal: true
+    };
+    this.currentUser = user;
+    try {
+      localStorage.setItem("tra_active_user", JSON.stringify(user));
+    } catch (e) {}
+    this.notifyListeners();
+    return user;
+  },
+
+  getLocalAccounts() {
+    try {
+      const stored = localStorage.getItem("tra_local_accounts");
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
     }
   },
 
   async logout() {
+    this.currentUser = null;
+    try {
+      localStorage.removeItem("tra_active_user");
+    } catch (e) {}
     const auth = initFirebaseAuth();
-    if (!auth) return;
-    await auth.signOut();
+    if (auth) {
+      try {
+        await auth.signOut();
+      } catch (e) {}
+    }
+    this.notifyListeners();
   }
 };
 
@@ -4014,7 +4137,7 @@ class TwibbonApp {
       } catch (err) {
         console.error(err);
         if (err.code === 'auth/unauthorized-domain') {
-          this.showToast("Domain មិនទាន់អនុញ្ញាតក្នុង Firebase Console ទេ សូម Add frame.tra4me.com", 'error');
+          this.showToast(isKm ? "Domain មិនទាន់អនុញ្ញាតក្នុង Firebase Console ទេ សូម Add frame.tra4me.com ក្នុង Firebase Console > Authentication > Settings" : "Domain not authorized. Add frame.tra4me.com in Firebase Console > Authentication > Settings", 'error');
         } else if (err.code !== 'auth/popup-closed-by-user') {
           this.showToast(t('loginFailed'), 'error');
         }
@@ -4047,6 +4170,10 @@ class TwibbonApp {
           msg = isKm ? "អ៊ីមែលនេះមានគណនីរួចហើយ សូមជ្រើសរើស ចូលគណនី" : "Email already registered. Please sign in.";
         } else if (err.code === 'auth/weak-password') {
           msg = isKm ? "ពាក្យសម្ងាត់ត្រូវមានយ៉ាងតិច ៦ តួអក្សរ" : "Password must be at least 6 characters.";
+        } else if (err.code === 'auth/operation-not-allowed') {
+          msg = isKm ? "មុខងារ Email/Password មិនទាន់បានបើកក្នុង Firebase Console ទេ" : "Email/Password sign-in is disabled in Firebase Console.";
+        } else if (err.code === 'auth/invalid-email') {
+          msg = isKm ? "ទម្រង់អ៊ីមែលមិនត្រឹមត្រូវទេ" : "Invalid email address format.";
         }
         this.showToast(msg, 'error');
       }
