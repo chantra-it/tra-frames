@@ -72,6 +72,20 @@ const SecurityUtils = {
     return this.escapeHtml(String(str).trim().slice(0, maxLength));
   },
 
+  isDisposableEmail(email) {
+    if (!email || typeof email !== 'string') return true;
+    const domain = email.split('@')[1]?.toLowerCase().trim();
+    if (!domain) return true;
+    const disposableDomains = [
+      'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'mailinator.com',
+      'throwawaymail.com', 'yopmail.com', 'trashmail.com', 'sharklasers.com',
+      'getairmail.com', 'fakemailgenerator.com', 'dispostable.com', 'maildrop.cc',
+      'generator.email', 'temp-mail.org', 'mohmal.com', 'crazymailing.com',
+      'fakeinbox.com', 'emailondeck.com', 'mytemp.email', 'burnermail.io'
+    ];
+    return disposableDomains.includes(domain);
+  },
+
   // Secure One-Way Cryptographic Password Hashing using native Web Crypto API (SHA-256)
   async hashPassword(password, salt = 'tra-frames-salt') {
     if (!password) return '';
@@ -588,11 +602,13 @@ const AuthService = {
 
     auth.onAuthStateChanged((user) => {
       if (user) {
+        const isGoogle = user.providerData && user.providerData.some(p => p.providerId === 'google.com');
         this.currentUser = {
           uid: user.uid,
           email: user.email || '',
-          displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Creator'),
-          photoURL: user.photoURL || '',
+          displayName: SecurityUtils.cleanText(user.displayName || (user.email ? user.email.split('@')[0] : 'Creator'), 50),
+          photoURL: SecurityUtils.sanitizeUrl(user.photoURL || ''),
+          emailVerified: isGoogle ? true : !!user.emailVerified,
           isLocal: false
         };
         try {
@@ -607,7 +623,7 @@ const AuthService = {
         }
       }
 
-      console.log("👤 Tra Frames Auth:", this.currentUser ? `Signed in as ${this.currentUser.displayName}` : "Guest");
+      console.log("👤 Tra Frames Auth:", this.currentUser ? `Signed in as ${this.currentUser.displayName} (Verified: ${this.isEmailVerified()})` : "Guest");
       this.notifyListeners();
     });
   },
@@ -627,6 +643,53 @@ const AuthService = {
     return !!this.currentUser;
   },
 
+  isEmailVerified() {
+    if (!this.currentUser) return false;
+    if (this.currentUser.emailVerified === true) return true;
+    if (this.currentUser.isLocal && this.currentUser.emailVerified !== false) return true;
+    return false;
+  },
+
+  async checkEmailVerificationStatus() {
+    const auth = initFirebaseAuth();
+    if (auth && auth.currentUser) {
+      try {
+        await auth.currentUser.reload();
+        const isGoogle = auth.currentUser.providerData && auth.currentUser.providerData.some(p => p.providerId === 'google.com');
+        const isVerified = isGoogle || !!auth.currentUser.emailVerified;
+        if (this.currentUser) {
+          this.currentUser.emailVerified = isVerified;
+          try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
+          this.notifyListeners();
+        }
+        return isVerified;
+      } catch (err) {
+        console.warn("reload user error:", err);
+      }
+    }
+    if (this.currentUser && this.currentUser.isLocal) {
+      return true;
+    }
+    return false;
+  },
+
+  async resendVerificationEmail() {
+    const rateCheck = SecurityUtils.checkRateLimit('resend_email_verification', 1, 60);
+    if (!rateCheck.allowed) {
+      const err = new Error(`សូមរង់ចាំ ${rateCheck.waitSeconds} វិនាទីមុននឹងផ្ញើម្តងទៀត`);
+      err.code = 'auth/too-many-requests';
+      throw err;
+    }
+    const auth = initFirebaseAuth();
+    if (auth && auth.currentUser) {
+      if (typeof auth.currentUser.sendEmailVerification === 'function') {
+        await auth.currentUser.sendEmailVerification();
+        return true;
+      }
+    }
+    return false;
+  },
+
   async loginWithGoogle() {
     const auth = initFirebaseAuth();
     if (!auth) throw new Error("Firebase Auth is not available.");
@@ -636,6 +699,18 @@ const AuthService = {
     provider.setCustomParameters({ prompt: 'select_account' });
     try {
       const result = await auth.signInWithPopup(provider);
+      if (result.user) {
+        this.currentUser = {
+          uid: result.user.uid,
+          email: result.user.email || '',
+          displayName: SecurityUtils.cleanText(result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'), 50),
+          photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
+          emailVerified: true,
+          isLocal: false
+        };
+        try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
+        this.notifyListeners();
+      }
       return result.user;
     } catch (err) {
       console.error("Google Sign-In Error:", err);
@@ -663,11 +738,13 @@ const AuthService = {
     if (auth) {
       try {
         const result = await auth.signInWithEmailAndPassword(cleanEmail, password);
+        const isGoogle = result.user.providerData && result.user.providerData.some(p => p.providerId === 'google.com');
         this.currentUser = {
           uid: result.user.uid,
           email: result.user.email,
           displayName: SecurityUtils.cleanText(result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'), 50),
           photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
+          emailVerified: isGoogle ? true : !!result.user.emailVerified,
           isLocal: false
         };
         try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
@@ -698,6 +775,11 @@ const AuthService = {
       err.code = 'auth/invalid-email';
       throw err;
     }
+    if (SecurityUtils.isDisposableEmail(cleanEmail)) {
+      const err = new Error("Disposable or temporary email addresses are not allowed.");
+      err.code = 'auth/disposable-email';
+      throw err;
+    }
     if (password.length < 6 || password.length > 128) {
       const err = new Error("Password must be between 6 and 128 characters");
       err.code = 'auth/weak-password';
@@ -712,11 +794,26 @@ const AuthService = {
         if (safeDisplayName && result.user) {
           try { await result.user.updateProfile({ displayName: safeDisplayName }); } catch (e) {}
         }
+
+        // Send Email Verification link
+        let emailSent = false;
+        if (result.user && typeof result.user.sendEmailVerification === 'function') {
+          try {
+            await result.user.sendEmailVerification();
+            emailSent = true;
+            console.log("📩 Verification email dispatched to:", cleanEmail);
+          } catch (verErr) {
+            console.warn("sendEmailVerification notice:", verErr);
+          }
+        }
+
         this.currentUser = {
           uid: result.user.uid,
           email: result.user.email,
           displayName: safeDisplayName,
           photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
+          emailVerified: false,
+          verificationEmailSent: emailSent,
           isLocal: false
         };
         try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
@@ -963,6 +1060,12 @@ const CampaignService = {
     }
 
     const user = AuthService.currentUser;
+    if (user && !AuthService.isEmailVerified()) {
+      const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+      throw new Error(isKm 
+        ? "សូមផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នកជាមុនសិន ទើបអាចបង្កើតយុទ្ធនាការបាន" 
+        : "Email verification required. Please verify your email before publishing campaigns.");
+    }
     const allowedCategories = ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'];
     const safeCategory = allowedCategories.includes(campaignData.category) ? campaignData.category : 'celebration';
 
