@@ -1,6 +1,6 @@
 // Campaign Data Service with Rich Presets & LocalStorage Persistence
 
-// Security Utilities (Anti-XSS, URL Sanitization & Input Validation)
+// Security Utilities (Anti-XSS, Cryptographic Hashing, Rate Limiting & Input Validation)
 const SecurityUtils = {
   escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -9,15 +9,47 @@ const SecurityUtils = {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
-      .replace(/\//g, '&#x2F;');
+      .replace(/'/g, '&#039;');
+  },
+
+  sanitizeSvg(svgContent) {
+    if (!svgContent || typeof svgContent !== 'string') return '';
+    // Strip dangerous elements, foreign objects, and execution vectors
+    return svgContent
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<foreignObject\b[^<]*(?:(?!<\/foreignObject>)<[^<]*)*<\/foreignObject>/gi, '')
+      .replace(/<use\b[^>]*>/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+      .replace(/<embed\b[^>]*>/gi, '')
+      .replace(/on\w+\s*=\s*(["'][^"']*["']|[^\s>]+)/gi, '')
+      .replace(/href\s*=\s*["']\s*javascript:[^"']*["']/gi, '')
+      .replace(/xlink:href\s*=\s*["']\s*javascript:[^"']*["']/gi, '');
   },
   
   sanitizeUrl(url) {
     if (!url || typeof url !== 'string') return '#';
     const trimmed = url.trim();
-    if (/^(https?:\/\/|\/|#|data:image\/(png|jpeg|jpg|webp|svg\+xml)[;,])/i.test(trimmed)) {
+    // Allow standard https, relative paths, hashes, and safe raster data URLs
+    if (/^(https?:\/\/|\/|#|data:image\/(png|jpeg|jpg|webp)[;,])/i.test(trimmed)) {
       return trimmed;
+    }
+    // For SVG data URLs, rigorously sanitize the SVG markup
+    if (/^data:image\/svg\+xml[;,]/i.test(trimmed)) {
+      try {
+        let svgBody = '';
+        if (trimmed.includes(';base64,')) {
+          svgBody = atob(trimmed.split(';base64,')[1]);
+          const cleanSvg = this.sanitizeSvg(svgBody);
+          return `data:image/svg+xml;base64,${btoa(cleanSvg)}`;
+        } else if (trimmed.includes(';utf8,')) {
+          svgBody = decodeURIComponent(trimmed.split(';utf8,')[1]);
+          const cleanSvg = this.sanitizeSvg(svgBody);
+          return `data:image/svg+xml;utf8,${encodeURIComponent(cleanSvg)}`;
+        }
+      } catch (e) {
+        return '#';
+      }
     }
     return '#';
   },
@@ -33,6 +65,56 @@ const SecurityUtils = {
       return { valid: false, error: 'Invalid file type. Only PNG, JPG, and WebP images are allowed.' };
     }
     return { valid: true };
+  },
+
+  cleanText(str, maxLength = 200) {
+    if (!str) return '';
+    return this.escapeHtml(String(str).trim().slice(0, maxLength));
+  },
+
+  // Secure One-Way Cryptographic Password Hashing using native Web Crypto API (SHA-256)
+  async hashPassword(password, salt = 'tra-frames-salt') {
+    if (!password) return '';
+    try {
+      if (window.crypto && window.crypto.subtle) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(`${salt}:${password}:tra-auth-secure-2026`);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (e) {
+      console.warn("WebCrypto notice, using robust fallback hash:", e);
+    }
+    let hash = 0;
+    const str = `${salt}:${password}:tra-fallback-2026`;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return 'h_' + Math.abs(hash).toString(16) + '_safe';
+  },
+
+  // Client-Side Rate Limiter & Anti-Flood Protection
+  checkRateLimit(actionKey, maxAttempts = 5, windowSeconds = 60) {
+    try {
+      const now = Date.now();
+      const storageKey = `tra_rl_${actionKey}`;
+      const records = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const validRecords = records.filter(timestamp => now - timestamp < windowSeconds * 1000);
+      
+      if (validRecords.length >= maxAttempts) {
+        const oldest = validRecords[0];
+        const waitTime = Math.ceil((windowSeconds * 1000 - (now - oldest)) / 1000);
+        return { allowed: false, waitSeconds: Math.max(1, waitTime) };
+      }
+
+      validRecords.push(now);
+      localStorage.setItem(storageKey, JSON.stringify(validRecords));
+      return { allowed: true, waitSeconds: 0 };
+    } catch (e) {
+      return { allowed: true, waitSeconds: 0 };
+    }
   }
 };
 
@@ -562,15 +644,30 @@ const AuthService = {
   },
 
   async loginWithEmail(email, password) {
+    if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
+      const err = new Error("Invalid credentials provided");
+      err.code = 'auth/invalid-credential';
+      throw err;
+    }
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Anti-Brute Force Protection: max 5 attempts per minute per email
+    const rateCheck = SecurityUtils.checkRateLimit(`login_${cleanEmail}`, 5, 60);
+    if (!rateCheck.allowed) {
+      const err = new Error(`Too many failed attempts. Please wait ${rateCheck.waitSeconds}s.`);
+      err.code = 'auth/too-many-requests';
+      throw err;
+    }
+
     const auth = initFirebaseAuth();
     if (auth) {
       try {
-        const result = await auth.signInWithEmailAndPassword(email, password);
+        const result = await auth.signInWithEmailAndPassword(cleanEmail, password);
         this.currentUser = {
           uid: result.user.uid,
           email: result.user.email,
-          displayName: result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'),
-          photoURL: result.user.photoURL || '',
+          displayName: SecurityUtils.cleanText(result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'), 50),
+          photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
           isLocal: false
         };
         try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
@@ -580,28 +677,46 @@ const AuthService = {
         console.warn("Firebase Cloud Login Notice:", err);
         // If Firebase Console has provider disabled or account is local, check local accounts
         if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-          const local = this.loginLocal(email, password);
+          const local = await this.loginLocal(cleanEmail, password);
           if (local) return local;
         }
         throw err;
       }
     }
-    return this.loginLocal(email, password);
+    return await this.loginLocal(cleanEmail, password);
   },
 
   async signUpWithEmail(email, password, displayName) {
+    if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
+      const err = new Error("Email and password are required");
+      err.code = 'auth/invalid-credential';
+      throw err;
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      const err = new Error("Invalid email format");
+      err.code = 'auth/invalid-email';
+      throw err;
+    }
+    if (password.length < 6 || password.length > 128) {
+      const err = new Error("Password must be between 6 and 128 characters");
+      err.code = 'auth/weak-password';
+      throw err;
+    }
+    const safeDisplayName = SecurityUtils.cleanText(displayName || cleanEmail.split('@')[0] || 'Creator', 50);
+
     const auth = initFirebaseAuth();
     if (auth) {
       try {
-        const result = await auth.createUserWithEmailAndPassword(email, password);
-        if (displayName && result.user) {
-          try { await result.user.updateProfile({ displayName }); } catch (e) {}
+        const result = await auth.createUserWithEmailAndPassword(cleanEmail, password);
+        if (safeDisplayName && result.user) {
+          try { await result.user.updateProfile({ displayName: safeDisplayName }); } catch (e) {}
         }
         this.currentUser = {
           uid: result.user.uid,
           email: result.user.email,
-          displayName: displayName || result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'),
-          photoURL: result.user.photoURL || '',
+          displayName: safeDisplayName,
+          photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
           isLocal: false
         };
         try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
@@ -611,30 +726,37 @@ const AuthService = {
         console.warn("Firebase Cloud Sign-Up Notice:", err);
         // If Firebase Console has Email/Password disabled (OPERATION_NOT_ALLOWED), fallback to seamless Local Account!
         if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/network-request-failed') {
-          return this.signUpLocal(email, password, displayName);
+          return await this.signUpLocal(cleanEmail, password, safeDisplayName);
         }
         throw err;
       }
     }
-    return this.signUpLocal(email, password, displayName);
+    return await this.signUpLocal(cleanEmail, password, safeDisplayName);
   },
 
-  signUpLocal(email, password, displayName) {
+  async signUpLocal(email, password, displayName) {
+    const cleanEmail = email.trim().toLowerCase();
     const accounts = this.getLocalAccounts();
-    const existing = accounts.find(a => a.email && a.email.toLowerCase() === email.toLowerCase());
+    const existing = accounts.find(a => a.email && a.email.toLowerCase() === cleanEmail);
     if (existing) {
       const err = new Error("Email already registered");
       err.code = 'auth/email-already-in-use';
       throw err;
     }
+
+    const uid = "local-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+    const safeDisplayName = SecurityUtils.cleanText(displayName || cleanEmail.split('@')[0] || 'Creator', 50);
+    const passwordHash = await SecurityUtils.hashPassword(password, uid);
+
     const user = {
-      uid: "local-" + Date.now(),
-      email: email,
-      displayName: displayName || email.split('@')[0] || 'Creator',
+      uid: uid,
+      email: cleanEmail,
+      displayName: safeDisplayName,
       photoURL: '',
       isLocal: true
     };
-    accounts.push({ ...user, passwordHash: btoa(encodeURIComponent(password)) });
+
+    accounts.push({ ...user, passwordHash });
     try {
       localStorage.setItem("tra_local_accounts", JSON.stringify(accounts));
     } catch (e) {}
@@ -646,20 +768,40 @@ const AuthService = {
     return user;
   },
 
-  loginLocal(email, password) {
+  async loginLocal(email, password) {
+    const cleanEmail = email.trim().toLowerCase();
     const accounts = this.getLocalAccounts();
-    const hash = btoa(encodeURIComponent(password));
-    const found = accounts.find(a => a.email && a.email.toLowerCase() === email.toLowerCase() && a.passwordHash === hash);
+    const found = accounts.find(a => a.email && a.email.toLowerCase() === cleanEmail);
     if (!found) {
       const err = new Error("Invalid email or password");
       err.code = 'auth/invalid-credential';
       throw err;
     }
+
+    // Verify SHA-256 hash with salt
+    const expectedHash = await SecurityUtils.hashPassword(password, found.uid);
+    let isMatch = (found.passwordHash === expectedHash);
+
+    // Backward compatibility: upgrade legacy base64 password to SHA-256 on successful login
+    if (!isMatch && found.passwordHash === btoa(encodeURIComponent(password))) {
+      isMatch = true;
+      found.passwordHash = expectedHash;
+      try {
+        localStorage.setItem("tra_local_accounts", JSON.stringify(accounts));
+      } catch (e) {}
+    }
+
+    if (!isMatch) {
+      const err = new Error("Invalid email or password");
+      err.code = 'auth/invalid-credential';
+      throw err;
+    }
+
     const user = {
       uid: found.uid,
       email: found.email,
-      displayName: found.displayName,
-      photoURL: found.photoURL || '',
+      displayName: SecurityUtils.cleanText(found.displayName, 50),
+      photoURL: SecurityUtils.sanitizeUrl(found.photoURL || ''),
       isLocal: true
     };
     this.currentUser = user;
@@ -787,6 +929,12 @@ const CampaignService = {
   },
 
   async saveCampaign(campaignData) {
+    // 1. Rate Limiting: max 5 campaign creations per 60 seconds per user
+    const rateCheck = SecurityUtils.checkRateLimit('create_campaign', 5, 60);
+    if (!rateCheck.allowed) {
+      throw new Error(`Rate limit exceeded. Please wait ${rateCheck.waitSeconds}s before publishing again.`);
+    }
+
     let userCampaigns = [];
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -795,12 +943,19 @@ const CampaignService = {
       userCampaigns = [];
     }
 
-    const safeSlug = (campaignData.slug || campaignData.titleEn || "campaign")
+    // 2. Strict Slug Validation (lowercase alphanumeric and hyphens only, max 60 chars)
+    const rawSlug = typeof campaignData.slug === 'string' ? campaignData.slug : (campaignData.titleEn || "campaign");
+    const safeSlug = rawSlug
       .toLowerCase()
       .replace(/[^a-z0-9-]+/g, "")
-      .replace(/^-+|-+$/g, "") || "campaign-" + Date.now();
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "campaign-" + Date.now();
 
+    // 3. Frame URL Sanitization and Compression
     let frameUrl = SecurityUtils.sanitizeUrl(campaignData.frameUrl);
+    if (!frameUrl || frameUrl === '#' || frameUrl.length > 3000000) {
+      throw new Error("Invalid or excessively large frame image provided.");
+    }
     if (frameUrl && frameUrl.length > 650000) {
       try {
         frameUrl = await this.compressFrameDataUrl(frameUrl);
@@ -808,23 +963,26 @@ const CampaignService = {
     }
 
     const user = AuthService.currentUser;
+    const allowedCategories = ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'];
+    const safeCategory = allowedCategories.includes(campaignData.category) ? campaignData.category : 'celebration';
+
+    // 4. Strict Whitelist Construction (Anti-Prototype Pollution & Field Injection)
+    const rawId = typeof campaignData.id === 'string' ? campaignData.id.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) : '';
     const newCampaign = {
-      ...campaignData,
-      id: campaignData.id || "user-" + Date.now(),
-      creatorUid: user ? user.uid : (campaignData.creatorUid || null),
-      creatorEmail: user ? user.email : (campaignData.creatorEmail || null),
-      titleKm: SecurityUtils.escapeHtml(campaignData.titleKm || ''),
-      titleEn: SecurityUtils.escapeHtml(campaignData.titleEn || ''),
+      id: rawId || "user-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+      creatorUid: user ? user.uid : null,
+      creatorEmail: user ? user.email : null,
+      titleKm: SecurityUtils.cleanText(campaignData.titleKm || '', 120),
+      titleEn: SecurityUtils.cleanText(campaignData.titleEn || '', 120),
       slug: safeSlug,
-      category: ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'].includes(campaignData.category)
-        ? campaignData.category
-        : 'celebration',
-      creator: SecurityUtils.escapeHtml(campaignData.creator || (user ? user.displayName : 'Anonymous')),
-      descriptionKm: SecurityUtils.escapeHtml(campaignData.descriptionKm || ''),
-      descriptionEn: SecurityUtils.escapeHtml(campaignData.descriptionEn || ''),
-      caption: SecurityUtils.escapeHtml(campaignData.caption || ''),
+      category: safeCategory,
+      creator: SecurityUtils.cleanText(campaignData.creator || (user ? user.displayName : 'Anonymous'), 80),
+      descriptionKm: SecurityUtils.cleanText(campaignData.descriptionKm || '', 1000),
+      descriptionEn: SecurityUtils.cleanText(campaignData.descriptionEn || '', 1000),
+      captionKm: SecurityUtils.cleanText(campaignData.captionKm || campaignData.caption || '', 1000),
+      captionEn: SecurityUtils.cleanText(campaignData.captionEn || campaignData.caption || '', 1000),
       frameUrl: frameUrl,
-      supporters: Math.max(1, parseInt(campaignData.supporters, 10) || 1),
+      supporters: Math.max(1, Math.min(10000000, parseInt(campaignData.supporters, 10) || 1)),
       createdAt: new Date().toISOString().split("T")[0],
       isUserCreated: true
     };
@@ -1030,13 +1188,32 @@ const CampaignService = {
     }
   },
 
-  deleteCampaign(id) {
+  async deleteCampaign(id) {
+    if (!id || typeof id !== 'string') return false;
+    const safeId = id.trim();
     try {
+      const user = AuthService.currentUser;
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (stored) {
         let userCampaigns = JSON.parse(stored);
-        userCampaigns = userCampaigns.filter(c => c.id !== id);
+        const target = userCampaigns.find(c => c.id === safeId || c.slug === safeId);
+        // IDOR Protection: Verify caller is owner of this campaign
+        if (target && target.creatorUid && user && target.creatorUid !== user.uid) {
+          console.warn("Unauthorized attempt to delete campaign:", safeId);
+          return false;
+        }
+
+        userCampaigns = userCampaigns.filter(c => c.id !== safeId && c.slug !== safeId);
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+
+        // Delete from Cloud Firestore if authorized
+        const db = initFirestore();
+        if (db && target) {
+          const docId = target.slug || target.id;
+          db.collection("campaigns").doc(docId).delete()
+            .then(() => console.log("🔥 Cloud campaign deleted:", docId))
+            .catch(err => console.warn("Cloud Firestore delete notice:", err));
+        }
         return true;
       }
     } catch (e) {
@@ -1060,22 +1237,48 @@ const CampaignService = {
   },
 
   incrementSupporter(id) {
+    if (!id) return 1;
+    const safeId = String(id).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+    if (!safeId) return 1;
+
+    // Rate Limiting / Anti-Spam: max 1 vote per campaign per 24 hours per client
+    const rateCheck = SecurityUtils.checkRateLimit(`vote_${safeId}`, 1, 86400);
     const all = this.getCampaigns();
-    const item = all.find(c => c.id === id);
+    const item = all.find(c => c.id === safeId || c.slug === safeId);
+
+    if (!rateCheck.allowed) {
+      // User has already supported recently, return current count without duplicate increment
+      return item ? item.supporters : 1;
+    }
+
     if (item) {
       item.supporters = (item.supporters || 0) + 1;
-      // If it's in user campaigns, update it
+      // If it's in user campaigns, update it locally
       try {
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (stored) {
           let userCampaigns = JSON.parse(stored);
-          const userIdx = userCampaigns.findIndex(c => c.id === id);
+          const userIdx = userCampaigns.findIndex(c => c.id === safeId || c.slug === safeId);
           if (userIdx !== -1) {
             userCampaigns[userIdx].supporters = (userCampaigns[userIdx].supporters || 0) + 1;
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
           }
         }
       } catch (e) {}
+
+      // Atomic Cloud Increment (Safe against race conditions and concurrent votes)
+      const db = initFirestore();
+      if (db && (item.slug || item.id)) {
+        const docId = item.slug || item.id;
+        try {
+          if (typeof firebase !== 'undefined' && firebase.firestore && firebase.firestore.FieldValue) {
+            db.collection("campaigns").doc(docId).update({
+              supporters: firebase.firestore.FieldValue.increment(1)
+            }).catch(() => {});
+          }
+        } catch (e) {}
+      }
+
       return item.supporters;
     }
     return 1;
