@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Tra Frames — Next-Gen Campaign Photo Frame Platform</title>
   <meta name="description" content="Tra Frames - Modern, fast, and beautiful photo frame platform for social media campaigns, celebrations, and causes.">
+
+  <!-- Security Hardening Meta Tags -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
   <style>
 /* =========================================================
    TWIBBONIZE PLUS — ULTRA-CLEAN & MODERN DESIGN SYSTEM
@@ -1404,6 +1410,45 @@ function getLanguage() {
   <script>
 // Campaign Data Service with Rich Presets & LocalStorage Persistence
 
+// Security Utilities (Anti-XSS, URL Sanitization & Input Validation)
+const SecurityUtils = {
+  escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+      .replace(/\//g, '&#x2F;');
+  },
+  
+  sanitizeUrl(url) {
+    if (!url || typeof url !== 'string') return '#';
+    const trimmed = url.trim();
+    if (/^(https?:\/\/|\/|#|data:image\/[a-zA-Z+]+;base64,)/i.test(trimmed)) {
+      return trimmed;
+    }
+    return '#';
+  },
+
+  validateImageFile(file) {
+    if (!file) return { valid: false, error: 'No file selected.' };
+    const maxSizeBytes = 5 * 1024 * 1024; // 5 MB
+    if (file.size > maxSizeBytes) {
+      return { valid: false, error: 'File size exceeds 5MB limit. Please upload a smaller image.' };
+    }
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      return { valid: false, error: 'Invalid file type. Only PNG, JPG, and WebP images are allowed.' };
+    }
+    return { valid: true };
+  }
+};
+
+const escapeHtml = (str) => SecurityUtils.escapeHtml(str);
+const sanitizeUrl = (url) => SecurityUtils.sanitizeUrl(url);
+
 const PRESET_FRAMES = {
   graduation: `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
@@ -1829,17 +1874,46 @@ const CampaignService = {
       userCampaigns = [];
     }
 
+    const safeSlug = (campaignData.slug || campaignData.titleEn || "campaign")
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "")
+      .replace(/^-+|-+$/g, "") || "campaign-" + Date.now();
+
     const newCampaign = {
       ...campaignData,
       id: campaignData.id || "user-" + Date.now(),
-      slug: (campaignData.slug || campaignData.titleEn || "campaign").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""),
-      supporters: campaignData.supporters || 1,
+      titleKm: SecurityUtils.escapeHtml(campaignData.titleKm || ''),
+      titleEn: SecurityUtils.escapeHtml(campaignData.titleEn || ''),
+      slug: safeSlug,
+      category: ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'].includes(campaignData.category)
+        ? campaignData.category
+        : 'celebration',
+      creator: SecurityUtils.escapeHtml(campaignData.creator || 'Anonymous'),
+      descriptionKm: SecurityUtils.escapeHtml(campaignData.descriptionKm || ''),
+      descriptionEn: SecurityUtils.escapeHtml(campaignData.descriptionEn || ''),
+      caption: SecurityUtils.escapeHtml(campaignData.caption || ''),
+      frameUrl: SecurityUtils.sanitizeUrl(campaignData.frameUrl),
+      supporters: Math.max(1, parseInt(campaignData.supporters, 10) || 1),
       createdAt: new Date().toISOString().split("T")[0],
       isUserCreated: true
     };
 
     userCampaigns.unshift(newCampaign);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+    } catch (err) {
+      console.warn("Storage quota exceeded, removing oldest custom campaigns:", err);
+      if (userCampaigns.length > 1) {
+        userCampaigns.pop();
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+        } catch (e2) {
+          throw new Error("Browser storage quota reached. Please delete old campaigns.");
+        }
+      } else {
+        throw new Error("Frame size is too large for local browser storage.");
+      }
+    }
     return newCampaign;
   },
 
@@ -1970,6 +2044,13 @@ class CanvasStudio {
         img.onerror = reject;
         img.src = sourceUrlOrFile;
       } else if (sourceUrlOrFile instanceof File || sourceUrlOrFile instanceof Blob) {
+        if (typeof SecurityUtils !== 'undefined' && sourceUrlOrFile instanceof File) {
+          const check = SecurityUtils.validateImageFile(sourceUrlOrFile);
+          if (!check.valid) {
+            reject(new Error(check.error));
+            return;
+          }
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
           const img = new Image();
@@ -2722,13 +2803,13 @@ class TwibbonApp {
 
         <!-- Social Buttons -->
         <div style="display: flex; gap: 0.6rem; justify-content: center; margin-top: 0.25rem;">
-          <button class="btn btn-secondary" onclick="window.open('https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}', '_blank')">
+          <button class="btn btn-secondary" onclick="window.open('https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}', '_blank', 'noopener,noreferrer')">
             ${Icons.telegram} <span>Telegram</span>
           </button>
-          <button class="btn btn-secondary" onclick="window.open('https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}', '_blank')">
+          <button class="btn btn-secondary" onclick="window.open('https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}', '_blank', 'noopener,noreferrer')">
             ${Icons.facebook} <span>Facebook</span>
           </button>
-          <button class="btn btn-secondary" onclick="window.open('https://api.whatsapp.com/send?text=${encodeURIComponent(title + ' ' + shareUrl)}', '_blank')">
+          <button class="btn btn-secondary" onclick="window.open('https://api.whatsapp.com/send?text=${encodeURIComponent(title + ' ' + shareUrl)}', '_blank', 'noopener,noreferrer')">
             <span>WhatsApp</span>
           </button>
         </div>
@@ -2921,26 +3002,31 @@ class TwibbonApp {
 
   renderCampaignCard(campaign) {
     const isKm = getLanguage() === 'km';
-    const title = (isKm ? campaign.titleKm : campaign.titleEn) || campaign.titleKm || campaign.titleEn || 'Untitled Campaign';
-    const desc = (isKm ? campaign.descriptionKm : campaign.descriptionEn) || '';
+    const rawTitle = (isKm ? campaign.titleKm : campaign.titleEn) || campaign.titleKm || campaign.titleEn || 'Untitled Campaign';
+    const rawDesc = (isKm ? campaign.descriptionKm : campaign.descriptionEn) || '';
+    const title = SecurityUtils.escapeHtml(rawTitle);
+    const desc = SecurityUtils.escapeHtml(rawDesc);
+    const creator = SecurityUtils.escapeHtml(campaign.creator || 'Anonymous');
+    const slug = SecurityUtils.escapeHtml(campaign.slug || campaign.id);
+    const frameUrl = SecurityUtils.sanitizeUrl(campaign.frameUrl);
     const supporterCount = (campaign.supporters || 0).toLocaleString();
 
     return `
       <div class="campaign-card">
-        <div class="card-preview-wrapper" onclick="window.location.hash='#campaign/${campaign.slug || campaign.id}'">
-          <img src="${campaign.frameUrl}" alt="${title}" class="card-preview-frame" loading="lazy" />
+        <div class="card-preview-wrapper" onclick="window.location.hash='#campaign/${slug}'">
+          <img src="${frameUrl}" alt="${title}" class="card-preview-frame" loading="lazy" />
           <div class="card-badge-category">${t('cat' + (campaign.category.charAt(0).toUpperCase() + campaign.category.slice(1)))}</div>
           <div class="card-badge-supporters">${Icons.users} <span>${supporterCount}</span></div>
         </div>
         <div class="card-content">
-          <h3 class="card-title" onclick="window.location.hash='#campaign/${campaign.slug || campaign.id}'">${title}</h3>
-          <div class="card-creator">${Icons.avatar} <span>${t('by')} ${campaign.creator}</span></div>
+          <h3 class="card-title" onclick="window.location.hash='#campaign/${slug}'">${title}</h3>
+          <div class="card-creator">${Icons.avatar} <span>${t('by')} ${creator}</span></div>
           <p class="card-description">${desc}</p>
           <div class="card-footer" style="display: flex; gap: 0.5rem; width: 100%;">
-            <button class="btn btn-primary" style="flex: 1;" onclick="window.location.hash='#campaign/${campaign.slug || campaign.id}'">
+            <button class="btn btn-primary" style="flex: 1;" onclick="window.location.hash='#campaign/${slug}'">
               ${Icons.camera} <span>${t('useFrame')}</span>
             </button>
-            <button class="btn btn-secondary" style="padding: 0.6rem 0.85rem;" title="${t('shareCampaign')}" onclick="event.stopPropagation(); app.openShareModal(CampaignService.getCampaignBySlugOrId('${campaign.slug || campaign.id}'))">
+            <button class="btn btn-secondary" style="padding: 0.6rem 0.85rem;" title="${t('shareCampaign')}" onclick="event.stopPropagation(); app.openShareModal(CampaignService.getCampaignBySlugOrId('${slug}'))">
               ${Icons.share}
             </button>
           </div>
@@ -2970,8 +3056,12 @@ class TwibbonApp {
 
     this.activeCampaign = campaign;
     const isKm = getLanguage() === 'km';
-    const title = (isKm ? campaign.titleKm : campaign.titleEn) || campaign.titleKm || campaign.titleEn;
-    const desc = (isKm ? campaign.descriptionKm : campaign.descriptionEn) || '';
+    const rawTitle = (isKm ? campaign.titleKm : campaign.titleEn) || campaign.titleKm || campaign.titleEn || '';
+    const rawDesc = (isKm ? campaign.descriptionKm : campaign.descriptionEn) || '';
+    const title = SecurityUtils.escapeHtml(rawTitle);
+    const desc = SecurityUtils.escapeHtml(rawDesc);
+    const creator = SecurityUtils.escapeHtml(campaign.creator || 'Anonymous');
+    const createdAt = SecurityUtils.escapeHtml(campaign.createdAt || '');
     const caption = (isKm ? campaign.captionKm : campaign.captionEn) || '';
 
     container.innerHTML = `
@@ -3012,9 +3102,9 @@ class TwibbonApp {
           <div class="campaign-header-info">
             <h1 class="campaign-detail-title">${title}</h1>
             <div class="campaign-detail-meta">
-              <span>${Icons.avatar} <strong>${campaign.creator}</strong></span>
+              <span>${Icons.avatar} <strong>${creator}</strong></span>
               <span>${Icons.users} <strong id="supporterCount">${(campaign.supporters || 0).toLocaleString()}</strong> ${t('supporters')}</span>
-              <span>📅 ${campaign.createdAt}</span>
+              <span>📅 ${createdAt}</span>
             </div>
             ${desc ? `<p style="margin-top: 0.75rem; color: var(--text-secondary); line-height: 1.6;">${desc}</p>` : ''}
           </div>
@@ -3385,13 +3475,20 @@ class TwibbonApp {
     const frameFileInput = document.getElementById('frameFileInput');
     frameFileInput.addEventListener('change', (e) => {
       if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        const validation = SecurityUtils.validateImageFile(file);
+        if (!validation.valid) {
+          this.showToast(validation.error, 'error');
+          frameFileInput.value = '';
+          return;
+        }
         const reader = new FileReader();
         reader.onload = (event) => {
           selectedFrameDataUrl = event.target.result;
           document.getElementById('framePreviewImg').src = selectedFrameDataUrl;
           this.showToast("Frame uploaded successfully!");
         };
-        reader.readAsDataURL(e.target.files[0]);
+        reader.readAsDataURL(file);
       }
     });
 
@@ -3592,26 +3689,34 @@ class TwibbonApp {
         </div>
       ` : `
         <div class="campaign-grid">
-          ${myCampaigns.map(c => `
-            <div class="campaign-card">
-              <div class="card-preview-wrapper" onclick="window.location.hash='#campaign/${c.slug || c.id}'">
-                <img src="${c.frameUrl}" class="card-preview-frame" />
-                <div class="card-badge-supporters">${Icons.users} <span>${(c.supporters || 0).toLocaleString()}</span></div>
-              </div>
-              <div class="card-content">
-                <h3 class="card-title">${c.titleKm || c.titleEn}</h3>
-                <div class="card-creator">📅 ${c.createdAt}</div>
-                <div class="card-footer" style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
-                  <button class="btn btn-primary" style="flex: 1;" onclick="window.location.hash='#campaign/${c.slug || c.id}'">
-                    ${Icons.camera} <span>${t('viewCampaign')}</span>
-                  </button>
-                  <button class="btn-icon" style="color: #ef4444;" title="${t('delete')}" onclick="app.deleteUserCampaign('${c.id}')">
-                    ${Icons.trash}
-                  </button>
+          ${myCampaigns.map(c => {
+            const safeTitle = SecurityUtils.escapeHtml(c.titleKm || c.titleEn || 'Untitled');
+            const safeDate = SecurityUtils.escapeHtml(c.createdAt || '');
+            const safeSlug = SecurityUtils.escapeHtml(c.slug || c.id);
+            const safeId = SecurityUtils.escapeHtml(c.id);
+            const safeFrameUrl = SecurityUtils.sanitizeUrl(c.frameUrl);
+            const safeSupporters = (c.supporters || 0).toLocaleString();
+            return `
+              <div class="campaign-card">
+                <div class="card-preview-wrapper" onclick="window.location.hash='#campaign/${safeSlug}'">
+                  <img src="${safeFrameUrl}" class="card-preview-frame" />
+                  <div class="card-badge-supporters">${Icons.users} <span>${safeSupporters}</span></div>
+                </div>
+                <div class="card-content">
+                  <h3 class="card-title">${safeTitle}</h3>
+                  <div class="card-creator">📅 ${safeDate}</div>
+                  <div class="card-footer" style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="window.location.hash='#campaign/${safeSlug}'">
+                      ${Icons.camera} <span>${t('viewCampaign')}</span>
+                    </button>
+                    <button class="btn-icon" style="color: #ef4444;" title="${t('delete')}" onclick="app.deleteUserCampaign('${safeId}')">
+                      ${Icons.trash}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
       `}
     `;
