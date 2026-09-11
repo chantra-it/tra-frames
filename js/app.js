@@ -650,9 +650,14 @@ class TwibbonApp {
           this.loadCampaignView(identifier);
         } else {
           container.innerHTML = `
-            <div style="text-align: center; padding: 5rem 1rem;">
-              <h2 style="color: var(--text-primary); font-weight: 800;">Campaign Not Found</h2>
-              <p style="color: var(--text-secondary); margin: 1rem 0 2rem 0;">The campaign you are looking for does not exist or has been removed.</p>
+            <div style="text-align: center; padding: 4rem 1.2rem; max-width: 540px; margin: 0 auto;">
+              <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+              <h2 style="color: var(--text-primary); font-weight: 800; font-size: 1.4rem;">${isKm ? 'រកមិនឃើញយុទ្ធនាការនេះទេ' : 'Campaign Not Found'}</h2>
+              <p style="color: var(--text-secondary); margin: 1rem 0 1.5rem 0; line-height: 1.6; font-size: 0.95rem;">
+                ${isKm 
+                  ? 'យុទ្ធនាការនេះមិនទាន់បាន Upload ឡើង Cloud នៅឡើយទេ ឬត្រូវបានលុប។<br><br>💡 <strong>ប្រសិនបើបងបានបង្កើតវានៅលើកុំព្យូទ័រ៖</strong> សូមបើក Tab វេបសាយនៅលើកុំព្យូទ័រនោះ រួចចុច <strong>Refresh (Reload)</strong> ម្តង ដើម្បីឱ្យប្រព័ន្ធ Sync ឡើង Cloud ដោយស្វ័យប្រវត្តិ។' 
+                  : 'The campaign you are looking for has not been synced to Cloud Firestore yet or was removed.<br><br>💡 If you created this on your computer, please refresh the page on your computer to sync it to the Cloud.'}
+              </p>
               <button class="btn btn-primary" onclick="window.location.hash='#explore'">${t('backToHome')}</button>
             </div>
           `;
@@ -660,6 +665,9 @@ class TwibbonApp {
       });
       return;
     }
+
+    // Found campaign locally! Automatically ensure it's synced to Cloud Firestore
+    CampaignService.syncSingleCampaignToCloud(campaign);
 
     this.activeCampaign = campaign;
     const isKm = getLanguage() === 'km';
@@ -805,6 +813,11 @@ class TwibbonApp {
                   <strong>${isKm ? 'ស្កេន QR Code តាមទូរស័ព្ទដៃ' : 'Scan with Mobile Camera'}</strong>
                   <span>${isKm ? 'អ្នកគាំទ្រអាចបើកកាមេរ៉ាទូរស័ព្ទស្កេន ដើម្បីប្រើស៊ុមនេះភ្លាមៗ' : 'Point camera to open and use this frame directly on mobile'}</span>
                 </div>
+              </div>
+
+              <!-- Cloud Sync Indicator -->
+              <div style="font-size: 0.82rem; color: #10b981; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.35rem;" id="cloudSyncStatus">
+                ☁️ ${isKm ? 'បានតភ្ជាប់ Cloud Firestore • អាចបើកលើទូរស័ព្ទបាន' : 'Synced to Cloud Firestore • Accessible on Mobile'}
               </div>
             </div>
 
@@ -1195,10 +1208,12 @@ class TwibbonApp {
           return;
         }
         const reader = new FileReader();
-        reader.onload = (event) => {
-          selectedFrameDataUrl = event.target.result;
+        reader.onload = async (event) => {
+          const isKm = getLanguage() === 'km';
+          this.showToast(isKm ? 'កំពុងដំណើរការ Optimize រូបភាព...' : 'Optimizing frame image...');
+          selectedFrameDataUrl = await CampaignService.compressFrameDataUrl(event.target.result);
           document.getElementById('framePreviewImg').src = selectedFrameDataUrl;
-          this.showToast("Frame uploaded successfully!");
+          this.showToast(isKm ? 'បានផ្ទុករូបភាពស៊ុមជោគជ័យ!' : 'Frame uploaded successfully!');
         };
         reader.readAsDataURL(file);
       }
@@ -1217,8 +1232,15 @@ class TwibbonApp {
     });
 
     // Form Submit
-    document.getElementById('createCampaignForm').addEventListener('submit', (e) => {
+    document.getElementById('createCampaignForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const isKm = getLanguage() === 'km';
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span>⏳ ${isKm ? 'កំពុងរក្សាទុក...' : 'Publishing...'}</span>`;
+      }
+
       const title = document.getElementById('campaignTitle').value.trim();
       const slug = document.getElementById('campaignSlug').value.trim();
       const category = document.getElementById('campaignCategory').value;
@@ -1226,7 +1248,7 @@ class TwibbonApp {
       const desc = document.getElementById('campaignDesc').value.trim();
       const caption = document.getElementById('campaignCaption').value.trim();
 
-      const newCampaign = CampaignService.saveCampaign({
+      const newCampaign = await CampaignService.saveCampaign({
         titleKm: title,
         titleEn: title,
         slug: slug,
