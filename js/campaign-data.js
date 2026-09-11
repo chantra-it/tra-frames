@@ -620,12 +620,27 @@ const OtpService = {
 
     try {
       sessionStorage.setItem("tra_otp_record", JSON.stringify(record));
+      sessionStorage.setItem("tra_active_otp_code", otpCode);
     } catch (e) {}
 
     // Dispatch email
     await this.sendOtpEmail(cleanEmail, otpCode, displayName);
 
     return { email: cleanEmail, otpCode, expiresAt };
+  },
+
+  getLastOtpCode(email) {
+    if (!email) return null;
+    const cleanEmail = email.trim().toLowerCase();
+    try {
+      const raw = sessionStorage.getItem("tra_otp_record");
+      if (!raw) return null;
+      const rec = JSON.parse(raw);
+      if (rec.email === cleanEmail && Date.now() < rec.expiresAt) {
+        return sessionStorage.getItem("tra_active_otp_code") || null;
+      }
+    } catch (e) {}
+    return null;
   },
 
   async sendOtpEmail(email, otpCode, displayName = '') {
@@ -744,6 +759,7 @@ const OtpService = {
     // OTP IS VALID!
     try {
       sessionStorage.removeItem("tra_otp_record");
+      sessionStorage.removeItem("tra_active_otp_code");
     } catch (e) {}
 
     // Update active user state
@@ -1010,7 +1026,7 @@ const AuthService = {
     return await this.loginLocal(cleanEmail, password);
   },
 
-  async signUpWithEmail(email, password, displayName) {
+  async signUpWithEmail(email, password, displayName, preVerified = false) {
     if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
       const err = new Error("Email and password are required");
       err.code = 'auth/invalid-credential';
@@ -1042,9 +1058,9 @@ const AuthService = {
           try { await result.user.updateProfile({ displayName: safeDisplayName }); } catch (e) {}
         }
 
-        // Send Email Verification link in background
+        // Send Email Verification link in background if not already pre-verified
         let emailSent = false;
-        if (result.user && typeof result.user.sendEmailVerification === 'function') {
+        if (!preVerified && result.user && typeof result.user.sendEmailVerification === 'function') {
           try {
             await result.user.sendEmailVerification();
             emailSent = true;
@@ -1059,17 +1075,19 @@ const AuthService = {
           email: result.user.email,
           displayName: safeDisplayName,
           photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
-          emailVerified: false,
+          emailVerified: !!preVerified,
           verificationEmailSent: emailSent,
           isLocal: false
         };
         try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
 
-        // Dispatch 6-digit OTP code to email
-        try {
-          await OtpService.generateOtp(cleanEmail, safeDisplayName);
-        } catch (otpErr) {
-          console.warn("OTP dispatch notice:", otpErr);
+        // Dispatch 6-digit OTP code to email only if not pre-verified
+        if (!preVerified) {
+          try {
+            await OtpService.generateOtp(cleanEmail, safeDisplayName);
+          } catch (otpErr) {
+            console.warn("OTP dispatch notice:", otpErr);
+          }
         }
 
         this.notifyListeners();
@@ -1078,15 +1096,15 @@ const AuthService = {
         console.warn("Firebase Cloud Sign-Up Notice:", err);
         // If Firebase Console has Email/Password disabled (OPERATION_NOT_ALLOWED), fallback to seamless Local Account!
         if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/network-request-failed') {
-          return await this.signUpLocal(cleanEmail, password, safeDisplayName);
+          return await this.signUpLocal(cleanEmail, password, safeDisplayName, preVerified);
         }
         throw err;
       }
     }
-    return await this.signUpLocal(cleanEmail, password, safeDisplayName);
+    return await this.signUpLocal(cleanEmail, password, safeDisplayName, preVerified);
   },
 
-  async signUpLocal(email, password, displayName) {
+  async signUpLocal(email, password, displayName, preVerified = false) {
     const cleanEmail = email.trim().toLowerCase();
     const accounts = this.getLocalAccounts();
     const existing = accounts.find(a => a.email && a.email.toLowerCase() === cleanEmail);
@@ -1105,7 +1123,7 @@ const AuthService = {
       email: cleanEmail,
       displayName: safeDisplayName,
       photoURL: '',
-      emailVerified: false,
+      emailVerified: !!preVerified,
       isLocal: true
     };
 
@@ -1118,11 +1136,13 @@ const AuthService = {
       localStorage.setItem("tra_active_user", JSON.stringify(user));
     } catch (e) {}
 
-    // Dispatch 6-digit OTP code to email
-    try {
-      await OtpService.generateOtp(cleanEmail, safeDisplayName);
-    } catch (otpErr) {
-      console.warn("OTP dispatch notice:", otpErr);
+    // Dispatch 6-digit OTP code to email if not pre-verified
+    if (!preVerified) {
+      try {
+        await OtpService.generateOtp(cleanEmail, safeDisplayName);
+      } catch (otpErr) {
+        console.warn("OTP dispatch notice:", otpErr);
+      }
     }
 
     this.notifyListeners();
