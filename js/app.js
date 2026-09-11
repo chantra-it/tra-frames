@@ -267,8 +267,12 @@ class TwibbonApp {
 
       try {
         if (isSignUp) {
-          await AuthService.signUpWithEmail(email, password, name);
-          this.showToast(t('signupSuccess'), 'success');
+          const user = await AuthService.signUpWithEmail(email, password, name);
+          if (user && !user.emailVerified) {
+            this.showToast(isKm ? `🎉 ចុះឈ្មោះជោគជ័យ! យើងបានផ្ញើតំណភ្ជាប់ផ្ទៀងផ្ទាត់ទៅកាន់ ${email}។ សូមពិនិត្យ Inbox/Spam!` : `Account created! Verification link sent to ${email}.`, 'success');
+          } else {
+            this.showToast(t('signupSuccess'), 'success');
+          }
         } else {
           await AuthService.loginWithEmail(email, password);
           this.showToast(t('loginSuccess'), 'success');
@@ -278,7 +282,9 @@ class TwibbonApp {
       } catch (err) {
         console.error(err);
         let msg = t('loginFailed');
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        if (err.code === 'auth/disposable-email') {
+          msg = t('disposableEmailError');
+        } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
           msg = isKm ? "អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវទេ" : "Incorrect email or password.";
         } else if (err.code === 'auth/email-already-in-use') {
           msg = isKm ? "អ៊ីមែលនេះមានគណនីរួចហើយ សូមជ្រើសរើស ចូលគណនី" : "Email already registered. Please sign in.";
@@ -288,6 +294,8 @@ class TwibbonApp {
           msg = isKm ? "មុខងារ Email/Password មិនទាន់បានបើកក្នុង Firebase Console ទេ" : "Email/Password sign-in is disabled in Firebase Console.";
         } else if (err.code === 'auth/invalid-email') {
           msg = isKm ? "ទម្រង់អ៊ីមែលមិនត្រឹមត្រូវទេ" : "Invalid email address format.";
+        } else if (err.code === 'auth/too-many-requests') {
+          msg = err.message || (isKm ? "សូមរង់ចាំបន្តិចមុននឹងព្យាយាមម្តងទៀត" : "Too many requests. Please wait.");
         }
         this.showToast(msg, 'error');
       }
@@ -1230,6 +1238,12 @@ class TwibbonApp {
       return;
     }
 
+    // Route Guard 2: Require Verified Email before creating a campaign
+    if (typeof AuthService !== 'undefined' && !AuthService.isEmailVerified()) {
+      this.loadEmailVerificationGate(presetFrameId);
+      return;
+    }
+
     let initialFrame = PRESET_FRAMES.graduation;
     if (presetFrameId && PRESET_FRAMES[presetFrameId]) {
       initialFrame = PRESET_FRAMES[presetFrameId];
@@ -1470,6 +1484,95 @@ class TwibbonApp {
       this.showToast(t('publishSuccess'), 'success');
       window.location.hash = `#campaign/${newCampaign.slug}`;
     });
+  }
+
+  // ==========================================
+  // VIEW: EMAIL VERIFICATION GATE
+  // ==========================================
+  loadEmailVerificationGate(presetFrameId) {
+    const container = document.getElementById('appContent');
+    const isKm = getLanguage() === 'km';
+    const user = AuthService.currentUser;
+    const email = user ? SecurityUtils.escapeHtml(user.email) : '';
+
+    container.innerHTML = `
+      <div class="auth-gate-card" style="max-width: 480px; margin: 3rem auto; text-align: center;">
+        <div class="auth-gate-icon" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; font-size: 2.2rem;">
+          ${Icons.mail}
+        </div>
+        <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">
+          ${t('emailVerificationRequired')}
+        </h2>
+        <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.92rem; margin-bottom: 1.25rem;">
+          ${t('emailVerificationDesc')}<br>
+          <span style="display: inline-block; margin-top: 0.45rem; padding: 0.35rem 0.85rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-weight: 700; color: var(--accent-primary); word-break: break-all;">
+            ${email}
+          </span>
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+          <button class="btn btn-primary" id="btnCheckVerified" style="padding: 0.85rem; font-size: 0.95rem;">
+            <span>🔄 ${t('checkVerificationBtn')}</span>
+          </button>
+          <button class="btn btn-outline" id="btnResendVerification" style="padding: 0.85rem; font-size: 0.92rem;">
+            <span>📩 ${t('resendVerificationBtn')}</span>
+          </button>
+          <button class="btn btn-secondary" id="btnSignOutGate" style="padding: 0.75rem; font-size: 0.88rem;">
+            <span>${isKm ? 'ចាកចេញ / ប្រើគណនីផ្សេង' : 'Sign Out / Use Another Account'}</span>
+          </button>
+        </div>
+
+        <div style="margin-top: 1.25rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; background: var(--bg-card); padding: 0.65rem 1rem; border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
+          💡 ${isKm ? 'ប្រសិនបើមិនឃើញ Email ក្នុង Inbox សូមពិនិត្យមើលក្នុងប្រអប់ <strong>Spam</strong> ឬ <strong>Junk</strong> របស់អ្នក។' : 'If you do not see the email, please check your <strong>Spam</strong> or <strong>Junk</strong> folder.'}
+        </div>
+      </div>
+    `;
+
+    const btnCheck = document.getElementById('btnCheckVerified');
+    if (btnCheck) {
+      btnCheck.addEventListener('click', async () => {
+        btnCheck.disabled = true;
+        btnCheck.innerHTML = `<span>⏳ ${isKm ? 'កំពុងពិនិត្យ...' : 'Checking...'}</span>`;
+        try {
+          const verified = await AuthService.checkEmailVerificationStatus();
+          if (verified) {
+            this.showToast(t('emailVerifiedSuccess'), 'success');
+            this.loadCreateView(presetFrameId);
+          } else {
+            this.showToast(t('emailNotVerifiedYet'), 'error');
+            btnCheck.disabled = false;
+            btnCheck.innerHTML = `<span>🔄 ${t('checkVerificationBtn')}</span>`;
+          }
+        } catch (err) {
+          btnCheck.disabled = false;
+          btnCheck.innerHTML = `<span>🔄 ${t('checkVerificationBtn')}</span>`;
+        }
+      });
+    }
+
+    const btnResend = document.getElementById('btnResendVerification');
+    if (btnResend) {
+      btnResend.addEventListener('click', async () => {
+        btnResend.disabled = true;
+        try {
+          await AuthService.resendVerificationEmail();
+          this.showToast(t('verificationEmailSent'), 'success');
+          setTimeout(() => { btnResend.disabled = false; }, 10000);
+        } catch (err) {
+          btnResend.disabled = false;
+          this.showToast(err.message || 'Error sending email', 'error');
+        }
+      });
+    }
+
+    const btnSignOut = document.getElementById('btnSignOutGate');
+    if (btnSignOut) {
+      btnSignOut.addEventListener('click', async () => {
+        await AuthService.logout();
+        this.showToast(t('logoutSuccess'), 'success');
+        window.location.hash = '#explore';
+      });
+    }
   }
 
   // ==========================================
