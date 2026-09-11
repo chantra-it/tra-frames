@@ -94,7 +94,7 @@ class TwibbonApp {
 
     if (!user) {
       container.innerHTML = `
-        <button class="btn btn-outline" id="btnNavSignIn" style="padding: 0.42rem 0.95rem; font-size: 0.85rem;" onclick="app.openAuthModal()">
+        <button class="btn btn-outline btn-nav-signin" id="btnNavSignIn" onclick="app.openAuthModal()">
           ${Icons.logIn} <span>${t('signIn')}</span>
         </button>
       `;
@@ -468,6 +468,17 @@ class TwibbonApp {
     this.currentView = 'explore';
     const container = document.getElementById('appContent');
     const isKm = getLanguage() === 'km';
+
+    // Fetch latest cloud campaigns in background to keep Explore feed fresh
+    if (!this._cloudFetched) {
+      this._cloudFetched = true;
+      CampaignService.fetchAllCloudCampaigns().then(cloudList => {
+        if (cloudList && cloudList.length > 0 && this.currentView === 'explore') {
+          this.loadExploreView();
+        }
+      });
+    }
+
     const allCampaigns = CampaignService.getCampaigns();
 
     // Filter by search & category
@@ -631,9 +642,9 @@ class TwibbonApp {
   // ==========================================
   // VIEW 2: CAMPAIGN STUDIO (CLEAN INTERACTION)
   // ==========================================
-  loadCampaignView(identifier) {
+  loadCampaignView(identifier, directCampaign = null) {
     this.currentView = 'studio';
-    const campaign = CampaignService.getCampaignBySlugOrId(identifier);
+    const campaign = directCampaign || CampaignService.getCampaignBySlugOrId(identifier);
     const container = document.getElementById('appContent');
 
     if (!campaign) {
@@ -647,7 +658,7 @@ class TwibbonApp {
       `;
       CampaignService.fetchCloudCampaign(identifier).then(cloudCampaign => {
         if (cloudCampaign) {
-          this.loadCampaignView(identifier);
+          this.loadCampaignView(cloudCampaign.slug || identifier, cloudCampaign);
         } else {
           container.innerHTML = `
             <div style="text-align: center; padding: 4rem 1.2rem; max-width: 540px; margin: 0 auto;">
