@@ -2433,7 +2433,66 @@ const CampaignService = {
     return all.find(c => c.slug === identifier || c.id === identifier);
   },
 
-  saveCampaign(campaignData) {
+  async compressFrameDataUrl(dataUrl, maxDim = 1080) {
+    if (!dataUrl || typeof dataUrl !== 'string') return dataUrl;
+    if (!dataUrl.startsWith('data:image')) return dataUrl;
+    if (dataUrl.startsWith('data:image/svg+xml')) return dataUrl;
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Try WebP first (supports alpha transparency and is 3-5x smaller than PNG)
+          try {
+            const webpUrl = canvas.toDataURL('image/webp', 0.85);
+            if (webpUrl && webpUrl.startsWith('data:image/webp') && webpUrl.length < 800000) {
+              return resolve(webpUrl);
+            }
+          } catch (e) {}
+
+          // Fallback to PNG (guaranteed lossless transparency)
+          const pngUrl = canvas.toDataURL('image/png');
+          if (pngUrl.length < 900000) {
+            return resolve(pngUrl);
+          }
+
+          // If still larger than 900KB, scale down slightly to 900x900 PNG
+          canvas.width = Math.min(width, 900);
+          canvas.height = Math.min(height, 900);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          return resolve(canvas.toDataURL('image/png'));
+        } catch (err) {
+          console.warn('Image compression exception, using original:', err);
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  },
+
+  async saveCampaign(campaignData) {
     let userCampaigns = [];
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -2446,6 +2505,13 @@ const CampaignService = {
       .toLowerCase()
       .replace(/[^a-z0-9-]+/g, "")
       .replace(/^-+|-+$/g, "") || "campaign-" + Date.now();
+
+    let frameUrl = SecurityUtils.sanitizeUrl(campaignData.frameUrl);
+    if (frameUrl && frameUrl.length > 650000) {
+      try {
+        frameUrl = await this.compressFrameDataUrl(frameUrl);
+      } catch (e) {}
+    }
 
     const user = AuthService.currentUser;
     const newCampaign = {
@@ -2463,7 +2529,7 @@ const CampaignService = {
       descriptionKm: SecurityUtils.escapeHtml(campaignData.descriptionKm || ''),
       descriptionEn: SecurityUtils.escapeHtml(campaignData.descriptionEn || ''),
       caption: SecurityUtils.escapeHtml(campaignData.caption || ''),
-      frameUrl: SecurityUtils.sanitizeUrl(campaignData.frameUrl),
+      frameUrl: frameUrl,
       supporters: Math.max(1, parseInt(campaignData.supporters, 10) || 1),
       createdAt: new Date().toISOString().split("T")[0],
       isUserCreated: true
@@ -2478,11 +2544,7 @@ const CampaignService = {
         userCampaigns.pop();
         try {
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
-        } catch (e2) {
-          throw new Error("Browser storage quota reached. Please delete old campaigns.");
-        }
-      } else {
-        throw new Error("Frame size is too large for local browser storage.");
+        } catch (e2) {}
       }
     }
 
@@ -2497,22 +2559,58 @@ const CampaignService = {
     return newCampaign;
   },
 
+  // Sync a single campaign to Cloud Firestore
+  async syncSingleCampaignToCloud(campaign) {
+    const db = initFirestore();
+    if (!db || !campaign) return false;
+    const docId = campaign.slug || campaign.id;
+    if (!docId) return false;
+
+    try {
+      let dataToSave = { ...campaign };
+      if (dataToSave.frameUrl && dataToSave.frameUrl.length > 650000) {
+        dataToSave.frameUrl = await this.compressFrameDataUrl(dataToSave.frameUrl);
+      }
+      await db.collection("campaigns").doc(docId).set(dataToSave, { merge: true });
+      console.log("🔥 Synced campaign to Cloud Firestore:", docId);
+      const cloudStatusEl = document.getElementById('cloudSyncStatus');
+      if (cloudStatusEl) {
+        const isKm = getLanguage() === 'km';
+        cloudStatusEl.innerHTML = `☁️ ${isKm ? 'បាន Sync ឡើង Cloud Firestore រួចរាល់ • អាចបើកលើទូរស័ព្ទបាន' : 'Synced to Cloud Firestore • Accessible on Mobile'}`;
+        cloudStatusEl.style.color = '#10b981';
+      }
+      return true;
+    } catch (err) {
+      console.warn("Failed syncing single campaign to Firestore:", docId, err);
+      return false;
+    }
+  },
+
   // Fetch campaign from Cloud Firestore if not found locally
   async fetchCloudCampaign(identifier) {
     const db = initFirestore();
-    if (!db) return null;
+    if (!db || !identifier) return null;
     try {
-      // 1. Try finding by slug field
+      // 1. Try finding by document ID directly (fastest, direct lookup)
+      const docRef = await db.collection("campaigns").doc(identifier).get();
+      if (docRef.exists) {
+        const data = docRef.data();
+        this.cacheCloudCampaign(data);
+        return data;
+      }
+
+      // 2. Try finding by slug field
       const snapshot = await db.collection("campaigns").where("slug", "==", identifier).limit(1).get();
       if (!snapshot.empty) {
         const data = snapshot.docs[0].data();
         this.cacheCloudCampaign(data);
         return data;
       }
-      // 2. Try finding by document ID
-      const docRef = await db.collection("campaigns").doc(identifier).get();
-      if (docRef.exists) {
-        const data = docRef.data();
+
+      // 3. Try finding by id field
+      const idSnapshot = await db.collection("campaigns").where("id", "==", identifier).limit(1).get();
+      if (!idSnapshot.empty) {
+        const data = idSnapshot.docs[0].data();
         this.cacheCloudCampaign(data);
         return data;
       }
@@ -2542,11 +2640,32 @@ const CampaignService = {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (!stored) return;
       const userCampaigns = JSON.parse(stored);
-      for (const c of userCampaigns) {
+      let updatedAny = false;
+      for (let i = 0; i < userCampaigns.length; i++) {
+        let c = userCampaigns[i];
         const docId = c.slug || c.id;
-        db.collection("campaigns").doc(docId).set(c, { merge: true })
-          .then(() => console.log("🔥 Synced local campaign to Cloud:", docId))
-          .catch(e => console.warn("Failed syncing campaign:", docId, e));
+        if (!docId) continue;
+
+        let toSync = { ...c };
+        if (toSync.frameUrl && toSync.frameUrl.length > 650000) {
+          try {
+            toSync.frameUrl = await this.compressFrameDataUrl(toSync.frameUrl);
+            userCampaigns[i] = toSync;
+            updatedAny = true;
+          } catch (e) {}
+        }
+
+        try {
+          await db.collection("campaigns").doc(docId).set(toSync, { merge: true });
+          console.log("🔥 Synced local campaign to Cloud:", docId);
+        } catch (e) {
+          console.warn("Failed syncing campaign to Cloud:", docId, e);
+        }
+      }
+      if (updatedAny) {
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+        } catch (e) {}
       }
     } catch (err) {
       console.warn("Sync to cloud error:", err);
@@ -3972,9 +4091,14 @@ class TwibbonApp {
           this.loadCampaignView(identifier);
         } else {
           container.innerHTML = `
-            <div style="text-align: center; padding: 5rem 1rem;">
-              <h2 style="color: var(--text-primary); font-weight: 800;">Campaign Not Found</h2>
-              <p style="color: var(--text-secondary); margin: 1rem 0 2rem 0;">The campaign you are looking for does not exist or has been removed.</p>
+            <div style="text-align: center; padding: 4rem 1.2rem; max-width: 540px; margin: 0 auto;">
+              <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+              <h2 style="color: var(--text-primary); font-weight: 800; font-size: 1.4rem;">${isKm ? 'រកមិនឃើញយុទ្ធនាការនេះទេ' : 'Campaign Not Found'}</h2>
+              <p style="color: var(--text-secondary); margin: 1rem 0 1.5rem 0; line-height: 1.6; font-size: 0.95rem;">
+                ${isKm 
+                  ? 'យុទ្ធនាការនេះមិនទាន់បាន Upload ឡើង Cloud នៅឡើយទេ ឬត្រូវបានលុប។<br><br>💡 <strong>ប្រសិនបើបងបានបង្កើតវានៅលើកុំព្យូទ័រ៖</strong> សូមបើក Tab វេបសាយនៅលើកុំព្យូទ័រនោះ រួចចុច <strong>Refresh (Reload)</strong> ម្តង ដើម្បីឱ្យប្រព័ន្ធ Sync ឡើង Cloud ដោយស្វ័យប្រវត្តិ។' 
+                  : 'The campaign you are looking for has not been synced to Cloud Firestore yet or was removed.<br><br>💡 If you created this on your computer, please refresh the page on your computer to sync it to the Cloud.'}
+              </p>
               <button class="btn btn-primary" onclick="window.location.hash='#explore'">${t('backToHome')}</button>
             </div>
           `;
@@ -3982,6 +4106,9 @@ class TwibbonApp {
       });
       return;
     }
+
+    // Found campaign locally! Automatically ensure it's synced to Cloud Firestore
+    CampaignService.syncSingleCampaignToCloud(campaign);
 
     this.activeCampaign = campaign;
     const isKm = getLanguage() === 'km';
@@ -4127,6 +4254,11 @@ class TwibbonApp {
                   <strong>${isKm ? 'ស្កេន QR Code តាមទូរស័ព្ទដៃ' : 'Scan with Mobile Camera'}</strong>
                   <span>${isKm ? 'អ្នកគាំទ្រអាចបើកកាមេរ៉ាទូរស័ព្ទស្កេន ដើម្បីប្រើស៊ុមនេះភ្លាមៗ' : 'Point camera to open and use this frame directly on mobile'}</span>
                 </div>
+              </div>
+
+              <!-- Cloud Sync Indicator -->
+              <div style="font-size: 0.82rem; color: #10b981; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.35rem;" id="cloudSyncStatus">
+                ☁️ ${isKm ? 'បានតភ្ជាប់ Cloud Firestore • អាចបើកលើទូរស័ព្ទបាន' : 'Synced to Cloud Firestore • Accessible on Mobile'}
               </div>
             </div>
 
@@ -4517,10 +4649,11 @@ class TwibbonApp {
           return;
         }
         const reader = new FileReader();
-        reader.onload = (event) => {
-          selectedFrameDataUrl = event.target.result;
+        reader.onload = async (event) => {
+          this.showToast(isKm ? 'កំពុងដំណើរការ Optimize រូបភាព...' : 'Optimizing frame image...');
+          selectedFrameDataUrl = await CampaignService.compressFrameDataUrl(event.target.result);
           document.getElementById('framePreviewImg').src = selectedFrameDataUrl;
-          this.showToast("Frame uploaded successfully!");
+          this.showToast(isKm ? 'បានផ្ទុករូបភាពស៊ុមជោគជ័យ!' : 'Frame uploaded successfully!');
         };
         reader.readAsDataURL(file);
       }
@@ -4539,8 +4672,14 @@ class TwibbonApp {
     });
 
     // Form Submit
-    document.getElementById('createCampaignForm').addEventListener('submit', (e) => {
+    document.getElementById('createCampaignForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span>⏳ ${isKm ? 'កំពុងរក្សាទុក...' : 'Publishing...'}</span>`;
+      }
+
       const title = document.getElementById('campaignTitle').value.trim();
       const slug = document.getElementById('campaignSlug').value.trim();
       const category = document.getElementById('campaignCategory').value;
@@ -4548,7 +4687,7 @@ class TwibbonApp {
       const desc = document.getElementById('campaignDesc').value.trim();
       const caption = document.getElementById('campaignCaption').value.trim();
 
-      const newCampaign = CampaignService.saveCampaign({
+      const newCampaign = await CampaignService.saveCampaign({
         titleKm: title,
         titleEn: title,
         slug: slug,
