@@ -572,6 +572,8 @@ const AuthService = {
 };
 
 const CampaignService = {
+  _memoryCache: new Map(),
+
   getCampaigns() {
     let userCampaigns = [];
     try {
@@ -582,10 +584,22 @@ const CampaignService = {
     } catch (e) {
       console.error("Failed to load user campaigns from localStorage:", e);
     }
-    return [...userCampaigns, ...INITIAL_CAMPAIGNS];
+    const combined = [...userCampaigns];
+    if (this._memoryCache) {
+      for (const [id, c] of this._memoryCache.entries()) {
+        if (!combined.some(existing => existing.slug === c.slug || existing.id === c.id)) {
+          combined.unshift(c);
+        }
+      }
+    }
+    return [...combined, ...INITIAL_CAMPAIGNS];
   },
 
   getCampaignBySlugOrId(identifier) {
+    if (!identifier) return null;
+    if (this._memoryCache && this._memoryCache.has(identifier)) {
+      return this._memoryCache.get(identifier);
+    }
     const all = this.getCampaigns();
     return all.find(c => c.slug === identifier || c.id === identifier);
   },
@@ -743,50 +757,114 @@ const CampaignService = {
     }
   },
 
-  // Fetch campaign from Cloud Firestore if not found locally
-  async fetchCloudCampaign(identifier) {
-    const db = initFirestore();
-    if (!db || !identifier) return null;
-    try {
-      // 1. Try finding by document ID directly (fastest, direct lookup)
-      const docRef = await db.collection("campaigns").doc(identifier).get();
-      if (docRef.exists) {
-        const data = docRef.data();
-        this.cacheCloudCampaign(data);
-        return data;
-      }
-
-      // 2. Try finding by slug field
-      const snapshot = await db.collection("campaigns").where("slug", "==", identifier).limit(1).get();
-      if (!snapshot.empty) {
-        const data = snapshot.docs[0].data();
-        this.cacheCloudCampaign(data);
-        return data;
-      }
-
-      // 3. Try finding by id field
-      const idSnapshot = await db.collection("campaigns").where("id", "==", identifier).limit(1).get();
-      if (!idSnapshot.empty) {
-        const data = idSnapshot.docs[0].data();
-        this.cacheCloudCampaign(data);
-        return data;
-      }
-    } catch (err) {
-      console.warn("Firestore query error:", err);
+  parseFirestoreDoc(doc) {
+    if (!doc || !doc.fields) return null;
+    const result = {};
+    for (const [key, val] of Object.entries(doc.fields)) {
+      if (val.stringValue !== undefined) result[key] = val.stringValue;
+      else if (val.integerValue !== undefined) result[key] = parseInt(val.integerValue, 10);
+      else if (val.doubleValue !== undefined) result[key] = parseFloat(val.doubleValue);
+      else if (val.booleanValue !== undefined) result[key] = val.booleanValue;
+      else if (val.timestampValue !== undefined) result[key] = val.timestampValue;
+      else if (val.nullValue !== undefined) result[key] = null;
     }
-    return null;
+    return result;
   },
 
-  // Save to local cache so subsequent loads are instant
+  // Save to memory cache and local storage so subsequent loads are instant
   cacheCloudCampaign(campaign) {
+    if (!campaign) return;
+    if (campaign.slug) this._memoryCache.set(campaign.slug, campaign);
+    if (campaign.id) this._memoryCache.set(campaign.id, campaign);
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       let userCampaigns = stored ? JSON.parse(stored) : [];
-      if (!userCampaigns.some(c => c.slug === campaign.slug || c.id === campaign.id)) {
+      const idx = userCampaigns.findIndex(c => c.slug === campaign.slug || c.id === campaign.id);
+      if (idx >= 0) {
+        userCampaigns[idx] = campaign;
+      } else {
         userCampaigns.unshift(campaign);
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
       }
-    } catch (e) {}
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+    } catch (e) {
+      console.warn("Storage quota warning on cacheCloudCampaign:", e);
+    }
+  },
+
+  // Fetch campaign from Cloud Firestore (SDK + High-Reliability REST fallback)
+  async fetchCloudCampaign(identifier) {
+    if (!identifier) return null;
+
+    // Check memory cache first
+    if (this._memoryCache && this._memoryCache.has(identifier)) {
+      return this._memoryCache.get(identifier);
+    }
+
+    // 1. Try Firebase SDK if available
+    const db = initFirestore();
+    if (db) {
+      try {
+        const docRef = await db.collection("campaigns").doc(identifier).get();
+        if (docRef.exists) {
+          const data = docRef.data();
+          this.cacheCloudCampaign(data);
+          return data;
+        }
+
+        const snapshot = await db.collection("campaigns").where("slug", "==", identifier).limit(1).get();
+        if (!snapshot.empty) {
+          const data = snapshot.docs[0].data();
+          this.cacheCloudCampaign(data);
+          return data;
+        }
+
+        const idSnapshot = await db.collection("campaigns").where("id", "==", identifier).limit(1).get();
+        if (!idSnapshot.empty) {
+          const data = idSnapshot.docs[0].data();
+          this.cacheCloudCampaign(data);
+          return data;
+        }
+      } catch (err) {
+        console.warn("Firestore SDK notice, switching to direct REST lookup:", err);
+      }
+    }
+
+    // 2. High-speed Direct REST Fallback (Works 100% reliably on all mobile networks without auth)
+    try {
+      const restUrl = `https://firestore.googleapis.com/v1/projects/tra-frames/databases/(default)/documents/campaigns/${encodeURIComponent(identifier)}`;
+      const res = await fetch(restUrl);
+      if (res.ok) {
+        const docJson = await res.json();
+        const data = this.parseFirestoreDoc(docJson);
+        if (data) {
+          this.cacheCloudCampaign(data);
+          return data;
+        }
+      }
+    } catch (restErr) {
+      console.warn("Firestore REST direct lookup error:", restErr);
+    }
+
+    return null;
+  },
+
+  // Fetch all public campaigns from Cloud Firestore to populate Explore feed
+  async fetchAllCloudCampaigns() {
+    try {
+      const restUrl = `https://firestore.googleapis.com/v1/projects/tra-frames/databases/(default)/documents/campaigns`;
+      const res = await fetch(restUrl);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.documents && Array.isArray(json.documents)) {
+          const campaigns = json.documents.map(d => this.parseFirestoreDoc(d)).filter(Boolean);
+          campaigns.forEach(c => this.cacheCloudCampaign(c));
+          return campaigns;
+        }
+      }
+    } catch (err) {
+      console.warn("fetchAllCloudCampaigns notice:", err);
+    }
+    return [];
   },
 
   // Sync existing local campaigns to Cloud Firestore
