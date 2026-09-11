@@ -291,6 +291,50 @@ class TwibbonApp {
     });
   }
 
+  async copyToClipboard(text) {
+    if (!text) return false;
+    let successful = false;
+
+    // Method 1: Modern navigator.clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        successful = true;
+      } catch (err) {
+        console.warn('navigator.clipboard.writeText failed, attempting fallback...', err);
+      }
+    }
+
+    // Method 2: Robust Fallback with temporary textarea
+    if (!successful) {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.top = '0';
+        textArea.style.left = '-9999px';
+        textArea.style.width = '2em';
+        textArea.style.height = '2em';
+        textArea.style.padding = '0';
+        textArea.style.border = 'none';
+        textArea.style.outline = 'none';
+        textArea.style.boxShadow = 'none';
+        textArea.style.background = 'transparent';
+        textArea.setAttribute('readonly', '');
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        textArea.setSelectionRange(0, textArea.value.length);
+        successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+      } catch (err) {
+        console.error('execCommand copy fallback failed:', err);
+      }
+    }
+
+    return successful;
+  }
+
   getShareableLink(campaign) {
     const slug = campaign.slug || campaign.id;
     if (window.location.protocol === 'file:') {
@@ -356,13 +400,24 @@ class TwibbonApp {
 
     document.body.appendChild(overlay);
 
-    overlay.querySelector('#btnModalCopyLink').addEventListener('click', () => {
-      navigator.clipboard.writeText(shareUrl);
-      this.showToast(t('linkCopied'), 'success');
-      const btn = overlay.querySelector('#btnModalCopyLink span');
-      btn.textContent = isKm ? 'បានចម្លង!' : 'Copied!';
-      setTimeout(() => { btn.textContent = t('copyLink'); }, 2000);
-    });
+    const btnModalCopy = overlay.querySelector('#btnModalCopyLink');
+    if (btnModalCopy) {
+      btnModalCopy.addEventListener('click', async () => {
+        await this.copyToClipboard(shareUrl);
+        this.showToast(t('linkCopied'), 'success');
+        const btn = btnModalCopy.querySelector('span');
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = isKm ? 'បានចម្លង!' : 'Copied!';
+          setTimeout(() => { btn.textContent = orig; }, 2000);
+        }
+      });
+    }
+
+    const modalInput = overlay.querySelector('#modalShareLinkInput');
+    if (modalInput) {
+      modalInput.addEventListener('click', () => modalInput.select());
+    }
 
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) overlay.remove();
@@ -902,32 +957,81 @@ class TwibbonApp {
     if (btnDownloadBottom) btnDownloadBottom.addEventListener('click', handleDownloadHD);
 
     // Copy Caption & Link
+    const shareableUrl = this.getShareableLink(campaign);
+    const currentUrl = encodeURIComponent(shareableUrl);
+    const shareTitle = encodeURIComponent(title);
+
     const btnCopyCaption = document.getElementById('btnCopyCaption');
     if (btnCopyCaption) {
-      btnCopyCaption.addEventListener('click', () => {
-        navigator.clipboard.writeText(caption);
+      btnCopyCaption.addEventListener('click', async () => {
+        await this.copyToClipboard(caption);
         this.showToast(t('captionCopied'), 'success');
+        const span = btnCopyCaption.querySelector('span');
+        if (span) {
+          const orig = span.textContent;
+          span.textContent = isKm ? 'បានចម្លង!' : 'Copied!';
+          setTimeout(() => { span.textContent = orig; }, 2000);
+        }
       });
     }
 
-    document.getElementById('btnCopyLink').addEventListener('click', () => {
-      navigator.clipboard.writeText(window.location.href);
-      this.showToast(t('linkCopied'), 'success');
-    });
+    // Studio Share Link Input (Auto-select on click)
+    const studioShareInput = document.getElementById('studioShareLinkInput');
+    if (studioShareInput) {
+      studioShareInput.addEventListener('click', () => {
+        studioShareInput.select();
+      });
+    }
 
-    // Social Sharing Links
-    const currentUrl = encodeURIComponent(window.location.href);
-    const shareTitle = encodeURIComponent(title);
+    // Studio Share Link Button (#btnCopyStudioLink)
+    const btnCopyStudioLink = document.getElementById('btnCopyStudioLink');
+    if (btnCopyStudioLink) {
+      btnCopyStudioLink.addEventListener('click', async () => {
+        await this.copyToClipboard(shareableUrl);
+        this.showToast(t('linkCopied'), 'success');
+        const span = btnCopyStudioLink.querySelector('span');
+        if (span) {
+          const orig = span.textContent;
+          span.textContent = isKm ? 'បានចម្លង!' : 'Copied!';
+          setTimeout(() => { span.textContent = orig; }, 2000);
+        }
+      });
+    }
 
-    document.getElementById('btnShareTelegram').addEventListener('click', () => {
-      window.open(`https://t.me/share/url?url=${currentUrl}&text=${shareTitle}`, '_blank');
-    });
-    document.getElementById('btnShareFacebook').addEventListener('click', () => {
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`, '_blank');
-    });
-    document.getElementById('btnShareX').addEventListener('click', () => {
-      window.open(`https://twitter.com/intent/tweet?url=${currentUrl}&text=${shareTitle}`, '_blank');
-    });
+    // Fallback if btnCopyLink exists
+    const btnCopyLink = document.getElementById('btnCopyLink');
+    if (btnCopyLink) {
+      btnCopyLink.addEventListener('click', async () => {
+        await this.copyToClipboard(shareableUrl);
+        this.showToast(t('linkCopied'), 'success');
+      });
+    }
+
+    // Social Sharing Links (with safe null-checks)
+    const btnShareTelegram = document.getElementById('btnShareTelegram');
+    if (btnShareTelegram) {
+      btnShareTelegram.addEventListener('click', () => {
+        window.open(`https://t.me/share/url?url=${currentUrl}&text=${shareTitle}`, '_blank', 'noopener,noreferrer');
+      });
+    }
+    const btnShareFacebook = document.getElementById('btnShareFacebook');
+    if (btnShareFacebook) {
+      btnShareFacebook.addEventListener('click', () => {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`, '_blank', 'noopener,noreferrer');
+      });
+    }
+    const btnShareWhatsapp = document.getElementById('btnShareWhatsapp');
+    if (btnShareWhatsapp) {
+      btnShareWhatsapp.addEventListener('click', () => {
+        window.open(`https://api.whatsapp.com/send?text=${shareTitle}%20${currentUrl}`, '_blank', 'noopener,noreferrer');
+      });
+    }
+    const btnShareX = document.getElementById('btnShareX');
+    if (btnShareX) {
+      btnShareX.addEventListener('click', () => {
+        window.open(`https://twitter.com/intent/tweet?url=${currentUrl}&text=${shareTitle}`, '_blank', 'noopener,noreferrer');
+      });
+    }
   }
 
   // ==========================================
