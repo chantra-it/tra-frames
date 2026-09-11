@@ -622,6 +622,7 @@ class TwibbonApp {
     return `
       <div class="campaign-card">
         <div class="card-preview-wrapper" onclick="window.location.hash='#campaign/${slug}'">
+          <img src="${SAMPLE_AVATARS[0]}" class="card-sample-backdrop" alt="Preview backdrop" loading="lazy" />
           <img src="${frameUrl}" alt="${title}" class="card-preview-frame" loading="lazy" />
           <div class="card-badge-category">${t('cat' + (campaign.category.charAt(0).toUpperCase() + campaign.category.slice(1)))}</div>
           <div class="card-badge-supporters">${Icons.users} <span>${supporterCount}</span></div>
@@ -629,12 +630,12 @@ class TwibbonApp {
         <div class="card-content">
           <h3 class="card-title" onclick="window.location.hash='#campaign/${slug}'">${title}</h3>
           <div class="card-creator">${Icons.avatar} <span>${t('by')} ${creator}</span></div>
-          <p class="card-description">${desc}</p>
-          <div class="card-footer" style="display: flex; gap: 0.5rem; width: 100%;">
-            <button class="btn btn-primary" style="flex: 1;" onclick="window.location.hash='#campaign/${slug}'">
+          ${desc ? `<p class="card-description">${desc}</p>` : ''}
+          <div class="card-footer">
+            <button class="btn btn-primary btn-use-frame" onclick="window.location.hash='#campaign/${slug}'">
               ${Icons.camera} <span>${t('useFrame')}</span>
             </button>
-            <button class="btn btn-secondary" style="padding: 0.6rem 0.85rem;" title="${t('shareCampaign')}" onclick="event.stopPropagation(); app.openShareModal(CampaignService.getCampaignBySlugOrId('${slug}'))">
+            <button class="btn btn-secondary btn-card-share" title="${t('shareCampaign')}" onclick="event.stopPropagation(); app.openShareModal(CampaignService.getCampaignBySlugOrId('${slug}'))">
               ${Icons.share}
             </button>
           </div>
@@ -695,14 +696,22 @@ class TwibbonApp {
     const caption = (isKm ? campaign.captionKm : campaign.captionEn) || '';
 
     container.innerHTML = `
-      <div style="margin-bottom: 1.25rem;">
+      <div class="studio-header-bar">
         <button class="btn btn-secondary" onclick="window.location.hash='#explore'">
           ${Icons.back} <span>${t('backToHome')}</span>
         </button>
+        <div class="studio-header-title-wrap">
+          <h1 class="studio-header-title">${title}</h1>
+          <div class="studio-header-meta">
+            <span>${Icons.avatar} <strong>${creator}</strong></span>
+            <span>${Icons.users} <strong id="supporterCount">${(campaign.supporters || 0).toLocaleString()}</strong> ${t('supporters')}</span>
+            <span>📅 ${createdAt}</span>
+          </div>
+        </div>
       </div>
 
       <div class="studio-layout">
-        <!-- Canvas Left Column -->
+        <!-- Canvas Left Column (Complete Interactive Workspace) -->
         <div class="canvas-wrapper-card">
           <div class="canvas-container" id="canvasContainer">
             <canvas id="studioCanvas" width="1080" height="1080"></canvas>
@@ -712,48 +721,28 @@ class TwibbonApp {
             💡 <span>${t('dragToReposition')}</span>
           </div>
 
-          <!-- Quick Action Buttons below Canvas -->
-          <div class="controls-row" style="width: 100%; justify-content: center;">
+          <!-- Quick Action Buttons: Rotate & Flip -->
+          <div class="controls-row studio-toolbar">
             <button class="btn-icon" id="btnRotate90" title="${t('rotate')} 90°">${Icons.rotateRight}</button>
             <button class="btn-icon" id="btnFlipH" title="${t('flipH')}">${Icons.flipHorizontal}</button>
             <button class="btn-icon" id="btnFlipV" title="${t('flipV')}">${Icons.flipVertical}</button>
             <button class="btn-icon" id="btnResetPos" title="${t('reset')}">${Icons.reset}</button>
           </div>
 
-          <!-- Main Download Button -->
-          <button class="btn btn-success" id="btnDownloadHD" style="width: 100%; padding: 0.9rem 1.5rem; font-size: 1.05rem;">
-            ${Icons.download} <span>${t('downloadFrame')}</span>
-          </button>
-        </div>
-
-        <!-- Studio Controls Right Column -->
-        <div class="studio-controls-card">
-          <!-- Campaign Info Header -->
-          <div class="campaign-header-info">
-            <h1 class="campaign-detail-title">${title}</h1>
-            <div class="campaign-detail-meta">
-              <span>${Icons.avatar} <strong>${creator}</strong></span>
-              <span>${Icons.users} <strong id="supporterCount">${(campaign.supporters || 0).toLocaleString()}</strong> ${t('supporters')}</span>
-              <span>📅 ${createdAt}</span>
-            </div>
-            ${desc ? `<p style="margin-top: 0.75rem; color: var(--text-secondary); line-height: 1.6;">${desc}</p>` : ''}
-          </div>
-
-          <!-- Step 1: Upload Photo Dropzone -->
-          <div>
-            <div class="tool-section-title">${Icons.upload} <span>${t('choosePhoto')}</span></div>
+          <!-- Step 1: Upload Photo Dropzone (Directly under Canvas for instant access) -->
+          <div class="studio-upload-section">
             <input type="file" id="photoFileInput" accept="image/*" style="display: none;" />
             <div class="photo-dropzone" id="photoDropzone">
               <div class="dropzone-icon">${Icons.camera}</div>
-              <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">${t('dragDropPhoto')}</div>
-              <div style="font-size: 0.82rem; color: var(--text-muted);">${t('photoTip')}</div>
+              <div class="dropzone-text">
+                <span class="dropzone-main-text">${t('choosePhoto')}</span>
+                <span class="dropzone-sub-text">${t('photoTip')}</span>
+              </div>
             </div>
 
-            <!-- Sample Photos Selector -->
-            <div style="margin-top: 0.75rem;">
-              <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; margin-bottom: 0.35rem;">
-                ${t('useSamplePhoto')}:
-              </div>
+            <!-- Quick Sample Avatars Selector -->
+            <div class="sample-avatars-row">
+              <span class="sample-avatars-label">${t('useSamplePhoto')}:</span>
               <div class="sample-avatar-pills">
                 ${SAMPLE_AVATARS.map((avatar, idx) => `
                   <button class="sample-avatar-btn" data-avatar="${idx}" title="Sample ${idx + 1}">
@@ -764,55 +753,73 @@ class TwibbonApp {
             </div>
           </div>
 
-          <!-- Step 2: Sliders & Adjustments -->
-          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+          <!-- Step 2: Zoom Slider -->
+          <div class="slider-group zoom-slider-group">
+            <div class="slider-header">
+              <span style="font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.35rem;">
+                ${Icons.search} <span>${t('zoom')}</span>
+              </span>
+              <span id="zoomVal" class="slider-val-badge">100%</span>
+            </div>
+            <input type="range" class="range-slider" id="zoomSlider" min="20" max="350" value="100" />
+          </div>
+
+          <!-- Step 3: Primary Download Button -->
+          <button class="btn btn-success btn-download-main" id="btnDownloadHD">
+            ${Icons.download} <span>${t('downloadFrame')}</span>
+          </button>
+        </div>
+
+        <!-- Studio Details & Share Right Column -->
+        <div class="studio-controls-card">
+          ${desc ? `
+            <div class="campaign-about-section">
+              <div class="tool-section-title">ℹ️ <span>${isKm ? 'អំពីយុទ្ធនាការ' : 'About Campaign'}</span></div>
+              <p class="campaign-about-desc">${desc}</p>
+            </div>
+          ` : ''}
+
+          <!-- Fine-tune Filters (Brightness, Contrast, Saturation) -->
+          <div>
             <div class="tool-section-title">${Icons.sliders} <span>${t('filters')}</span></div>
 
-            <!-- Zoom Slider -->
-            <div class="slider-group">
-              <div class="slider-header">
-                <span>${t('zoom')}</span>
-                <span id="zoomVal">100%</span>
+            <div class="sliders-grid">
+              <!-- Brightness -->
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span>${t('brightness')}</span>
+                  <span id="brightnessVal" class="slider-val-badge">100%</span>
+                </div>
+                <input type="range" class="range-slider" id="brightnessSlider" min="50" max="160" value="100" />
               </div>
-              <input type="range" class="range-slider" id="zoomSlider" min="20" max="350" value="100" />
-            </div>
 
-            <!-- Brightness -->
-            <div class="slider-group">
-              <div class="slider-header">
-                <span>${t('brightness')}</span>
-                <span id="brightnessVal">100%</span>
+              <!-- Contrast -->
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span>${t('contrast')}</span>
+                  <span id="contrastVal" class="slider-val-badge">100%</span>
+                </div>
+                <input type="range" class="range-slider" id="contrastSlider" min="50" max="160" value="100" />
               </div>
-              <input type="range" class="range-slider" id="brightnessSlider" min="50" max="160" value="100" />
-            </div>
 
-            <!-- Contrast -->
-            <div class="slider-group">
-              <div class="slider-header">
-                <span>${t('contrast')}</span>
-                <span id="contrastVal">100%</span>
+              <!-- Saturation -->
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span>${t('saturation')}</span>
+                  <span id="satVal" class="slider-val-badge">100%</span>
+                </div>
+                <input type="range" class="range-slider" id="satSlider" min="0" max="200" value="100" />
               </div>
-              <input type="range" class="range-slider" id="contrastSlider" min="50" max="160" value="100" />
-            </div>
-
-            <!-- Saturation -->
-            <div class="slider-group">
-              <div class="slider-header">
-                <span>${t('saturation')}</span>
-                <span id="satVal">100%</span>
-              </div>
-              <input type="range" class="range-slider" id="satSlider" min="0" max="200" value="100" />
             </div>
           </div>
 
-          <!-- Step 3: Social Sharing & Caption Box -->
+          <!-- Share Campaign Box -->
           <div>
             <div class="tool-section-title">${Icons.share} <span>${t('shareCampaign')}</span></div>
             
-            <!-- Dedicated Campaign Share Box with Link & QR Code -->
-            <div class="campaign-share-box" style="margin-bottom: 1.25rem;">
-              <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">
-                🔗 ${isKm ? 'តំណភ្ជាប់សម្រាប់អោយគេប្រើប្រាស់ (Share Link for Others):' : 'Campaign Share Link for Supporters:'}
+            <div class="campaign-share-box">
+              <div class="share-box-header">
+                <span>🔗 ${isKm ? 'តំណភ្ជាប់ចែករំលែក (Share Link)' : 'Campaign Share Link'}:</span>
               </div>
               <div class="share-link-input-group">
                 <input type="text" class="share-link-input" id="studioShareLinkInput" value="${this.getShareableLink(campaign)}" readonly />
@@ -831,13 +838,13 @@ class TwibbonApp {
               </div>
 
               <!-- Cloud Sync Indicator -->
-              <div style="font-size: 0.82rem; color: #10b981; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.35rem;" id="cloudSyncStatus">
+              <div class="cloud-sync-status" id="cloudSyncStatus">
                 ☁️ ${isKm ? 'បានតភ្ជាប់ Cloud Firestore • អាចបើកលើទូរស័ព្ទបាន' : 'Synced to Cloud Firestore • Accessible on Mobile'}
               </div>
             </div>
 
             ${caption ? `
-              <div class="caption-box" style="margin-bottom: 1rem;">
+              <div class="caption-box" style="margin-top: 1rem;">
                 <div>${caption}</div>
                 <div class="caption-actions">
                   <button class="btn btn-secondary" id="btnCopyCaption" style="padding: 0.35rem 0.8rem; font-size: 0.82rem;">
@@ -848,21 +855,21 @@ class TwibbonApp {
             ` : ''}
 
             <!-- Social Share Links -->
-            <div class="controls-row">
-              <button class="btn btn-secondary" id="btnShareTelegram">
+            <div class="social-share-row" style="margin-top: 1rem;">
+              <button class="btn btn-secondary btn-social" id="btnShareTelegram">
                 ${Icons.telegram} <span>Telegram</span>
               </button>
-              <button class="btn btn-secondary" id="btnShareFacebook">
+              <button class="btn btn-secondary btn-social" id="btnShareFacebook">
                 ${Icons.facebook} <span>Facebook</span>
               </button>
-              <button class="btn btn-secondary" id="btnShareWhatsapp">
+              <button class="btn btn-secondary btn-social" id="btnShareWhatsapp">
                 <span>WhatsApp</span>
               </button>
             </div>
           </div>
 
-          <!-- Bottom Action: Download HD button (Extra convenient on mobile) -->
-          <button class="btn btn-success" id="btnDownloadHDBottom" style="width: 100%; padding: 0.95rem 1.5rem; font-size: 1.05rem; margin-top: 0.25rem;">
+          <!-- Bottom Action: Extra Download Button on Mobile -->
+          <button class="btn btn-success btn-download-bottom" id="btnDownloadHDBottom">
             ${Icons.download} <span>${t('downloadFrame')}</span>
           </button>
         </div>
@@ -1488,7 +1495,8 @@ class TwibbonApp {
             return `
               <div class="campaign-card">
                 <div class="card-preview-wrapper" onclick="window.location.hash='#campaign/${safeSlug}'">
-                  <img src="${safeFrameUrl}" class="card-preview-frame" />
+                  <img src="${SAMPLE_AVATARS[0]}" class="card-sample-backdrop" alt="Preview backdrop" loading="lazy" />
+                  <img src="${safeFrameUrl}" class="card-preview-frame" loading="lazy" />
                   <div class="card-badge-supporters">${Icons.users} <span>${safeSupporters}</span></div>
                 </div>
                 <div class="card-content">
