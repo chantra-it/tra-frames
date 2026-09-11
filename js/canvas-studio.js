@@ -33,11 +33,30 @@ class CanvasStudio {
     this.dragStartY = 0;
     this.lastPinchDistance = null;
 
+    // Dirty & Unsaved Work State
+    this.isDirty = false;
+    this.isDownloaded = false;
+    this.isCustomUserPhoto = false;
+
     // Callbacks
     this.onStateChange = options.onStateChange || null;
     this.onPhotoLoaded = options.onPhotoLoaded || null;
 
     this.initEvents();
+  }
+
+  hasUnsavedWork() {
+    return (this.isCustomUserPhoto || this.isDirty) && !this.isDownloaded;
+  }
+
+  markDirty() {
+    this.isDirty = true;
+    this.isDownloaded = false;
+  }
+
+  clearDirty() {
+    this.isDirty = false;
+    this.isDownloaded = true;
   }
 
   setFrame(sourceUrl) {
@@ -59,7 +78,7 @@ class CanvasStudio {
     });
   }
 
-  setUserPhoto(sourceUrlOrFile) {
+  setUserPhoto(sourceUrlOrFile, isCustom = true) {
     return new Promise((resolve, reject) => {
       if (typeof sourceUrlOrFile === 'string') {
         const img = new Image();
@@ -69,6 +88,13 @@ class CanvasStudio {
         img.onload = () => {
           this.userImage = img;
           this.fitPhotoToCanvas();
+          if (isCustom) {
+            this.isCustomUserPhoto = true;
+            this.markDirty();
+          } else {
+            this.isCustomUserPhoto = false;
+            this.isDirty = false;
+          }
           this.render();
           if (this.onPhotoLoaded) this.onPhotoLoaded();
           resolve();
@@ -89,6 +115,8 @@ class CanvasStudio {
           img.onload = () => {
             this.userImage = img;
             this.fitPhotoToCanvas();
+            this.isCustomUserPhoto = true;
+            this.markDirty();
             this.render();
             if (this.onPhotoLoaded) this.onPhotoLoaded();
             resolve();
@@ -360,6 +388,7 @@ class CanvasStudio {
       this.renderToContext(expCtx, this.outputResolution, this.outputResolution, true);
 
       exportCanvas.toBlob((blob) => {
+        this.clearDirty();
         resolve(blob);
       }, 'image/png', 1.0);
     });
