@@ -151,6 +151,39 @@ svg {
   flex-shrink: 0;
 }
 
+/* ─── GLOBAL ICON SAFETY NET ───────────────────────────────
+   Prevents inline SVG icons (no width/height attributes)
+   from rendering at browser default ~300×150px.
+   Specific component rules below can override these.
+   ──────────────────────────────────────────────────────── */
+.btn svg,
+.btn-icon svg,
+.user-dropdown-item svg,
+.user-dropdown svg,
+.modal-header svg,
+.modal-header h3 svg,
+.nav-actions svg,
+.mobile-nav-item svg,
+.studio-top-bar svg,
+.studio-controls-card svg,
+.share-action-btn svg,
+.toast svg {
+  width: 18px;
+  height: 18px;
+  max-width: 18px;
+  max-height: 18px;
+  flex-shrink: 0;
+}
+
+/* Google logo SVG — slightly larger for brand recognition */
+.btn-google svg {
+  width: 20px;
+  height: 20px;
+  max-width: 20px;
+  max-height: 20px;
+  flex-shrink: 0;
+}
+
 img {
   max-width: 100%;
   height: auto;
