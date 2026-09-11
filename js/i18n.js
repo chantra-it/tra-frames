@@ -142,7 +142,18 @@ const translations = {
     verificationEmailSent: "បានផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់រួចរាល់ សូមពិនិត្យប្រអប់សំបុត្ររបស់អ្នក!",
     emailVerifiedSuccess: "អ៊ីមែលរបស់អ្នកត្រូវបានផ្ទៀងផ្ទាត់ជោគជ័យ!",
     emailNotVerifiedYet: "អ៊ីមែលមិនទាន់បានផ្ទៀងផ្ទាត់នៅឡើយទេ។ សូមពិនិត្យមើល Link ក្នុងប្រអប់សំបុត្រ Email របស់អ្នក (រួមទាំង Spam)។",
-    disposableEmailError: "សូមប្រើប្រាស់អ៊ីមែលពិតប្រាកដ (Gmail, Outlook, Yahoo...)។ ប្រព័ន្ធមិនអនុញ្ញាតអ៊ីមែលបណ្តោះអាសន្នទេ។"
+    disposableEmailError: "សូមប្រើប្រាស់អ៊ីមែលពិតប្រាកដ (Gmail, Outlook, Yahoo...)។ ប្រព័ន្ធមិនអនុញ្ញាតអ៊ីមែលបណ្តោះអាសន្នទេ។",
+    otpModalTitle: "ផ្ទៀងផ្ទាត់លេខកូដ OTP",
+    otpModalSubtitle: "យើងបានផ្ញើលេខកូដសម្ងាត់ ៦ ខ្ទង់ទៅកាន់អ៊ីមែល៖",
+    otpVerifyBtn: "ផ្ទៀងផ្ទាត់លេខកូដ",
+    otpResendBtn: "ផ្ញើលេខកូដឡើងវិញ",
+    otpResendWait: "ផ្ញើឡើងវិញក្នុងរយៈពេល",
+    otpInvalidCode: "លេខកូដ OTP មិនត្រឹមត្រូវទេ! សូមពិនិត្យឡើងវិញ។",
+    otpExpiredCode: "លេខកូដ OTP ផុតកំណត់ហើយ! សូមចុចផ្ញើលេខកូដថ្មី។",
+    otpMaxAttempts: "អ្នកបានវាយខុសលើសកំណត់! សូមស្នើសុំលេខកូដថ្មី។",
+    otpVerifiedSuccess: "🎉 ផ្ទៀងផ្ទាត់ជោគជ័យ! អ៊ីមែលរបស់អ្នកត្រូវបានបញ្ជាក់ត្រឹមត្រូវ។",
+    otpEnterCodeBtn: "🔑 បញ្ចូលលេខកូដ OTP",
+    otpSendNewBtn: "📩 ផ្ញើលេខកូដ OTP ទៅ Email"
   },
   en: {
     appName: "Tra Frames",
@@ -286,7 +297,18 @@ const translations = {
     verificationEmailSent: "Verification email sent. Please check your inbox or spam!",
     emailVerifiedSuccess: "Your email has been verified successfully!",
     emailNotVerifiedYet: "Email is not verified yet. Please click the link in your inbox (or spam folder).",
-    disposableEmailError: "Please use a real email address (Gmail, Outlook, Yahoo). Disposable emails are not allowed."
+    disposableEmailError: "Please use a real email address (Gmail, Outlook, Yahoo). Disposable emails are not allowed.",
+    otpModalTitle: "Verify OTP Code",
+    otpModalSubtitle: "We have sent a 6-digit verification code to:",
+    otpVerifyBtn: "Verify Code",
+    otpResendBtn: "Resend Code",
+    otpResendWait: "Resend in",
+    otpInvalidCode: "Invalid OTP code! Please check and try again.",
+    otpExpiredCode: "OTP code has expired! Please request a new code.",
+    otpMaxAttempts: "Maximum attempts exceeded! Please request a new code.",
+    otpVerifiedSuccess: "🎉 Verified successfully! Your email has been confirmed.",
+    otpEnterCodeBtn: "🔑 Enter OTP Code",
+    otpSendNewBtn: "📩 Send OTP Code to Email"
   }
 };
 
