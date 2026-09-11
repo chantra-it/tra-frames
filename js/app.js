@@ -194,22 +194,63 @@ class TwibbonApp {
           <button class="auth-tab" id="tabSignUp">${t('createAccount')}</button>
         </div>
 
-        <form id="authEmailForm" style="display: flex; flex-direction: column; gap: 1rem;">
+        <form id="authEmailForm" style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <!-- Display Name (Sign Up only) -->
           <div class="form-group" id="groupDisplayName" style="display: none;">
             <label class="form-label">${t('fullName')}</label>
             <input type="text" id="authDisplayNameInput" class="form-input" placeholder="e.g. Sok Chantra" />
           </div>
 
+          <!-- Email with Send OTP action -->
           <div class="form-group">
-            <label class="form-label">${t('email')} *</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <label class="form-label" style="margin-bottom: 0;">${t('email')} *</label>
+              <button type="button" id="btnRequestOtp" class="btn-get-otp" style="display: none;">
+                📩 ${isKm ? 'ផ្ញើលេខកូដ OTP' : 'Send OTP Code'}
+              </button>
+            </div>
             <input type="email" id="authEmailInput" class="form-input" placeholder="name@example.com" required />
           </div>
 
+          <!-- Instant In-App VIP OTP Banner (Shown when OTP is requested/generated) -->
+          <div id="signUpOtpBanner" class="otp-instant-box" style="display: none;">
+            <div class="otp-instant-header">
+              <span>⚡ ${isKm ? 'លេខកូដ OTP របស់អ្នកគឺ៖' : 'Your OTP Code is:'}</span>
+              <span class="badge-instant">VIP Instant</span>
+            </div>
+            <div class="otp-instant-code" id="authOtpDisplayCode">------</div>
+            <button type="button" class="btn-autofill-otp" id="btnAutoFillSignUpOtp">
+              ✨ ${isKm ? 'ចុចបំពេញលេខកូដស្វ័យប្រវត្តិ (1-Click Auto-Fill)' : '1-Click Auto-Fill Code'}
+            </button>
+          </div>
+
+          <!-- 6-Digit Segmented OTP Grid (Sign Up only) -->
+          <div class="form-group" id="groupSignUpOtpInputs" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+              <label class="form-label" style="margin-bottom: 0;">
+                🔑 ${isKm ? 'លេខកូដផ្ទៀងផ្ទាត់ OTP (៦ ខ្ទង់) *' : '6-Digit OTP Code *'}
+              </label>
+              <span id="authOtpTimerBadge" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-primary); display: none;">
+                ⏱️ <span id="authOtpCountdown">10:00</span>
+              </span>
+            </div>
+            <div class="otp-inputs-grid" id="authSignUpOtpGrid" style="margin: 0.25rem 0 0.4rem;">
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="0">
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="1">
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="2">
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="3">
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="4">
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="5">
+            </div>
+          </div>
+
+          <!-- Password -->
           <div class="form-group">
-            <label class="form-label">${t('password')} *</label>
+            <label class="form-label">${t('password')} * <span id="pwdHint" style="font-size: 0.78rem; color: var(--text-muted); font-weight: normal; display: none;">(យ៉ាងតិច ៦ ខ្ទង់)</span></label>
             <input type="password" id="authPasswordInput" class="form-input" placeholder="••••••••" required minlength="6" />
           </div>
 
+          <!-- Submit Button -->
           <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="padding: 0.85rem; font-size: 1rem; margin-top: 0.25rem;">
             <span>${t('signIn')}</span>
           </button>
@@ -220,31 +261,202 @@ class TwibbonApp {
     document.body.appendChild(overlay);
 
     let isSignUp = false;
+    let authOtpInterval = null;
     const tabSignIn = overlay.querySelector('#tabSignIn');
     const tabSignUp = overlay.querySelector('#tabSignUp');
     const groupName = overlay.querySelector('#groupDisplayName');
+    const btnRequestOtp = overlay.querySelector('#btnRequestOtp');
+    const signUpOtpBanner = overlay.querySelector('#signUpOtpBanner');
+    const authOtpDisplayCode = overlay.querySelector('#authOtpDisplayCode');
+    const btnAutoFillSignUpOtp = overlay.querySelector('#btnAutoFillSignUpOtp');
+    const groupSignUpOtpInputs = overlay.querySelector('#groupSignUpOtpInputs');
+    const authOtpTimerBadge = overlay.querySelector('#authOtpTimerBadge');
+    const authOtpCountdown = overlay.querySelector('#authOtpCountdown');
+    const authOtpDigits = overlay.querySelectorAll('.auth-otp-digit');
+    const pwdHint = overlay.querySelector('#pwdHint');
     const btnSubmit = overlay.querySelector('#btnAuthSubmit span');
+    const authEmailInput = overlay.querySelector('#authEmailInput');
+    const authDisplayNameInput = overlay.querySelector('#authDisplayNameInput');
+    const authPasswordInput = overlay.querySelector('#authPasswordInput');
+    const authSignUpOtpGrid = overlay.querySelector('#authSignUpOtpGrid');
 
+    // Switch to Sign In Tab
     tabSignIn.addEventListener('click', () => {
       isSignUp = false;
       tabSignIn.classList.add('active');
       tabSignUp.classList.remove('active');
       groupName.style.display = 'none';
+      btnRequestOtp.style.display = 'none';
+      signUpOtpBanner.style.display = 'none';
+      groupSignUpOtpInputs.style.display = 'none';
+      pwdHint.style.display = 'none';
       btnSubmit.textContent = t('signIn');
     });
 
+    // Switch to Sign Up Tab
     tabSignUp.addEventListener('click', () => {
       isSignUp = true;
       tabSignUp.classList.add('active');
       tabSignIn.classList.remove('active');
       groupName.style.display = 'flex';
-      btnSubmit.textContent = t('signUp');
+      btnRequestOtp.style.display = 'inline-block';
+      groupSignUpOtpInputs.style.display = 'flex';
+      pwdHint.style.display = 'inline';
+      btnSubmit.textContent = isKm ? '✅ ផ្ទៀងផ្ទាត់ OTP & ចុះឈ្មោះ' : '✅ Verify OTP & Sign Up';
+
+      // Check if existing valid OTP in session
+      const currentEmail = authEmailInput.value.trim();
+      if (currentEmail) {
+        const lastCode = OtpService.getLastOtpCode(currentEmail);
+        if (lastCode) {
+          authOtpDisplayCode.textContent = lastCode;
+          signUpOtpBanner.style.display = 'block';
+        }
+      }
+    });
+
+    // 6-Digit OTP Segmented Inputs Event Listeners
+    const getEnteredSignUpOtp = () => Array.from(authOtpDigits).map(d => d.value).join('');
+
+    authOtpDigits.forEach((input, idx) => {
+      input.addEventListener('input', (e) => {
+        const val = e.target.value.replace(/\D/g, '');
+        e.target.value = val ? val[val.length - 1] : '';
+        if (e.target.value) {
+          e.target.classList.add('filled');
+          if (idx < 5) authOtpDigits[idx + 1].focus();
+        } else {
+          e.target.classList.remove('filled');
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace') {
+          if (!input.value && idx > 0) {
+            authOtpDigits[idx - 1].focus();
+            authOtpDigits[idx - 1].value = '';
+            authOtpDigits[idx - 1].classList.remove('filled');
+          } else {
+            input.value = '';
+            input.classList.remove('filled');
+          }
+        } else if (e.key === 'ArrowLeft' && idx > 0) {
+          authOtpDigits[idx - 1].focus();
+        } else if (e.key === 'ArrowRight' && idx < 5) {
+          authOtpDigits[idx + 1].focus();
+        }
+      });
+
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
+        const numOnly = pasteData.replace(/\D/g, '').slice(0, 6);
+        if (numOnly) {
+          for (let i = 0; i < 6; i++) {
+            if (i < numOnly.length) {
+              authOtpDigits[i].value = numOnly[i];
+              authOtpDigits[i].classList.add('filled');
+            } else {
+              authOtpDigits[i].value = '';
+              authOtpDigits[i].classList.remove('filled');
+            }
+          }
+          const nextIdx = Math.min(5, numOnly.length);
+          authOtpDigits[nextIdx].focus();
+        }
+      });
+    });
+
+    // Start 10-minute countdown for Sign Up OTP
+    const startAuthOtpCountdown = () => {
+      if (authOtpInterval) clearInterval(authOtpInterval);
+      let totalSeconds = 600;
+      authOtpTimerBadge.style.display = 'inline-block';
+      authOtpInterval = setInterval(() => {
+        totalSeconds--;
+        if (totalSeconds <= 0) {
+          clearInterval(authOtpInterval);
+          authOtpCountdown.textContent = "00:00";
+          return;
+        }
+        const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+        const secs = String(totalSeconds % 60).padStart(2, '0');
+        authOtpCountdown.textContent = `${mins}:${secs}`;
+      }, 1000);
+    };
+
+    // Request OTP Button Click
+    const handleRequestOtp = async () => {
+      const email = authEmailInput.value.trim().toLowerCase();
+      if (!email) {
+        this.showToast(isKm ? "សូមបញ្ចូលអ៊ីមែលជាមុនសិន!" : "Please enter your email first!", 'error');
+        authEmailInput.focus();
+        return null;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        this.showToast(isKm ? "ទម្រង់អ៊ីមែលមិនត្រឹមត្រូវទេ!" : "Invalid email format!", 'error');
+        authEmailInput.focus();
+        return null;
+      }
+      if (SecurityUtils.isDisposableEmail(email)) {
+        this.showToast(t('disposableEmailError'), 'error');
+        return null;
+      }
+
+      btnRequestOtp.disabled = true;
+      btnRequestOtp.textContent = "⏳...";
+      try {
+        const res = await OtpService.generateOtp(email, authDisplayNameInput.value.trim());
+        if (res && res.otpCode) {
+          authOtpDisplayCode.textContent = res.otpCode;
+          signUpOtpBanner.style.display = 'block';
+          startAuthOtpCountdown();
+          this.showToast(isKm ? `📩 លេខកូដ OTP របស់អ្នកគឺ៖ ${res.otpCode}` : `📩 Your OTP Code: ${res.otpCode}`, 'info', 9000);
+
+          // 60s cooldown on request button
+          let left = 60;
+          const cdInterval = setInterval(() => {
+            left--;
+            if (left <= 0) {
+              clearInterval(cdInterval);
+              btnRequestOtp.disabled = false;
+              btnRequestOtp.textContent = isKm ? "📩 ផ្ញើលេខកូដ OTP" : "Send OTP Code";
+            } else {
+              btnRequestOtp.textContent = `${left}s`;
+            }
+          }, 1000);
+
+          authOtpDigits[0].focus();
+          return res.otpCode;
+        }
+      } catch (err) {
+        btnRequestOtp.disabled = false;
+        btnRequestOtp.textContent = isKm ? "📩 ផ្ញើលេខកូដ OTP" : "Send OTP Code";
+        this.showToast(err.message || 'Error generating OTP', 'error');
+      }
+      return null;
+    };
+
+    btnRequestOtp.addEventListener('click', handleRequestOtp);
+
+    // 1-Click Auto-Fill OTP Button
+    btnAutoFillSignUpOtp.addEventListener('click', () => {
+      const code = authOtpDisplayCode.textContent.trim();
+      if (code && /^\d{6}$/.test(code)) {
+        for (let i = 0; i < 6; i++) {
+          authOtpDigits[i].value = code[i];
+          authOtpDigits[i].classList.add('filled');
+        }
+        authPasswordInput.focus();
+        this.showToast(isKm ? "✨ បានបំពេញលេខកូដ OTP រួចរាល់! សូមកំណត់ពាក្យសម្ងាត់" : "✨ OTP Auto-Filled! Please set your password", 'success');
+      }
     });
 
     // Handle Google Login
     overlay.querySelector('#btnAuthGoogle').addEventListener('click', async () => {
       try {
         await AuthService.loginWithGoogle();
+        if (authOtpInterval) clearInterval(authOtpInterval);
         overlay.remove();
         this.showToast(t('loginSuccess'), 'success');
         if (onSuccessCallback) onSuccessCallback();
@@ -261,31 +473,69 @@ class TwibbonApp {
     // Handle Email Login / Sign-up
     overlay.querySelector('#authEmailForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = overlay.querySelector('#authEmailInput').value.trim();
-      const password = overlay.querySelector('#authPasswordInput').value;
-      const name = overlay.querySelector('#authDisplayNameInput').value.trim();
+      const email = authEmailInput.value.trim().toLowerCase();
+      const password = authPasswordInput.value;
+      const name = authDisplayNameInput.value.trim();
 
       try {
         if (isSignUp) {
-          const user = await AuthService.signUpWithEmail(email, password, name);
-          overlay.remove();
-          if (user && !user.emailVerified) {
-            this.openOtpModal(email, () => {
-              if (onSuccessCallback) onSuccessCallback();
-            });
-          } else {
-            this.showToast(t('signupSuccess'), 'success');
-            if (onSuccessCallback) onSuccessCallback();
+          if (password.length < 6) {
+            this.showToast(isKm ? "ពាក្យសម្ងាត់ត្រូវមានយ៉ាងតិច ៦ តួអក្សរ" : "Password must be at least 6 characters.", 'error');
+            authPasswordInput.focus();
+            return;
           }
+
+          let enteredOtp = getEnteredSignUpOtp();
+          // If user hasn't entered OTP yet, check session or auto-generate!
+          if (enteredOtp.length !== 6) {
+            const lastCode = OtpService.getLastOtpCode(email);
+            if (!lastCode) {
+              await handleRequestOtp();
+              this.showToast(isKm ? "💡 ប្រព័ន្ធបានបង្កើតលេខកូដ OTP ជូនអ្នករួចរាល់! សូមចុច 'បំពេញស្វ័យប្រវត្តិ' រួចចុចចុះឈ្មោះ" : "OTP generated! Please click Auto-Fill and then register.", 'info', 8000);
+              return;
+            } else {
+              this.showToast(isKm ? "សូមបំពេញលេខកូដ OTP ៦ ខ្ទង់ ឬចុច 'បំពេញស្វ័យប្រវត្តិ'" : "Please enter the 6-digit OTP code or click Auto-Fill", 'error');
+              authOtpDigits[0].focus();
+              return;
+            }
+          }
+
+          // Verify OTP first!
+          const verifyResult = await OtpService.verifyOtp(email, enteredOtp);
+          if (!verifyResult.success) {
+            authSignUpOtpGrid.style.animation = 'shake 0.4s ease';
+            setTimeout(() => { authSignUpOtpGrid.style.animation = ''; }, 400);
+            if (verifyResult.reason === 'expired') {
+              this.showToast(t('otpExpiredCode'), 'error');
+            } else if (verifyResult.reason === 'max_attempts') {
+              this.showToast(t('otpMaxAttempts'), 'error');
+            } else {
+              this.showToast(t('otpInvalidCode'), 'error');
+            }
+            return;
+          }
+
+          // OTP verified! Create account
+          btnSubmit.parentElement.disabled = true;
+          btnSubmit.innerHTML = `<span>⏳ ${isKm ? 'កំពុងបង្កើតគណនី...' : 'Creating account...'}</span>`;
+          const user = await AuthService.signUpWithEmail(email, password, name, true);
+          if (authOtpInterval) clearInterval(authOtpInterval);
+          overlay.remove();
+          this.showToast(isKm ? "🎉 ចុះឈ្មោះ និងផ្ទៀងផ្ទាត់ OTP ជោគជ័យ!" : "🎉 Account registered & verified successfully!", 'success');
+          if (onSuccessCallback) onSuccessCallback();
           return;
         } else {
+          // Sign In
           await AuthService.loginWithEmail(email, password);
+          if (authOtpInterval) clearInterval(authOtpInterval);
           this.showToast(t('loginSuccess'), 'success');
           overlay.remove();
           if (onSuccessCallback) onSuccessCallback();
         }
       } catch (err) {
         console.error(err);
+        btnSubmit.parentElement.disabled = false;
+        btnSubmit.textContent = isSignUp ? (isKm ? '✅ ផ្ទៀងផ្ទាត់ OTP & ចុះឈ្មោះ' : '✅ Verify OTP & Sign Up') : t('signIn');
         let msg = t('loginFailed');
         if (err.code === 'auth/disposable-email') {
           msg = t('disposableEmailError');
@@ -307,7 +557,10 @@ class TwibbonApp {
     });
 
     overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.remove();
+      if (e.target === overlay) {
+        if (authOtpInterval) clearInterval(authOtpInterval);
+        overlay.remove();
+      }
     });
   }
 
@@ -339,10 +592,22 @@ class TwibbonApp {
           ${t('otpModalTitle')}
         </h2>
         
-        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.75rem;">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.5rem;">
           ${t('otpModalSubtitle')}<br>
           <strong style="color: var(--accent-primary); word-break: break-all;">${cleanEmail}</strong>
         </p>
+
+        <!-- Instant In-App VIP OTP Banner -->
+        <div class="otp-instant-box" id="modalOtpInstantBox" style="margin: 0.6rem 0 0.8rem;">
+          <div class="otp-instant-header">
+            <span>⚡ ${isKm ? 'លេខកូដ OTP របស់អ្នកគឺ៖' : 'Your OTP Code is:'}</span>
+            <span class="badge-instant">VIP Instant</span>
+          </div>
+          <div class="otp-instant-code" id="modalOtpInstantCode">------</div>
+          <button type="button" class="btn-autofill-otp" id="btnModalAutoFillOtp">
+            ✨ ${isKm ? 'ចុចបំពេញលេខកូដស្វ័យប្រវត្តិ (1-Click Auto-Fill)' : '1-Click Auto-Fill Code'}
+          </button>
+        </div>
 
         <!-- 6-Digit Segmented Inputs -->
         <div class="otp-inputs-grid" id="otpInputsGrid">
@@ -380,6 +645,38 @@ class TwibbonApp {
     const submitBtn = overlay.querySelector('#btnOtpSubmit');
     const resendBtn = overlay.querySelector('#btnOtpResend');
     const countdownEl = overlay.querySelector('#otpCountdown');
+    const instantCodeEl = overlay.querySelector('#modalOtpInstantCode');
+    const btnAutoFill = overlay.querySelector('#btnModalAutoFillOtp');
+
+    const updateInstantBanner = (code) => {
+      if (instantCodeEl && code) {
+        instantCodeEl.textContent = code;
+      }
+    };
+
+    // Load active code or generate one
+    const existingCode = OtpService.getLastOtpCode(targetEmail);
+    if (existingCode) {
+      updateInstantBanner(existingCode);
+    } else {
+      OtpService.generateOtp(targetEmail).then(res => {
+        if (res && res.otpCode) updateInstantBanner(res.otpCode);
+      }).catch(() => {});
+    }
+
+    // Auto-fill button click
+    if (btnAutoFill) {
+      btnAutoFill.addEventListener('click', () => {
+        const code = instantCodeEl ? instantCodeEl.textContent.trim() : '';
+        if (code && /^\d{6}$/.test(code)) {
+          for (let i = 0; i < 6; i++) {
+            digits[i].value = code[i];
+            digits[i].classList.add('filled');
+          }
+          checkFull();
+        }
+      });
+    }
 
     // Focus first input box
     setTimeout(() => {
@@ -533,8 +830,9 @@ class TwibbonApp {
     resendBtn.addEventListener('click', async () => {
       resendBtn.disabled = true;
       try {
-        await OtpService.generateOtp(targetEmail);
+        const res = await OtpService.generateOtp(targetEmail);
         this.showToast(t('verificationEmailSent'), 'success');
+        if (res && res.otpCode) updateInstantBanner(res.otpCode);
         startResendCooldown();
         digits.forEach(d => { d.value = ''; d.classList.remove('filled'); });
         digits[0].focus();
@@ -557,10 +855,11 @@ class TwibbonApp {
     // In-App OTP Notification listener (helps user see OTP instantly)
     const onOtpDispatched = (e) => {
       if (e.detail && e.detail.otpCode) {
-        this.showToast(`📩 OTP Code: ${e.detail.otpCode}`, 'info', 8000);
+        updateInstantBanner(e.detail.otpCode);
+        this.showToast(isKm ? `📩 លេខកូដ OTP របស់អ្នកគឺ៖ ${e.detail.otpCode}` : `📩 OTP Code: ${e.detail.otpCode}`, 'info', 8000);
       }
     };
-    window.addEventListener('tra_otp_dispatched', onOtpDispatched, { once: true });
+    window.addEventListener('tra_otp_dispatched', onOtpDispatched);
   }
 
   async copyToClipboard(text) {
