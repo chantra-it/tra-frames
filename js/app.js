@@ -498,21 +498,12 @@ class TwibbonApp {
     });
 
     container.innerHTML = `
-      <!-- Ultra-Clean Centered Hero -->
-      <section class="hero-clean">
-        <div class="hero-pill">
-          ${Icons.sparkles} <span>${t('heroBadge')}</span>
-        </div>
-        <h1 class="hero-title">
-          ${isKm 
-            ? 'បង្កើត និងចែករំលែកស៊ុមរូបថត <span style="color:var(--accent-primary);">សម្រាប់គ្រប់យុទ្ធនាការ</span>' 
-            : 'Create & Share Beautiful Frames <span style="color:var(--accent-primary);">for Any Movement</span>'}
+      <!-- Super Clean Minimal Search Header -->
+      <section class="explore-hero-minimal">
+        <h1 class="explore-hero-title">
+          ${isKm ? 'ស្វែងរកស៊ុមរូបថត' : 'Explore Frames'}
         </h1>
-        <p class="hero-subtitle">
-          ${t('heroSubtitle')}
-        </p>
 
-        <!-- Clean Search Bar -->
         <div class="hero-search-box">
           <span class="hero-search-icon">${Icons.search}</span>
           <input 
@@ -523,54 +514,37 @@ class TwibbonApp {
             id="campaignSearchInput"
           />
         </div>
-
-        <div class="hero-search-tags">
-          <span>Trending:</span>
-          <a onclick="app.setQuickSearch('graduation')">#Graduation2026</a>
-          <a onclick="app.setQuickSearch('khmer')">#KhmerNewYear</a>
-          <a onclick="app.setQuickSearch('planet')">#ProtectOurPlanet</a>
-          <a onclick="app.setQuickSearch('tech')">#TechSummit</a>
-        </div>
-
-        <div class="hero-actions">
-          <button class="btn btn-primary" onclick="window.location.hash='#create'">
-            ${Icons.plus} <span>${t('createCampaign')}</span>
-          </button>
-          <button class="btn btn-secondary" onclick="window.location.hash='#designer'">
-            ${Icons.paint} <span>${t('frameDesigner')}</span>
-          </button>
-        </div>
       </section>
 
       <!-- Category Filter Pills -->
       <div class="categories-bar">
         <button class="category-chip ${this.currentCategory === 'all' ? 'active' : ''}" data-cat="all">
-          ✨ ${t('allCategories')}
+          ${t('allCategories')}
         </button>
         <button class="category-chip ${this.currentCategory === 'education' ? 'active' : ''}" data-cat="education">
-          🎓 ${t('catEducation')}
+          ${t('catEducation')}
         </button>
         <button class="category-chip ${this.currentCategory === 'culture' ? 'active' : ''}" data-cat="culture">
-          🇰🇭 ${t('catCulture')}
+          ${t('catCulture')}
         </button>
         <button class="category-chip ${this.currentCategory === 'charity' ? 'active' : ''}" data-cat="charity">
-          ❤️ ${t('catCharity')}
+          ${t('catCharity')}
         </button>
         <button class="category-chip ${this.currentCategory === 'tech' ? 'active' : ''}" data-cat="tech">
-          ⚡ ${t('catTech')}
+          ${t('catTech')}
         </button>
         <button class="category-chip ${this.currentCategory === 'celebration' ? 'active' : ''}" data-cat="celebration">
-          🎉 ${t('catCelebration')}
+          ${t('catCelebration')}
         </button>
       </div>
 
-      <!-- Section Title -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
-        <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary);">
-          🔥 ${t('sortPopular')}
+      <!-- Minimal Section Title -->
+      <div class="explore-section-header">
+        <h2 class="explore-section-title">
+          ${t('sortPopular')}
         </h2>
-        <span style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-          ${filtered.length} ${t('statsCampaigns')}
+        <span class="explore-section-count">
+          ${filtered.length}
         </span>
       </div>
 
