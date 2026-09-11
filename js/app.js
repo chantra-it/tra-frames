@@ -1871,6 +1871,17 @@ class TwibbonApp {
     const isKm = getLanguage() === 'km';
 
     container.innerHTML = `
+      <!-- Sleek Mobile Top Bar (Native App Style) -->
+      <div class="designer-mobile-bar">
+        <button class="btn-icon" onclick="window.location.hash='#explore'" title="${t('backToHome')}">
+          ${Icons.chevronLeft}
+        </button>
+        <div class="designer-mobile-title">${t('designerTitle')}</div>
+        <button class="btn-icon" id="btnTopDownloadFrame" title="Download PNG">
+          ${Icons.download}
+        </button>
+      </div>
+
       <div class="designer-top-nav">
         <button class="btn btn-secondary" onclick="window.location.hash='#explore'">
           ${Icons.back} <span>${t('backToHome')}</span>
@@ -2005,7 +2016,7 @@ class TwibbonApp {
     });
 
     // Download PNG
-    document.getElementById('btnDownloadDesignerFrame').addEventListener('click', () => {
+    const dlHandler = () => {
       const dataUrl = this.activeDesigner.getTransparentPNGDataUrl();
       const a = document.createElement('a');
       a.href = dataUrl;
@@ -2014,7 +2025,11 @@ class TwibbonApp {
       a.click();
       a.remove();
       this.showToast(t('downloadSuccess'), 'success');
-    });
+    };
+
+    document.getElementById('btnDownloadDesignerFrame').addEventListener('click', dlHandler);
+    const topDl = document.getElementById('btnTopDownloadFrame');
+    if (topDl) topDl.addEventListener('click', dlHandler);
   }
 
   // ==========================================
