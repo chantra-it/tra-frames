@@ -7,7 +7,7 @@
   <meta name="description" content="Tra Frames - Modern, fast, and beautiful photo frame platform for social media campaigns, celebrations, and causes.">
 
   <!-- Security Hardening Meta Tags -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://firestore.googleapis.com https://*.googleapis.com https://*.firebaseio.com;">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -1135,6 +1135,10 @@ svg {
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <!-- Firebase Cloud Database SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
     <script>
 // Modern Lucide-style SVG Icons with explicit fixed dimensions
 const Icons = {
@@ -1846,6 +1850,35 @@ const INITIAL_CAMPAIGNS = [
 
 const LOCAL_STORAGE_KEY = "twibbon_user_campaigns";
 
+// Firebase Cloud Database Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDbtWymUNZ9Gk4URHgRUb6UkcSS3IwItiY",
+  authDomain: "tra-frames.firebaseapp.com",
+  projectId: "tra-frames",
+  storageBucket: "tra-frames.firebasestorage.app",
+  messagingSenderId: "635316364309",
+  appId: "1:635316364309:web:95d68cc9782c8aa8bd9a1c",
+  measurementId: "G-SFN5CFCT4E"
+};
+
+let firestoreDb = null;
+function initFirestore() {
+  if (firestoreDb) return firestoreDb;
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      firestoreDb = firebase.firestore();
+      console.log("🔥 Tra Frames: Connected to Google Cloud Firestore!");
+      return firestoreDb;
+    }
+  } catch (err) {
+    console.warn("Firestore connection notice:", err);
+  }
+  return null;
+}
+
 const CampaignService = {
   getCampaigns() {
     let userCampaigns = [];
@@ -1914,7 +1947,72 @@ const CampaignService = {
         throw new Error("Frame size is too large for local browser storage.");
       }
     }
+
+    // Save to Cloud Firestore so it is instantly accessible worldwide
+    const db = initFirestore();
+    if (db) {
+      db.collection("campaigns").doc(newCampaign.slug || newCampaign.id).set(newCampaign)
+        .then(() => console.log("🔥 Campaign synced to Cloud Firestore:", newCampaign.slug))
+        .catch(err => console.warn("Cloud Firestore sync error:", err));
+    }
+
     return newCampaign;
+  },
+
+  // Fetch campaign from Cloud Firestore if not found locally
+  async fetchCloudCampaign(identifier) {
+    const db = initFirestore();
+    if (!db) return null;
+    try {
+      // 1. Try finding by slug field
+      const snapshot = await db.collection("campaigns").where("slug", "==", identifier).limit(1).get();
+      if (!snapshot.empty) {
+        const data = snapshot.docs[0].data();
+        this.cacheCloudCampaign(data);
+        return data;
+      }
+      // 2. Try finding by document ID
+      const docRef = await db.collection("campaigns").doc(identifier).get();
+      if (docRef.exists) {
+        const data = docRef.data();
+        this.cacheCloudCampaign(data);
+        return data;
+      }
+    } catch (err) {
+      console.warn("Firestore query error:", err);
+    }
+    return null;
+  },
+
+  // Save to local cache so subsequent loads are instant
+  cacheCloudCampaign(campaign) {
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      let userCampaigns = stored ? JSON.parse(stored) : [];
+      if (!userCampaigns.some(c => c.slug === campaign.slug || c.id === campaign.id)) {
+        userCampaigns.unshift(campaign);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+      }
+    } catch (e) {}
+  },
+
+  // Sync existing local campaigns to Cloud Firestore
+  async syncLocalCampaignsToCloud() {
+    const db = initFirestore();
+    if (!db) return;
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (!stored) return;
+      const userCampaigns = JSON.parse(stored);
+      for (const c of userCampaigns) {
+        const docId = c.slug || c.id;
+        db.collection("campaigns").doc(docId).set(c, { merge: true })
+          .then(() => console.log("🔥 Synced local campaign to Cloud:", docId))
+          .catch(e => console.warn("Failed syncing campaign:", docId, e));
+      }
+    } catch (err) {
+      console.warn("Sync to cloud error:", err);
+    }
   },
 
   deleteCampaign(id) {
@@ -3044,13 +3142,27 @@ class TwibbonApp {
     const container = document.getElementById('appContent');
 
     if (!campaign) {
+      const isKm = getLanguage() === 'km';
       container.innerHTML = `
         <div style="text-align: center; padding: 5rem 1rem;">
-          <h2>Campaign Not Found</h2>
-          <p style="color: var(--text-secondary); margin: 1rem 0 2rem 0;">The campaign you are looking for does not exist or has been removed.</p>
-          <button class="btn btn-primary" onclick="window.location.hash='#explore'">${t('backToHome')}</button>
+          <div style="font-size: 2.8rem; margin-bottom: 1rem;">☁️</div>
+          <h2 style="color: var(--text-primary); font-weight: 800;">${isKm ? 'កំពុងទាញយកយុទ្ធនាការពី Cloud...' : 'Loading campaign from Cloud...'}</h2>
+          <p style="color: var(--text-secondary); margin: 0.5rem 0 1.5rem 0;">${isKm ? 'សូមរង់ចាំមួយភ្លែត ប្រព័ន្ធកំពុងទាញទិន្នន័យពី Cloud Firestore...' : 'Fetching live campaign data from Cloud Firestore...'}</p>
         </div>
       `;
+      CampaignService.fetchCloudCampaign(identifier).then(cloudCampaign => {
+        if (cloudCampaign) {
+          this.loadCampaignView(identifier);
+        } else {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 5rem 1rem;">
+              <h2 style="color: var(--text-primary); font-weight: 800;">Campaign Not Found</h2>
+              <p style="color: var(--text-secondary); margin: 1rem 0 2rem 0;">The campaign you are looking for does not exist or has been removed.</p>
+              <button class="btn btn-primary" onclick="window.location.hash='#explore'">${t('backToHome')}</button>
+            </div>
+          `;
+        }
+      });
       return;
     }
 
@@ -3760,6 +3872,9 @@ class TwibbonApp {
 let app;
 window.addEventListener('DOMContentLoaded', () => {
   app = new TwibbonApp();
+  setTimeout(() => {
+    CampaignService.syncLocalCampaignsToCloud();
+  }, 1000);
 });
 
   </script>
