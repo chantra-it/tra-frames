@@ -3,12 +3,28 @@
 class TwibbonApp {
   constructor() {
     this.currentView = 'explore';
+    this.currentRouteHash = window.location.hash || '';
+    this.previousRouteHash = '';
+    this.isRevertingHash = false;
+    this.isInitialLoad = true;
     this.activeCampaign = null;
     this.activeStudio = null;
     this.activeDesigner = null;
-    this.currentCategory = 'all';
-    this.searchQuery = '';
-    this.sortOrder = 'popular';
+    this.studio = null;
+    this.designer = null;
+    this.isCreateFormDirty = false;
+    this.isAuthPendingOtp = false;
+
+    // Restore Explore states from sessionStorage
+    try {
+      this.currentCategory = sessionStorage.getItem('tra_explore_cat') || 'all';
+      this.searchQuery = sessionStorage.getItem('tra_explore_q') || '';
+      this.sortOrder = sessionStorage.getItem('tra_explore_sort') || 'popular';
+    } catch (e) {
+      this.currentCategory = 'all';
+      this.searchQuery = '';
+      this.sortOrder = 'popular';
+    }
 
     // Force default to clean light mode
     const storedTheme = localStorage.getItem('twibbon_theme');
@@ -37,19 +53,114 @@ class TwibbonApp {
       });
     }
 
-    // 3. Setup hash routing
-    window.addEventListener('hashchange', () => this.handleRoute());
+    // 3. Track scroll position per route for refresh/reload restoration
+    window.addEventListener('scroll', () => {
+      const activeHash = window.location.hash || '#explore';
+      try {
+        sessionStorage.setItem('tra_scroll_' + activeHash, window.scrollY);
+      } catch (e) {}
+    }, { passive: true });
 
-    // 4. Listen for language changes
+    // 4. Browser BeforeUnload Guard (Prompts confirmation on F5 / Reload / Close Tab)
+    window.addEventListener('beforeunload', (e) => {
+      if (this.hasUnsavedWork()) {
+        e.preventDefault();
+        e.returnValue = ''; // Shows browser native: "Reload site? Changes you made may not be saved."
+        return '';
+      }
+    });
+
+    // 5. Setup Hash Routing with Intra-App Navigation Guard
+    window.addEventListener('hashchange', (e) => {
+      if (this.isRevertingHash) {
+        this.isRevertingHash = false;
+        return;
+      }
+
+      if (this.hasUnsavedWork()) {
+        const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+        const confirmMsg = isKm
+          ? "⚠️ អ្នកមានការងារដែលមិនទាន់បានបញ្ចប់ ឬមិនទាន់បានរក្សាទុក!\n\nតើអ្នកពិតជាចង់ចាកចេញមែនទេ? ការផ្លាស់ប្តូររបស់អ្នកអាចនឹងបាត់បង់។"
+          : "⚠️ You have unsaved or unfinished work in progress!\n\nAre you sure you want to leave? Your changes may be lost.";
+        
+        if (!window.confirm(confirmMsg)) {
+          this.isRevertingHash = true;
+          const oldHash = e.oldURL ? e.oldURL.split('#')[1] : '';
+          window.location.hash = oldHash ? ('#' + oldHash) : (this.currentRouteHash || '#explore');
+          return;
+        }
+        // Confirmed leaving: clear dirty flags
+        this.clearAllDirty();
+      }
+
+      this.previousRouteHash = this.currentRouteHash;
+      this.currentRouteHash = window.location.hash;
+      this.handleRoute();
+    });
+
+    // 6. Listen for language changes
     document.addEventListener('languageChanged', () => {
       this.updateStaticTranslations();
       this.updateNavAuth(AuthService ? AuthService.currentUser : null);
       this.renderCurrentView();
     });
 
-    // 5. Initial route resolution
+    // 7. Route Persistence: If root URL visited without hash, restore last active route!
+    if (!window.location.hash || window.location.hash === '#' || window.location.hash === '') {
+      try {
+        const lastRoute = localStorage.getItem('tra_last_active_route');
+        if (lastRoute && lastRoute !== '#' && lastRoute !== '') {
+          window.location.hash = lastRoute;
+          return;
+        }
+      } catch (e) {}
+    }
+
+    // 8. Initial route resolution
     this.updateStaticTranslations();
     this.handleRoute();
+  }
+
+  hasUnsavedWork() {
+    // 1. Check Canvas Studio
+    const studio = this.activeStudio || this.studio;
+    if (this.currentView === 'campaign' && studio && typeof studio.hasUnsavedWork === 'function') {
+      if (studio.hasUnsavedWork()) return true;
+    }
+
+    // 2. Check Frame Designer
+    const designer = this.activeDesigner || this.designer;
+    if (this.currentView === 'designer' && designer && typeof designer.hasUnsavedWork === 'function') {
+      if (designer.hasUnsavedWork()) return true;
+    }
+
+    // 3. Check Campaign Creation Form
+    if (this.currentView === 'create' && this.isCreateFormDirty) {
+      return true;
+    }
+
+    // 4. Check Auth / Sign-up OTP in progress
+    if (this.isAuthPendingOtp) {
+      return true;
+    }
+
+    return false;
+  }
+
+  clearAllDirty() {
+    const studio = this.activeStudio || this.studio;
+    if (studio && typeof studio.clearDirty === 'function') {
+      studio.clearDirty();
+    }
+    const designer = this.activeDesigner || this.designer;
+    if (designer && typeof designer.clearDirty === 'function') {
+      designer.clearDirty();
+    }
+    this.isCreateFormDirty = false;
+    this.isAuthPendingOtp = false;
+    try {
+      sessionStorage.removeItem('tra_create_draft');
+    } catch (e) {}
   }
 
   setTheme(theme) {
@@ -172,7 +283,7 @@ class TwibbonApp {
       <div class="modal-card" style="max-width: 440px;">
         <div class="modal-header">
           <h3>${Icons.avatar} <span>${t('signIn')} / ${t('signUp')}</span></h3>
-          <button class="modal-close-btn" onclick="document.getElementById('authModalOverlay').remove()">&times;</button>
+          <button class="modal-close-btn" onclick="if (typeof app !== 'undefined') app.isAuthPendingOtp = false; document.getElementById('authModalOverlay').remove()">&times;</button>
         </div>
 
         <div style="background: var(--accent-soft); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 0.75rem 1rem; font-size: 0.84rem; color: var(--accent-primary); line-height: 1.5;">
@@ -407,6 +518,7 @@ class TwibbonApp {
       try {
         const res = await OtpService.generateOtp(email, authDisplayNameInput.value.trim());
         if (res && res.otpCode) {
+          this.isAuthPendingOtp = true;
           if (authSentEmailDisplay) authSentEmailDisplay.textContent = email;
           signUpOtpBanner.style.display = 'block';
           startAuthOtpCountdown();
@@ -506,6 +618,7 @@ class TwibbonApp {
           btnSubmit.innerHTML = `<span>⏳ ${isKm ? 'កំពុងបង្កើតគណនី...' : 'Creating account...'}</span>`;
           const user = await AuthService.signUpWithEmail(email, password, name, true);
           if (authOtpInterval) clearInterval(authOtpInterval);
+          this.isAuthPendingOtp = false;
           overlay.remove();
           this.showToast(isKm ? "🎉 ចុះឈ្មោះ និងផ្ទៀងផ្ទាត់ OTP ជោគជ័យ!" : "🎉 Account registered & verified successfully!", 'success');
           if (onSuccessCallback) onSuccessCallback();
@@ -514,6 +627,7 @@ class TwibbonApp {
           // Sign In
           await AuthService.loginWithEmail(email, password);
           if (authOtpInterval) clearInterval(authOtpInterval);
+          this.isAuthPendingOtp = false;
           this.showToast(t('loginSuccess'), 'success');
           overlay.remove();
           if (onSuccessCallback) onSuccessCallback();
@@ -545,6 +659,7 @@ class TwibbonApp {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         if (authOtpInterval) clearInterval(authOtpInterval);
+        this.isAuthPendingOtp = false;
         overlay.remove();
       }
     });
@@ -937,12 +1052,20 @@ class TwibbonApp {
   }
 
   handleRoute() {
-    const hash = window.location.hash.slice(1) || 'explore';
+    const rawHash = window.location.hash || '#explore';
+    const hash = rawHash.slice(1) || 'explore';
     const parts = hash.split('/');
     const mainRoute = parts[0];
     const param = parts[1];
 
     this.updateNavLinks(mainRoute);
+
+    // Save active route to localStorage for persistence
+    try {
+      localStorage.setItem('tra_last_active_route', rawHash);
+    } catch (e) {}
+
+    const isNewRoute = (this.currentRouteHash !== this.previousRouteHash && !this.isInitialLoad);
 
     if (mainRoute === 'campaign' && param) {
       this.loadCampaignView(param);
@@ -955,7 +1078,21 @@ class TwibbonApp {
     } else {
       this.loadExploreView();
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Scroll handling:
+    // If it's a page reload or refresh, restore previous scroll position!
+    const savedScroll = sessionStorage.getItem('tra_scroll_' + rawHash);
+    if ((this.isInitialLoad || !isNewRoute) && savedScroll) {
+      const scrollY = parseInt(savedScroll, 10);
+      if (!isNaN(scrollY) && scrollY > 0) {
+        setTimeout(() => {
+          window.scrollTo({ top: scrollY, behavior: 'instant' });
+        }, 80);
+      }
+    } else if (isNewRoute) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    this.isInitialLoad = false;
   }
 
   updateNavLinks(activeRoute) {
@@ -1095,6 +1232,7 @@ class TwibbonApp {
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         this.searchQuery = e.target.value;
+        try { sessionStorage.setItem('tra_explore_q', this.searchQuery); } catch (err) {}
         this.loadExploreView();
       });
     }
@@ -1104,6 +1242,7 @@ class TwibbonApp {
     if (btnClear) {
       btnClear.addEventListener('click', () => {
         this.searchQuery = '';
+        try { sessionStorage.setItem('tra_explore_q', ''); } catch (err) {}
         this.loadExploreView();
       });
     }
@@ -1113,6 +1252,7 @@ class TwibbonApp {
     if (btnSortPop) {
       btnSortPop.addEventListener('click', () => {
         this.sortOrder = 'popular';
+        try { sessionStorage.setItem('tra_explore_sort', 'popular'); } catch (err) {}
         this.loadExploreView();
       });
     }
@@ -1121,6 +1261,7 @@ class TwibbonApp {
     if (btnSortNew) {
       btnSortNew.addEventListener('click', () => {
         this.sortOrder = 'newest';
+        try { sessionStorage.setItem('tra_explore_sort', 'newest'); } catch (err) {}
         this.loadExploreView();
       });
     }
@@ -1129,6 +1270,7 @@ class TwibbonApp {
     container.querySelectorAll('.category-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         this.currentCategory = chip.getAttribute('data-cat');
+        try { sessionStorage.setItem('tra_explore_cat', this.currentCategory); } catch (err) {}
         this.loadExploreView();
       });
     });
@@ -1136,6 +1278,7 @@ class TwibbonApp {
 
   setQuickSearch(tag) {
     this.searchQuery = tag;
+    try { sessionStorage.setItem('tra_explore_q', this.searchQuery); } catch (err) {}
     this.loadExploreView();
   }
 
@@ -1447,8 +1590,9 @@ class TwibbonApp {
     // Load Frame Image
     this.activeStudio.setFrame(campaign.frameUrl);
 
-    // Auto-load First Sample Avatar
-    this.activeStudio.setUserPhoto(SAMPLE_AVATARS[0]);
+    // Auto-load First Sample Avatar (as sample preview, not custom user photo)
+    this.activeStudio.setUserPhoto(SAMPLE_AVATARS[0], false);
+    this.studio = this.activeStudio;
 
     // Bind Upload Dropzone
     const dropzone = document.getElementById('photoDropzone');
@@ -1457,7 +1601,7 @@ class TwibbonApp {
     dropzone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => {
       if (e.target.files && e.target.files[0]) {
-        this.activeStudio.setUserPhoto(e.target.files[0]);
+        this.activeStudio.setUserPhoto(e.target.files[0], true);
         this.showToast(t('choosePhoto') + ' OK!');
       }
     });
@@ -1739,9 +1883,31 @@ class TwibbonApp {
       initialFrame = window._designerExportedFrame;
     }
 
-    const defaultCreator = (AuthService && AuthService.currentUser) 
-      ? SecurityUtils.escapeHtml(AuthService.currentUser.displayName || AuthService.currentUser.email.split('@')[0])
-      : '';
+    // Load any existing draft from sessionStorage
+    let savedDraft = null;
+    try {
+      const rawDraft = sessionStorage.getItem('tra_create_draft');
+      if (rawDraft) savedDraft = JSON.parse(rawDraft);
+    } catch (e) {}
+
+    if (savedDraft && savedDraft.frameUrl) {
+      initialFrame = savedDraft.frameUrl;
+    }
+
+    const defaultCreator = (savedDraft && savedDraft.creator)
+      ? SecurityUtils.escapeHtml(savedDraft.creator)
+      : ((AuthService && AuthService.currentUser) 
+          ? SecurityUtils.escapeHtml(AuthService.currentUser.displayName || AuthService.currentUser.email.split('@')[0])
+          : '');
+
+    const initialTitle = savedDraft && savedDraft.title ? SecurityUtils.escapeHtml(savedDraft.title) : '';
+    const initialSlug = savedDraft && savedDraft.slug ? SecurityUtils.escapeHtml(savedDraft.slug) : '';
+    const initialCategory = savedDraft && savedDraft.category ? savedDraft.category : 'education';
+    const initialDesc = savedDraft && savedDraft.desc ? SecurityUtils.escapeHtml(savedDraft.desc) : '';
+    const initialCaption = savedDraft && savedDraft.caption ? SecurityUtils.escapeHtml(savedDraft.caption) : '';
+    if (savedDraft && (savedDraft.title || savedDraft.desc || (savedDraft.frameUrl && savedDraft.frameUrl !== PRESET_FRAMES.graduation))) {
+      this.isCreateFormDirty = true;
+    }
 
     container.innerHTML = `
       <div style="margin-bottom: 1.5rem; text-align: center;">
@@ -1759,11 +1925,11 @@ class TwibbonApp {
             <div class="card-preview-wrapper">
               <img src="${SAMPLE_AVATARS[0]}" class="card-sample-backdrop" alt="Backdrop" />
               <img id="liveCardFrameImg" src="${initialFrame}" class="card-preview-frame" alt="Frame" />
-              <div id="liveCardCategoryBadge" class="card-badge-category">${t('catEducation')}</div>
+              <div id="liveCardCategoryBadge" class="card-badge-category">${t('cat' + (initialCategory.charAt(0).toUpperCase() + initialCategory.slice(1)))}</div>
               <div class="card-badge-supporters">${Icons.users} <span>1</span></div>
             </div>
             <div class="card-content">
-              <h3 id="liveCardTitle" class="card-title">${isKm ? 'ចំណងជើងយុទ្ធនាការ' : 'Campaign Title'}</h3>
+              <h3 id="liveCardTitle" class="card-title">${initialTitle || (isKm ? 'ចំណងជើងយុទ្ធនាការ' : 'Campaign Title')}</h3>
               <div id="liveCardCreator" class="card-creator">${Icons.avatar} <span>${t('by')} ${defaultCreator || (isKm ? 'ឈ្មោះអ្នកបង្កើត' : 'Creator')}</span></div>
             </div>
           </div>
@@ -1783,24 +1949,24 @@ class TwibbonApp {
         <form id="createCampaignForm" class="studio-controls-card" style="gap: 1.25rem;">
           <div class="form-group">
             <label class="form-label">${t('fieldTitle')} *</label>
-            <input type="text" id="campaignTitle" class="form-input" placeholder="${t('fieldTitlePlaceholder')}" required />
+            <input type="text" id="campaignTitle" class="form-input" value="${initialTitle}" placeholder="${t('fieldTitlePlaceholder')}" required />
           </div>
 
           <div class="form-row-2col">
             <div class="form-group">
               <label class="form-label">${t('fieldSlug')}</label>
-              <input type="text" id="campaignSlug" class="form-input" placeholder="${t('fieldSlugPlaceholder')}" />
+              <input type="text" id="campaignSlug" class="form-input" value="${initialSlug}" placeholder="${t('fieldSlugPlaceholder')}" />
             </div>
 
             <div class="form-group">
               <label class="form-label">${t('fieldCategory')}</label>
               <select id="campaignCategory" class="form-select">
-                <option value="education">🎓 ${t('catEducation')}</option>
-                <option value="culture">🇰🇭 ${t('catCulture')}</option>
-                <option value="charity">❤️ ${t('catCharity')}</option>
-                <option value="tech">⚡ ${t('catTech')}</option>
-                <option value="celebration">🎉 ${t('catCelebration')}</option>
-                <option value="sports">🏆 ${t('catSports')}</option>
+                <option value="education" ${initialCategory === 'education' ? 'selected' : ''}>🎓 ${t('catEducation')}</option>
+                <option value="culture" ${initialCategory === 'culture' ? 'selected' : ''}>🇰🇭 ${t('catCulture')}</option>
+                <option value="charity" ${initialCategory === 'charity' ? 'selected' : ''}>❤️ ${t('catCharity')}</option>
+                <option value="tech" ${initialCategory === 'tech' ? 'selected' : ''}>⚡ ${t('catTech')}</option>
+                <option value="celebration" ${initialCategory === 'celebration' ? 'selected' : ''}>🎉 ${t('catCelebration')}</option>
+                <option value="sports" ${initialCategory === 'sports' ? 'selected' : ''}>🏆 ${t('catSports')}</option>
               </select>
             </div>
           </div>
@@ -1812,12 +1978,12 @@ class TwibbonApp {
 
           <div class="form-group">
             <label class="form-label">${t('fieldDesc')}</label>
-            <textarea id="campaignDesc" class="form-textarea" rows="3" placeholder="${t('fieldDescPlaceholder')}"></textarea>
+            <textarea id="campaignDesc" class="form-textarea" rows="3" placeholder="${t('fieldDescPlaceholder')}">${initialDesc}</textarea>
           </div>
 
           <div class="form-group">
             <label class="form-label">${t('fieldCaption')}</label>
-            <textarea id="campaignCaption" class="form-textarea" rows="2" placeholder="${t('fieldCaptionPlaceholder')}"></textarea>
+            <textarea id="campaignCaption" class="form-textarea" rows="2" placeholder="${t('fieldCaptionPlaceholder')}">${initialCaption}</textarea>
           </div>
 
           <!-- Frame Selection / Upload -->
@@ -1862,16 +2028,40 @@ class TwibbonApp {
     const slugInput = document.getElementById('campaignSlug');
     const catInput = document.getElementById('campaignCategory');
     const creatorInput = document.getElementById('campaignCreator');
+    const descInput = document.getElementById('campaignDesc');
+    const captionInput = document.getElementById('campaignCaption');
     const liveCardTitle = document.getElementById('liveCardTitle');
     const liveCardCreator = document.getElementById('liveCardCreator');
     const liveCardCat = document.getElementById('liveCardCategoryBadge');
     const liveCardFrame = document.getElementById('liveCardFrameImg');
     const rawFrame = document.getElementById('rawFrameImg');
 
-    let slugManual = false;
+    let slugManual = !!initialSlug;
     if (slugInput) {
       slugInput.addEventListener('input', () => { slugManual = true; });
     }
+
+    const updateCreateDraft = () => {
+      const title = titleInput ? titleInput.value.trim() : '';
+      const desc = descInput ? descInput.value.trim() : '';
+      const hasCustom = title !== '' || desc !== '' || (selectedFrameDataUrl && selectedFrameDataUrl !== PRESET_FRAMES.graduation);
+      this.isCreateFormDirty = !!hasCustom;
+      if (hasCustom) {
+        try {
+          sessionStorage.setItem('tra_create_draft', JSON.stringify({
+            title: titleInput ? titleInput.value : '',
+            slug: slugInput ? slugInput.value : '',
+            category: catInput ? catInput.value : 'education',
+            creator: creatorInput ? creatorInput.value : '',
+            desc: descInput ? descInput.value : '',
+            caption: captionInput ? captionInput.value : '',
+            frameUrl: selectedFrameDataUrl
+          }));
+        } catch (e) {}
+      } else {
+        try { sessionStorage.removeItem('tra_create_draft'); } catch (e) {}
+      }
+    };
 
     if (titleInput) {
       titleInput.addEventListener('input', (e) => {
@@ -1881,6 +2071,7 @@ class TwibbonApp {
           const auto = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           if (auto) slugInput.value = auto;
         }
+        updateCreateDraft();
       });
     }
 
@@ -1891,6 +2082,7 @@ class TwibbonApp {
         if (liveCardCreator) {
           liveCardCreator.innerHTML = `${Icons.avatar} <span>${t('by')} ${safeVal || (isKm ? 'ឈ្មោះអ្នកបង្កើត' : 'Creator')}</span>`;
         }
+        updateCreateDraft();
       });
     }
 
@@ -1898,13 +2090,19 @@ class TwibbonApp {
       catInput.addEventListener('change', (e) => {
         const cat = e.target.value;
         if (liveCardCat) liveCardCat.textContent = t('cat' + (cat.charAt(0).toUpperCase() + cat.slice(1)));
+        updateCreateDraft();
       });
     }
+
+    if (slugInput) slugInput.addEventListener('input', updateCreateDraft);
+    if (descInput) descInput.addEventListener('input', updateCreateDraft);
+    if (captionInput) captionInput.addEventListener('input', updateCreateDraft);
 
     const updateFramePreviews = (url) => {
       selectedFrameDataUrl = url;
       if (liveCardFrame) liveCardFrame.src = url;
       if (rawFrame) rawFrame.src = url;
+      updateCreateDraft();
     };
 
     // Handle File Upload
@@ -1943,6 +2141,9 @@ class TwibbonApp {
     // Form Submit
     document.getElementById('createCampaignForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      try { sessionStorage.removeItem('tra_create_draft'); } catch (err) {}
+      this.isCreateFormDirty = false;
+
       const submitBtn = e.target.querySelector('button[type="submit"]');
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -2213,6 +2414,34 @@ class TwibbonApp {
     // Initialize Designer
     const canvas = document.getElementById('designerCanvas');
     this.activeDesigner = new FrameDesigner(canvas);
+    this.designer = this.activeDesigner;
+
+    // Synchronize UI inputs and chips with designer's restored settings
+    const currentSettings = this.activeDesigner.settings;
+    const headerInput = document.getElementById('designerHeaderInput');
+    const footerInput = document.getElementById('designerFooterInput');
+    if (headerInput && currentSettings.headerText) headerInput.value = currentSettings.headerText;
+    if (footerInput && currentSettings.footerText) footerInput.value = currentSettings.footerText;
+
+    if (currentSettings.shape) {
+      container.querySelectorAll('[data-shape]').forEach(chip => {
+        if (chip.getAttribute('data-shape') === currentSettings.shape) {
+          chip.classList.add('active');
+        } else {
+          chip.classList.remove('active');
+        }
+      });
+    }
+
+    if (currentSettings.theme) {
+      container.querySelectorAll('[data-theme-name]').forEach(chip => {
+        if (chip.getAttribute('data-theme-name') === currentSettings.theme) {
+          chip.classList.add('active');
+        } else {
+          chip.classList.remove('active');
+        }
+      });
+    }
 
     // Bind Shape Chips
     container.querySelectorAll('[data-shape]').forEach(chip => {
@@ -2242,12 +2471,14 @@ class TwibbonApp {
 
     // Use As Campaign
     document.getElementById('btnUseAsCampaign').addEventListener('click', () => {
+      this.activeDesigner.clearDirty();
       window._designerExportedFrame = this.activeDesigner.getTransparentPNGDataUrl();
       window.location.hash = '#create/designer';
     });
 
     // Download PNG
     const dlHandler = () => {
+      this.activeDesigner.clearDirty();
       const dataUrl = this.activeDesigner.getTransparentPNGDataUrl();
       const a = document.createElement('a');
       a.href = dataUrl;
