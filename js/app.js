@@ -248,7 +248,7 @@ class TwibbonApp {
       } catch (err) {
         console.error(err);
         if (err.code === 'auth/unauthorized-domain') {
-          this.showToast("Domain មិនទាន់អនុញ្ញាតក្នុង Firebase Console ទេ សូម Add frame.tra4me.com", 'error');
+          this.showToast(isKm ? "Domain មិនទាន់អនុញ្ញាតក្នុង Firebase Console ទេ សូម Add frame.tra4me.com ក្នុង Firebase Console > Authentication > Settings" : "Domain not authorized. Add frame.tra4me.com in Firebase Console > Authentication > Settings", 'error');
         } else if (err.code !== 'auth/popup-closed-by-user') {
           this.showToast(t('loginFailed'), 'error');
         }
@@ -281,6 +281,10 @@ class TwibbonApp {
           msg = isKm ? "អ៊ីមែលនេះមានគណនីរួចហើយ សូមជ្រើសរើស ចូលគណនី" : "Email already registered. Please sign in.";
         } else if (err.code === 'auth/weak-password') {
           msg = isKm ? "ពាក្យសម្ងាត់ត្រូវមានយ៉ាងតិច ៦ តួអក្សរ" : "Password must be at least 6 characters.";
+        } else if (err.code === 'auth/operation-not-allowed') {
+          msg = isKm ? "មុខងារ Email/Password មិនទាន់បានបើកក្នុង Firebase Console ទេ" : "Email/Password sign-in is disabled in Firebase Console.";
+        } else if (err.code === 'auth/invalid-email') {
+          msg = isKm ? "ទម្រង់អ៊ីមែលមិនត្រឹមត្រូវទេ" : "Invalid email address format.";
         }
         this.showToast(msg, 'error');
       }
