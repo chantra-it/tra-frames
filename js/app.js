@@ -268,17 +268,22 @@ class TwibbonApp {
       try {
         if (isSignUp) {
           const user = await AuthService.signUpWithEmail(email, password, name);
+          overlay.remove();
           if (user && !user.emailVerified) {
-            this.showToast(isKm ? `🎉 ចុះឈ្មោះជោគជ័យ! យើងបានផ្ញើតំណភ្ជាប់ផ្ទៀងផ្ទាត់ទៅកាន់ ${email}។ សូមពិនិត្យ Inbox/Spam!` : `Account created! Verification link sent to ${email}.`, 'success');
+            this.openOtpModal(email, () => {
+              if (onSuccessCallback) onSuccessCallback();
+            });
           } else {
             this.showToast(t('signupSuccess'), 'success');
+            if (onSuccessCallback) onSuccessCallback();
           }
+          return;
         } else {
           await AuthService.loginWithEmail(email, password);
           this.showToast(t('loginSuccess'), 'success');
+          overlay.remove();
+          if (onSuccessCallback) onSuccessCallback();
         }
-        overlay.remove();
-        if (onSuccessCallback) onSuccessCallback();
       } catch (err) {
         console.error(err);
         let msg = t('loginFailed');
@@ -304,6 +309,258 @@ class TwibbonApp {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) overlay.remove();
     });
+  }
+
+  // ==========================================
+  // 6-DIGIT EMAIL OTP VERIFICATION MODAL
+  // ==========================================
+  openOtpModal(email, onSuccessCallback) {
+    const existing = document.getElementById('traOtpModalOverlay');
+    if (existing) existing.remove();
+
+    const isKm = getLanguage() === 'km';
+    const targetEmail = email || (AuthService.currentUser ? AuthService.currentUser.email : '');
+    const cleanEmail = SecurityUtils.escapeHtml(targetEmail);
+
+    const overlay = document.createElement('div');
+    overlay.id = 'traOtpModalOverlay';
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '9999';
+
+    overlay.innerHTML = `
+      <div class="otp-modal-content">
+        <button class="modal-close-btn" id="btnOtpClose" style="position: absolute; top: 1rem; right: 1rem;">${Icons.close}</button>
+        
+        <div class="otp-icon-wrapper">
+          ${Icons.mail}
+        </div>
+        
+        <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.4rem;">
+          ${t('otpModalTitle')}
+        </h2>
+        
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.75rem;">
+          ${t('otpModalSubtitle')}<br>
+          <strong style="color: var(--accent-primary); word-break: break-all;">${cleanEmail}</strong>
+        </p>
+
+        <!-- 6-Digit Segmented Inputs -->
+        <div class="otp-inputs-grid" id="otpInputsGrid">
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="0" autofocus>
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="1">
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="2">
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="3">
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="4">
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="5">
+        </div>
+
+        <div class="otp-timer-badge" id="otpTimerBadge">
+          <span>⏱️ ${isKm ? 'សុពលភាព៖' : 'Expires in:'} <span id="otpCountdown">10:00</span></span>
+        </div>
+
+        <div class="otp-actions-wrapper">
+          <button class="btn btn-primary" id="btnOtpSubmit" style="padding: 0.85rem; font-size: 1rem; width: 100%;" disabled>
+            <span>${t('otpVerifyBtn')}</span>
+          </button>
+          
+          <button class="btn btn-secondary" id="btnOtpResend" style="padding: 0.7rem; font-size: 0.88rem; width: 100%;">
+            <span>${t('otpResendBtn')}</span>
+          </button>
+        </div>
+
+        <div style="margin-top: 1.25rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; background: var(--bg-secondary); padding: 0.65rem 0.85rem; border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
+          💡 ${isKm ? 'ប្រសិនបើមិនឃើញ Email ក្នុង Inbox សូមពិនិត្យមើលក្នុងប្រអប់ <strong>Spam</strong> ឬ <strong>Junk</strong>' : 'If you do not see the email, please check your <strong>Spam</strong> or <strong>Junk</strong> folder'}
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const digits = overlay.querySelectorAll('.otp-digit');
+    const submitBtn = overlay.querySelector('#btnOtpSubmit');
+    const resendBtn = overlay.querySelector('#btnOtpResend');
+    const countdownEl = overlay.querySelector('#otpCountdown');
+
+    // Focus first input box
+    setTimeout(() => {
+      if (digits[0]) digits[0].focus();
+    }, 100);
+
+    const getEnteredOtp = () => Array.from(digits).map(d => d.value).join('');
+
+    const checkFull = () => {
+      const val = getEnteredOtp();
+      const isComplete = val.length === 6 && /^\d{6}$/.test(val);
+      submitBtn.disabled = !isComplete;
+      if (isComplete) {
+        doVerify();
+      }
+    };
+
+    // Digit keyboard inputs
+    digits.forEach((input, idx) => {
+      input.addEventListener('input', (e) => {
+        const val = e.target.value.replace(/\D/g, '');
+        e.target.value = val ? val[val.length - 1] : '';
+        if (e.target.value) {
+          e.target.classList.add('filled');
+          if (idx < 5) digits[idx + 1].focus();
+        } else {
+          e.target.classList.remove('filled');
+        }
+        checkFull();
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace') {
+          if (!input.value && idx > 0) {
+            digits[idx - 1].focus();
+            digits[idx - 1].value = '';
+            digits[idx - 1].classList.remove('filled');
+          } else {
+            input.value = '';
+            input.classList.remove('filled');
+          }
+          checkFull();
+        } else if (e.key === 'ArrowLeft' && idx > 0) {
+          digits[idx - 1].focus();
+        } else if (e.key === 'ArrowRight' && idx < 5) {
+          digits[idx + 1].focus();
+        }
+      });
+
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
+        const numOnly = pasteData.replace(/\D/g, '').slice(0, 6);
+        if (numOnly) {
+          for (let i = 0; i < 6; i++) {
+            if (i < numOnly.length) {
+              digits[i].value = numOnly[i];
+              digits[i].classList.add('filled');
+            } else {
+              digits[i].value = '';
+              digits[i].classList.remove('filled');
+            }
+          }
+          const nextIdx = Math.min(5, numOnly.length);
+          digits[nextIdx].focus();
+          checkFull();
+        }
+      });
+    });
+
+    // 10-Minute Countdown
+    let totalSeconds = 600;
+    const timerInterval = setInterval(() => {
+      totalSeconds--;
+      if (totalSeconds <= 0) {
+        clearInterval(timerInterval);
+        countdownEl.textContent = "00:00";
+        submitBtn.disabled = true;
+        this.showToast(t('otpExpiredCode'), 'error');
+        return;
+      }
+      const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+      const secs = String(totalSeconds % 60).padStart(2, '0');
+      countdownEl.textContent = `${mins}:${secs}`;
+    }, 1000);
+
+    // Resend 60s cooldown
+    let resendCooldown = 60;
+    const startResendCooldown = () => {
+      resendBtn.disabled = true;
+      let left = resendCooldown;
+      const resendInterval = setInterval(() => {
+        left--;
+        if (left <= 0) {
+          clearInterval(resendInterval);
+          resendBtn.disabled = false;
+          resendBtn.textContent = t('otpResendBtn');
+        } else {
+          resendBtn.textContent = `${t('otpResendWait')} ${left}s`;
+        }
+      }, 1000);
+    };
+    startResendCooldown();
+
+    // Verify logic
+    let isVerifying = false;
+    const doVerify = async () => {
+      if (isVerifying) return;
+      const code = getEnteredOtp();
+      if (code.length !== 6) return;
+
+      isVerifying = true;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>⏳ ${isKm ? 'កំពុងផ្ទៀងផ្ទាត់...' : 'Verifying...'}</span>`;
+
+      try {
+        const result = await OtpService.verifyOtp(targetEmail, code);
+        if (result.success) {
+          clearInterval(timerInterval);
+          this.showToast(t('otpVerifiedSuccess'), 'success');
+          overlay.remove();
+          if (onSuccessCallback) onSuccessCallback();
+        } else {
+          isVerifying = false;
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<span>${t('otpVerifyBtn')}</span>`;
+          if (result.reason === 'expired') {
+            this.showToast(t('otpExpiredCode'), 'error');
+          } else if (result.reason === 'max_attempts') {
+            this.showToast(t('otpMaxAttempts'), 'error');
+          } else {
+            this.showToast(t('otpInvalidCode'), 'error');
+            const grid = overlay.querySelector('#otpInputsGrid');
+            if (grid) {
+              grid.style.animation = 'shake 0.4s ease';
+              setTimeout(() => { grid.style.animation = ''; }, 400);
+            }
+          }
+        }
+      } catch (err) {
+        isVerifying = false;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>${t('otpVerifyBtn')}</span>`;
+        this.showToast(t('otpInvalidCode'), 'error');
+      }
+    };
+
+    submitBtn.addEventListener('click', doVerify);
+
+    // Resend logic
+    resendBtn.addEventListener('click', async () => {
+      resendBtn.disabled = true;
+      try {
+        await OtpService.generateOtp(targetEmail);
+        this.showToast(t('verificationEmailSent'), 'success');
+        startResendCooldown();
+        digits.forEach(d => { d.value = ''; d.classList.remove('filled'); });
+        digits[0].focus();
+        submitBtn.disabled = true;
+      } catch (err) {
+        resendBtn.disabled = false;
+        this.showToast(err.message || 'Error sending OTP', 'error');
+      }
+    });
+
+    // Close button & backdrop
+    const closeBtn = overlay.querySelector('#btnOtpClose');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        clearInterval(timerInterval);
+        overlay.remove();
+      });
+    }
+
+    // In-App OTP Notification listener (helps user see OTP instantly)
+    const onOtpDispatched = (e) => {
+      if (e.detail && e.detail.otpCode) {
+        this.showToast(`📩 OTP Code: ${e.detail.otpCode}`, 'info', 8000);
+      }
+    };
+    window.addEventListener('tra_otp_dispatched', onOtpDispatched, { once: true });
   }
 
   async copyToClipboard(text) {
@@ -1511,11 +1768,14 @@ class TwibbonApp {
         </p>
 
         <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
-          <button class="btn btn-primary" id="btnCheckVerified" style="padding: 0.85rem; font-size: 0.95rem;">
-            <span>🔄 ${t('checkVerificationBtn')}</span>
+          <button class="btn btn-primary" id="btnGateOpenOtp" style="padding: 0.85rem; font-size: 1rem;">
+            <span>${t('otpEnterCodeBtn')}</span>
           </button>
-          <button class="btn btn-outline" id="btnResendVerification" style="padding: 0.85rem; font-size: 0.92rem;">
-            <span>📩 ${t('resendVerificationBtn')}</span>
+          <button class="btn btn-outline" id="btnGateSendOtp" style="padding: 0.85rem; font-size: 0.92rem;">
+            <span>${t('otpSendNewBtn')}</span>
+          </button>
+          <button class="btn btn-outline" id="btnCheckVerified" style="padding: 0.85rem; font-size: 0.92rem;">
+            <span>🔄 ${t('checkVerificationBtn')}</span>
           </button>
           <button class="btn btn-secondary" id="btnSignOutGate" style="padding: 0.75rem; font-size: 0.88rem;">
             <span>${isKm ? 'ចាកចេញ / ប្រើគណនីផ្សេង' : 'Sign Out / Use Another Account'}</span>
@@ -1527,6 +1787,33 @@ class TwibbonApp {
         </div>
       </div>
     `;
+
+    const btnOpenOtp = document.getElementById('btnGateOpenOtp');
+    if (btnOpenOtp) {
+      btnOpenOtp.addEventListener('click', () => {
+        this.openOtpModal(user ? user.email : '', () => {
+          this.loadCreateView(presetFrameId);
+        });
+      });
+    }
+
+    const btnSendOtp = document.getElementById('btnGateSendOtp');
+    if (btnSendOtp) {
+      btnSendOtp.addEventListener('click', async () => {
+        btnSendOtp.disabled = true;
+        try {
+          await OtpService.generateOtp(user ? user.email : '');
+          this.showToast(t('verificationEmailSent'), 'success');
+          setTimeout(() => { if (btnSendOtp) btnSendOtp.disabled = false; }, 5000);
+          this.openOtpModal(user ? user.email : '', () => {
+            this.loadCreateView(presetFrameId);
+          });
+        } catch (err) {
+          btnSendOtp.disabled = false;
+          this.showToast(err.message || 'Error sending OTP', 'error');
+        }
+      });
+    }
 
     const btnCheck = document.getElementById('btnCheckVerified');
     if (btnCheck) {
