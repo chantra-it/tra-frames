@@ -620,7 +620,6 @@ const OtpService = {
 
     try {
       sessionStorage.setItem("tra_otp_record", JSON.stringify(record));
-      sessionStorage.setItem("tra_active_otp_code", otpCode);
     } catch (e) {}
 
     // Dispatch email
@@ -629,18 +628,16 @@ const OtpService = {
     return { email: cleanEmail, otpCode, expiresAt };
   },
 
-  getLastOtpCode(email) {
-    if (!email) return null;
+  hasActiveOtp(email) {
+    if (!email) return false;
     const cleanEmail = email.trim().toLowerCase();
     try {
       const raw = sessionStorage.getItem("tra_otp_record");
-      if (!raw) return null;
+      if (!raw) return false;
       const rec = JSON.parse(raw);
-      if (rec.email === cleanEmail && Date.now() < rec.expiresAt) {
-        return sessionStorage.getItem("tra_active_otp_code") || null;
-      }
+      return (rec.email === cleanEmail && Date.now() < rec.expiresAt);
     } catch (e) {}
-    return null;
+    return false;
   },
 
   async sendOtpEmail(email, otpCode, displayName = '') {
@@ -759,7 +756,6 @@ const OtpService = {
     // OTP IS VALID!
     try {
       sessionStorage.removeItem("tra_otp_record");
-      sessionStorage.removeItem("tra_active_otp_code");
     } catch (e) {}
 
     // Update active user state
