@@ -2984,7 +2984,15 @@ const translations = {
     resultsFound: "ស៊ុម",
     autoSlugHint: "តំណភ្ជាប់នឹងបង្កើតដោយស្វ័យប្រវត្តិ",
     creatorDashboard: "ផ្ទាំងអ្នកបង្កើត",
-    creatorStats: "ស្ថិតិយុទ្ធនាការ"
+    creatorStats: "ស្ថិតិយុទ្ធនាការ",
+    emailVerificationRequired: "សូមផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នក",
+    emailVerificationDesc: "ដើម្បីទប់ស្កាត់ Spam និងធានាសុវត្ថិភាព យុទ្ធនាការអាចបង្កើតបានតែជាមួយអ៊ីមែលដែលបានផ្ទៀងផ្ទាត់រួចរាល់ប៉ុណ្ណោះ។ យើងបានផ្ញើតំណភ្ជាប់ទៅកាន់៖",
+    checkVerificationBtn: "ខ្ញុំបានចុច Link ផ្ទៀងផ្ទាត់រួចរាល់",
+    resendVerificationBtn: "ផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់ម្តងទៀត",
+    verificationEmailSent: "បានផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់រួចរាល់ សូមពិនិត្យប្រអប់សំបុត្ររបស់អ្នក!",
+    emailVerifiedSuccess: "អ៊ីមែលរបស់អ្នកត្រូវបានផ្ទៀងផ្ទាត់ជោគជ័យ!",
+    emailNotVerifiedYet: "អ៊ីមែលមិនទាន់បានផ្ទៀងផ្ទាត់នៅឡើយទេ។ សូមពិនិត្យមើល Link ក្នុងប្រអប់សំបុត្រ Email របស់អ្នក (រួមទាំង Spam)។",
+    disposableEmailError: "សូមប្រើប្រាស់អ៊ីមែលពិតប្រាកដ (Gmail, Outlook, Yahoo...)។ ប្រព័ន្ធមិនអនុញ្ញាតអ៊ីមែលបណ្តោះអាសន្នទេ។"
   },
   en: {
     appName: "Tra Frames",
@@ -3120,7 +3128,15 @@ const translations = {
     resultsFound: "frames",
     autoSlugHint: "Slug generated automatically from title",
     creatorDashboard: "Creator Dashboard",
-    creatorStats: "Campaign Statistics"
+    creatorStats: "Campaign Statistics",
+    emailVerificationRequired: "Please Verify Your Email",
+    emailVerificationDesc: "To prevent spam and protect platform security, campaigns can only be published by accounts with verified emails. A verification link has been sent to:",
+    checkVerificationBtn: "I Have Verified (Check Status)",
+    resendVerificationBtn: "Resend Verification Email",
+    verificationEmailSent: "Verification email sent. Please check your inbox or spam!",
+    emailVerifiedSuccess: "Your email has been verified successfully!",
+    emailNotVerifiedYet: "Email is not verified yet. Please click the link in your inbox (or spam folder).",
+    disposableEmailError: "Please use a real email address (Gmail, Outlook, Yahoo). Disposable emails are not allowed."
   }
 };
 
@@ -3222,6 +3238,20 @@ const SecurityUtils = {
   cleanText(str, maxLength = 200) {
     if (!str) return '';
     return this.escapeHtml(String(str).trim().slice(0, maxLength));
+  },
+
+  isDisposableEmail(email) {
+    if (!email || typeof email !== 'string') return true;
+    const domain = email.split('@')[1]?.toLowerCase().trim();
+    if (!domain) return true;
+    const disposableDomains = [
+      'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'mailinator.com',
+      'throwawaymail.com', 'yopmail.com', 'trashmail.com', 'sharklasers.com',
+      'getairmail.com', 'fakemailgenerator.com', 'dispostable.com', 'maildrop.cc',
+      'generator.email', 'temp-mail.org', 'mohmal.com', 'crazymailing.com',
+      'fakeinbox.com', 'emailondeck.com', 'mytemp.email', 'burnermail.io'
+    ];
+    return disposableDomains.includes(domain);
   },
 
   // Secure One-Way Cryptographic Password Hashing using native Web Crypto API (SHA-256)
@@ -3740,11 +3770,13 @@ const AuthService = {
 
     auth.onAuthStateChanged((user) => {
       if (user) {
+        const isGoogle = user.providerData && user.providerData.some(p => p.providerId === 'google.com');
         this.currentUser = {
           uid: user.uid,
           email: user.email || '',
-          displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Creator'),
-          photoURL: user.photoURL || '',
+          displayName: SecurityUtils.cleanText(user.displayName || (user.email ? user.email.split('@')[0] : 'Creator'), 50),
+          photoURL: SecurityUtils.sanitizeUrl(user.photoURL || ''),
+          emailVerified: isGoogle ? true : !!user.emailVerified,
           isLocal: false
         };
         try {
@@ -3759,7 +3791,7 @@ const AuthService = {
         }
       }
 
-      console.log("👤 Tra Frames Auth:", this.currentUser ? `Signed in as ${this.currentUser.displayName}` : "Guest");
+      console.log("👤 Tra Frames Auth:", this.currentUser ? `Signed in as ${this.currentUser.displayName} (Verified: ${this.isEmailVerified()})` : "Guest");
       this.notifyListeners();
     });
   },
@@ -3779,6 +3811,53 @@ const AuthService = {
     return !!this.currentUser;
   },
 
+  isEmailVerified() {
+    if (!this.currentUser) return false;
+    if (this.currentUser.emailVerified === true) return true;
+    if (this.currentUser.isLocal && this.currentUser.emailVerified !== false) return true;
+    return false;
+  },
+
+  async checkEmailVerificationStatus() {
+    const auth = initFirebaseAuth();
+    if (auth && auth.currentUser) {
+      try {
+        await auth.currentUser.reload();
+        const isGoogle = auth.currentUser.providerData && auth.currentUser.providerData.some(p => p.providerId === 'google.com');
+        const isVerified = isGoogle || !!auth.currentUser.emailVerified;
+        if (this.currentUser) {
+          this.currentUser.emailVerified = isVerified;
+          try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
+          this.notifyListeners();
+        }
+        return isVerified;
+      } catch (err) {
+        console.warn("reload user error:", err);
+      }
+    }
+    if (this.currentUser && this.currentUser.isLocal) {
+      return true;
+    }
+    return false;
+  },
+
+  async resendVerificationEmail() {
+    const rateCheck = SecurityUtils.checkRateLimit('resend_email_verification', 1, 60);
+    if (!rateCheck.allowed) {
+      const err = new Error(`សូមរង់ចាំ ${rateCheck.waitSeconds} វិនាទីមុននឹងផ្ញើម្តងទៀត`);
+      err.code = 'auth/too-many-requests';
+      throw err;
+    }
+    const auth = initFirebaseAuth();
+    if (auth && auth.currentUser) {
+      if (typeof auth.currentUser.sendEmailVerification === 'function') {
+        await auth.currentUser.sendEmailVerification();
+        return true;
+      }
+    }
+    return false;
+  },
+
   async loginWithGoogle() {
     const auth = initFirebaseAuth();
     if (!auth) throw new Error("Firebase Auth is not available.");
@@ -3788,6 +3867,18 @@ const AuthService = {
     provider.setCustomParameters({ prompt: 'select_account' });
     try {
       const result = await auth.signInWithPopup(provider);
+      if (result.user) {
+        this.currentUser = {
+          uid: result.user.uid,
+          email: result.user.email || '',
+          displayName: SecurityUtils.cleanText(result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'), 50),
+          photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
+          emailVerified: true,
+          isLocal: false
+        };
+        try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
+        this.notifyListeners();
+      }
       return result.user;
     } catch (err) {
       console.error("Google Sign-In Error:", err);
@@ -3815,11 +3906,13 @@ const AuthService = {
     if (auth) {
       try {
         const result = await auth.signInWithEmailAndPassword(cleanEmail, password);
+        const isGoogle = result.user.providerData && result.user.providerData.some(p => p.providerId === 'google.com');
         this.currentUser = {
           uid: result.user.uid,
           email: result.user.email,
           displayName: SecurityUtils.cleanText(result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'), 50),
           photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
+          emailVerified: isGoogle ? true : !!result.user.emailVerified,
           isLocal: false
         };
         try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
@@ -3850,6 +3943,11 @@ const AuthService = {
       err.code = 'auth/invalid-email';
       throw err;
     }
+    if (SecurityUtils.isDisposableEmail(cleanEmail)) {
+      const err = new Error("Disposable or temporary email addresses are not allowed.");
+      err.code = 'auth/disposable-email';
+      throw err;
+    }
     if (password.length < 6 || password.length > 128) {
       const err = new Error("Password must be between 6 and 128 characters");
       err.code = 'auth/weak-password';
@@ -3864,11 +3962,26 @@ const AuthService = {
         if (safeDisplayName && result.user) {
           try { await result.user.updateProfile({ displayName: safeDisplayName }); } catch (e) {}
         }
+
+        // Send Email Verification link
+        let emailSent = false;
+        if (result.user && typeof result.user.sendEmailVerification === 'function') {
+          try {
+            await result.user.sendEmailVerification();
+            emailSent = true;
+            console.log("📩 Verification email dispatched to:", cleanEmail);
+          } catch (verErr) {
+            console.warn("sendEmailVerification notice:", verErr);
+          }
+        }
+
         this.currentUser = {
           uid: result.user.uid,
           email: result.user.email,
           displayName: safeDisplayName,
           photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
+          emailVerified: false,
+          verificationEmailSent: emailSent,
           isLocal: false
         };
         try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
@@ -4115,6 +4228,12 @@ const CampaignService = {
     }
 
     const user = AuthService.currentUser;
+    if (user && !AuthService.isEmailVerified()) {
+      const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+      throw new Error(isKm 
+        ? "សូមផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នកជាមុនសិន ទើបអាចបង្កើតយុទ្ធនាការបាន" 
+        : "Email verification required. Please verify your email before publishing campaigns.");
+    }
     const allowedCategories = ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'];
     const safeCategory = allowedCategories.includes(campaignData.category) ? campaignData.category : 'celebration';
 
@@ -5421,8 +5540,12 @@ class TwibbonApp {
 
       try {
         if (isSignUp) {
-          await AuthService.signUpWithEmail(email, password, name);
-          this.showToast(t('signupSuccess'), 'success');
+          const user = await AuthService.signUpWithEmail(email, password, name);
+          if (user && !user.emailVerified) {
+            this.showToast(isKm ? `🎉 ចុះឈ្មោះជោគជ័យ! យើងបានផ្ញើតំណភ្ជាប់ផ្ទៀងផ្ទាត់ទៅកាន់ ${email}។ សូមពិនិត្យ Inbox/Spam!` : `Account created! Verification link sent to ${email}.`, 'success');
+          } else {
+            this.showToast(t('signupSuccess'), 'success');
+          }
         } else {
           await AuthService.loginWithEmail(email, password);
           this.showToast(t('loginSuccess'), 'success');
@@ -5432,7 +5555,9 @@ class TwibbonApp {
       } catch (err) {
         console.error(err);
         let msg = t('loginFailed');
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        if (err.code === 'auth/disposable-email') {
+          msg = t('disposableEmailError');
+        } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
           msg = isKm ? "អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវទេ" : "Incorrect email or password.";
         } else if (err.code === 'auth/email-already-in-use') {
           msg = isKm ? "អ៊ីមែលនេះមានគណនីរួចហើយ សូមជ្រើសរើស ចូលគណនី" : "Email already registered. Please sign in.";
@@ -5442,6 +5567,8 @@ class TwibbonApp {
           msg = isKm ? "មុខងារ Email/Password មិនទាន់បានបើកក្នុង Firebase Console ទេ" : "Email/Password sign-in is disabled in Firebase Console.";
         } else if (err.code === 'auth/invalid-email') {
           msg = isKm ? "ទម្រង់អ៊ីមែលមិនត្រឹមត្រូវទេ" : "Invalid email address format.";
+        } else if (err.code === 'auth/too-many-requests') {
+          msg = err.message || (isKm ? "សូមរង់ចាំបន្តិចមុននឹងព្យាយាមម្តងទៀត" : "Too many requests. Please wait.");
         }
         this.showToast(msg, 'error');
       }
@@ -6384,6 +6511,12 @@ class TwibbonApp {
       return;
     }
 
+    // Route Guard 2: Require Verified Email before creating a campaign
+    if (typeof AuthService !== 'undefined' && !AuthService.isEmailVerified()) {
+      this.loadEmailVerificationGate(presetFrameId);
+      return;
+    }
+
     let initialFrame = PRESET_FRAMES.graduation;
     if (presetFrameId && PRESET_FRAMES[presetFrameId]) {
       initialFrame = PRESET_FRAMES[presetFrameId];
@@ -6624,6 +6757,95 @@ class TwibbonApp {
       this.showToast(t('publishSuccess'), 'success');
       window.location.hash = `#campaign/${newCampaign.slug}`;
     });
+  }
+
+  // ==========================================
+  // VIEW: EMAIL VERIFICATION GATE
+  // ==========================================
+  loadEmailVerificationGate(presetFrameId) {
+    const container = document.getElementById('appContent');
+    const isKm = getLanguage() === 'km';
+    const user = AuthService.currentUser;
+    const email = user ? SecurityUtils.escapeHtml(user.email) : '';
+
+    container.innerHTML = `
+      <div class="auth-gate-card" style="max-width: 480px; margin: 3rem auto; text-align: center;">
+        <div class="auth-gate-icon" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; font-size: 2.2rem;">
+          ${Icons.mail}
+        </div>
+        <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem;">
+          ${t('emailVerificationRequired')}
+        </h2>
+        <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.92rem; margin-bottom: 1.25rem;">
+          ${t('emailVerificationDesc')}<br>
+          <span style="display: inline-block; margin-top: 0.45rem; padding: 0.35rem 0.85rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-weight: 700; color: var(--accent-primary); word-break: break-all;">
+            ${email}
+          </span>
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+          <button class="btn btn-primary" id="btnCheckVerified" style="padding: 0.85rem; font-size: 0.95rem;">
+            <span>🔄 ${t('checkVerificationBtn')}</span>
+          </button>
+          <button class="btn btn-outline" id="btnResendVerification" style="padding: 0.85rem; font-size: 0.92rem;">
+            <span>📩 ${t('resendVerificationBtn')}</span>
+          </button>
+          <button class="btn btn-secondary" id="btnSignOutGate" style="padding: 0.75rem; font-size: 0.88rem;">
+            <span>${isKm ? 'ចាកចេញ / ប្រើគណនីផ្សេង' : 'Sign Out / Use Another Account'}</span>
+          </button>
+        </div>
+
+        <div style="margin-top: 1.25rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; background: var(--bg-card); padding: 0.65rem 1rem; border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
+          💡 ${isKm ? 'ប្រសិនបើមិនឃើញ Email ក្នុង Inbox សូមពិនិត្យមើលក្នុងប្រអប់ <strong>Spam</strong> ឬ <strong>Junk</strong> របស់អ្នក។' : 'If you do not see the email, please check your <strong>Spam</strong> or <strong>Junk</strong> folder.'}
+        </div>
+      </div>
+    `;
+
+    const btnCheck = document.getElementById('btnCheckVerified');
+    if (btnCheck) {
+      btnCheck.addEventListener('click', async () => {
+        btnCheck.disabled = true;
+        btnCheck.innerHTML = `<span>⏳ ${isKm ? 'កំពុងពិនិត្យ...' : 'Checking...'}</span>`;
+        try {
+          const verified = await AuthService.checkEmailVerificationStatus();
+          if (verified) {
+            this.showToast(t('emailVerifiedSuccess'), 'success');
+            this.loadCreateView(presetFrameId);
+          } else {
+            this.showToast(t('emailNotVerifiedYet'), 'error');
+            btnCheck.disabled = false;
+            btnCheck.innerHTML = `<span>🔄 ${t('checkVerificationBtn')}</span>`;
+          }
+        } catch (err) {
+          btnCheck.disabled = false;
+          btnCheck.innerHTML = `<span>🔄 ${t('checkVerificationBtn')}</span>`;
+        }
+      });
+    }
+
+    const btnResend = document.getElementById('btnResendVerification');
+    if (btnResend) {
+      btnResend.addEventListener('click', async () => {
+        btnResend.disabled = true;
+        try {
+          await AuthService.resendVerificationEmail();
+          this.showToast(t('verificationEmailSent'), 'success');
+          setTimeout(() => { btnResend.disabled = false; }, 10000);
+        } catch (err) {
+          btnResend.disabled = false;
+          this.showToast(err.message || 'Error sending email', 'error');
+        }
+      });
+    }
+
+    const btnSignOut = document.getElementById('btnSignOutGate');
+    if (btnSignOut) {
+      btnSignOut.addEventListener('click', async () => {
+        await AuthService.logout();
+        this.showToast(t('logoutSuccess'), 'success');
+        window.location.hash = '#explore';
+      });
+    }
   }
 
   // ==========================================
