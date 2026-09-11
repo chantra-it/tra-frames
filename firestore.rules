@@ -7,6 +7,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isEmailVerified() {
+      return isAuthenticated() && (request.auth.token.email_verified == true);
+    }
+
     function isOwner(creatorUid) {
       return isAuthenticated() && request.auth.uid == creatorUid;
     }
@@ -31,8 +35,8 @@ service cloud.firestore {
       // 1. Public Read: anyone can view frames and explore
       allow read: if true;
 
-      // 2. Create: Only authenticated users, must own the document, strict schema validation
-      allow create: if isAuthenticated() &&
+      // 2. Create: Only authenticated users with VERIFIED EMAIL, must own the document, strict schema validation
+      allow create: if isEmailVerified() &&
                        request.resource.data.creatorUid == request.auth.uid &&
                        isValidCampaignData(request.resource.data);
 
