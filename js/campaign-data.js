@@ -590,7 +590,66 @@ const CampaignService = {
     return all.find(c => c.slug === identifier || c.id === identifier);
   },
 
-  saveCampaign(campaignData) {
+  async compressFrameDataUrl(dataUrl, maxDim = 1080) {
+    if (!dataUrl || typeof dataUrl !== 'string') return dataUrl;
+    if (!dataUrl.startsWith('data:image')) return dataUrl;
+    if (dataUrl.startsWith('data:image/svg+xml')) return dataUrl;
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Try WebP first (supports alpha transparency and is 3-5x smaller than PNG)
+          try {
+            const webpUrl = canvas.toDataURL('image/webp', 0.85);
+            if (webpUrl && webpUrl.startsWith('data:image/webp') && webpUrl.length < 800000) {
+              return resolve(webpUrl);
+            }
+          } catch (e) {}
+
+          // Fallback to PNG (guaranteed lossless transparency)
+          const pngUrl = canvas.toDataURL('image/png');
+          if (pngUrl.length < 900000) {
+            return resolve(pngUrl);
+          }
+
+          // If still larger than 900KB, scale down slightly to 900x900 PNG
+          canvas.width = Math.min(width, 900);
+          canvas.height = Math.min(height, 900);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          return resolve(canvas.toDataURL('image/png'));
+        } catch (err) {
+          console.warn('Image compression exception, using original:', err);
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  },
+
+  async saveCampaign(campaignData) {
     let userCampaigns = [];
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -603,6 +662,13 @@ const CampaignService = {
       .toLowerCase()
       .replace(/[^a-z0-9-]+/g, "")
       .replace(/^-+|-+$/g, "") || "campaign-" + Date.now();
+
+    let frameUrl = SecurityUtils.sanitizeUrl(campaignData.frameUrl);
+    if (frameUrl && frameUrl.length > 650000) {
+      try {
+        frameUrl = await this.compressFrameDataUrl(frameUrl);
+      } catch (e) {}
+    }
 
     const user = AuthService.currentUser;
     const newCampaign = {
@@ -620,7 +686,7 @@ const CampaignService = {
       descriptionKm: SecurityUtils.escapeHtml(campaignData.descriptionKm || ''),
       descriptionEn: SecurityUtils.escapeHtml(campaignData.descriptionEn || ''),
       caption: SecurityUtils.escapeHtml(campaignData.caption || ''),
-      frameUrl: SecurityUtils.sanitizeUrl(campaignData.frameUrl),
+      frameUrl: frameUrl,
       supporters: Math.max(1, parseInt(campaignData.supporters, 10) || 1),
       createdAt: new Date().toISOString().split("T")[0],
       isUserCreated: true
@@ -635,11 +701,7 @@ const CampaignService = {
         userCampaigns.pop();
         try {
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
-        } catch (e2) {
-          throw new Error("Browser storage quota reached. Please delete old campaigns.");
-        }
-      } else {
-        throw new Error("Frame size is too large for local browser storage.");
+        } catch (e2) {}
       }
     }
 
@@ -654,22 +716,58 @@ const CampaignService = {
     return newCampaign;
   },
 
+  // Sync a single campaign to Cloud Firestore
+  async syncSingleCampaignToCloud(campaign) {
+    const db = initFirestore();
+    if (!db || !campaign) return false;
+    const docId = campaign.slug || campaign.id;
+    if (!docId) return false;
+
+    try {
+      let dataToSave = { ...campaign };
+      if (dataToSave.frameUrl && dataToSave.frameUrl.length > 650000) {
+        dataToSave.frameUrl = await this.compressFrameDataUrl(dataToSave.frameUrl);
+      }
+      await db.collection("campaigns").doc(docId).set(dataToSave, { merge: true });
+      console.log("🔥 Synced campaign to Cloud Firestore:", docId);
+      const cloudStatusEl = document.getElementById('cloudSyncStatus');
+      if (cloudStatusEl) {
+        const isKm = getLanguage() === 'km';
+        cloudStatusEl.innerHTML = `☁️ ${isKm ? 'បាន Sync ឡើង Cloud Firestore រួចរាល់ • អាចបើកលើទូរស័ព្ទបាន' : 'Synced to Cloud Firestore • Accessible on Mobile'}`;
+        cloudStatusEl.style.color = '#10b981';
+      }
+      return true;
+    } catch (err) {
+      console.warn("Failed syncing single campaign to Firestore:", docId, err);
+      return false;
+    }
+  },
+
   // Fetch campaign from Cloud Firestore if not found locally
   async fetchCloudCampaign(identifier) {
     const db = initFirestore();
-    if (!db) return null;
+    if (!db || !identifier) return null;
     try {
-      // 1. Try finding by slug field
+      // 1. Try finding by document ID directly (fastest, direct lookup)
+      const docRef = await db.collection("campaigns").doc(identifier).get();
+      if (docRef.exists) {
+        const data = docRef.data();
+        this.cacheCloudCampaign(data);
+        return data;
+      }
+
+      // 2. Try finding by slug field
       const snapshot = await db.collection("campaigns").where("slug", "==", identifier).limit(1).get();
       if (!snapshot.empty) {
         const data = snapshot.docs[0].data();
         this.cacheCloudCampaign(data);
         return data;
       }
-      // 2. Try finding by document ID
-      const docRef = await db.collection("campaigns").doc(identifier).get();
-      if (docRef.exists) {
-        const data = docRef.data();
+
+      // 3. Try finding by id field
+      const idSnapshot = await db.collection("campaigns").where("id", "==", identifier).limit(1).get();
+      if (!idSnapshot.empty) {
+        const data = idSnapshot.docs[0].data();
         this.cacheCloudCampaign(data);
         return data;
       }
@@ -699,11 +797,32 @@ const CampaignService = {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (!stored) return;
       const userCampaigns = JSON.parse(stored);
-      for (const c of userCampaigns) {
+      let updatedAny = false;
+      for (let i = 0; i < userCampaigns.length; i++) {
+        let c = userCampaigns[i];
         const docId = c.slug || c.id;
-        db.collection("campaigns").doc(docId).set(c, { merge: true })
-          .then(() => console.log("🔥 Synced local campaign to Cloud:", docId))
-          .catch(e => console.warn("Failed syncing campaign:", docId, e));
+        if (!docId) continue;
+
+        let toSync = { ...c };
+        if (toSync.frameUrl && toSync.frameUrl.length > 650000) {
+          try {
+            toSync.frameUrl = await this.compressFrameDataUrl(toSync.frameUrl);
+            userCampaigns[i] = toSync;
+            updatedAny = true;
+          } catch (e) {}
+        }
+
+        try {
+          await db.collection("campaigns").doc(docId).set(toSync, { merge: true });
+          console.log("🔥 Synced local campaign to Cloud:", docId);
+        } catch (e) {
+          console.warn("Failed syncing campaign:", docId, e);
+        }
+      }
+      if (updatedAny) {
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+        } catch (e) {}
       }
     } catch (err) {
       console.warn("Sync to cloud error:", err);
