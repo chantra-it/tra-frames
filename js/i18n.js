@@ -122,7 +122,19 @@ const translations = {
     signupSuccess: "ចុះឈ្មោះបានជោគជ័យ!",
     loginFailed: "ការចូលគណនីមិនជោគជ័យ សូមព្យាយាមម្តងទៀត",
     supporterNoLoginTip: "ចំណាំ៖ អ្នកគាំទ្រដែលប្រើស៊ុមរូបថត មិនបាច់ Login ទេ!",
-    orDivider: "ឬ"
+    orDivider: "ឬ",
+    livePreview: "រូបភាពគំរូជាក់ស្តែង",
+    totalCampaigns: "យុទ្ធនាការសរុប",
+    totalSupporters: "អ្នកគាំទ្រសរុប",
+    adjustments: "កែសម្រួលពណ៌",
+    resolutionHd: "HD 1080p ច្បាស់កម្រិតខ្ពស់",
+    scanQrTip: "ស្កេន QR Code",
+    shareNative: "ចែករំលែក",
+    clearSearch: "សម្អាត",
+    resultsFound: "ស៊ុម",
+    autoSlugHint: "តំណភ្ជាប់នឹងបង្កើតដោយស្វ័យប្រវត្តិ",
+    creatorDashboard: "ផ្ទាំងអ្នកបង្កើត",
+    creatorStats: "ស្ថិតិយុទ្ធនាការ"
   },
   en: {
     appName: "Tra Frames",
@@ -246,7 +258,19 @@ const translations = {
     signupSuccess: "Account created successfully!",
     loginFailed: "Sign in failed. Please check credentials and try again.",
     supporterNoLoginTip: "Note: Supporters wearing frames never need to log in!",
-    orDivider: "OR"
+    orDivider: "OR",
+    livePreview: "Live Card Preview",
+    totalCampaigns: "Total Campaigns",
+    totalSupporters: "Total Supporters",
+    adjustments: "Fine Adjustments",
+    resolutionHd: "HD 1080p Crystal Clear",
+    scanQrTip: "Scan QR Code",
+    shareNative: "Share",
+    clearSearch: "Clear",
+    resultsFound: "frames",
+    autoSlugHint: "Slug generated automatically from title",
+    creatorDashboard: "Creator Dashboard",
+    creatorStats: "Campaign Statistics"
   }
 };
 
