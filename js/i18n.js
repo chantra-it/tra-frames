@@ -134,7 +134,15 @@ const translations = {
     resultsFound: "ស៊ុម",
     autoSlugHint: "តំណភ្ជាប់នឹងបង្កើតដោយស្វ័យប្រវត្តិ",
     creatorDashboard: "ផ្ទាំងអ្នកបង្កើត",
-    creatorStats: "ស្ថិតិយុទ្ធនាការ"
+    creatorStats: "ស្ថិតិយុទ្ធនាការ",
+    emailVerificationRequired: "សូមផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នក",
+    emailVerificationDesc: "ដើម្បីទប់ស្កាត់ Spam និងធានាសុវត្ថិភាព យុទ្ធនាការអាចបង្កើតបានតែជាមួយអ៊ីមែលដែលបានផ្ទៀងផ្ទាត់រួចរាល់ប៉ុណ្ណោះ។ យើងបានផ្ញើតំណភ្ជាប់ទៅកាន់៖",
+    checkVerificationBtn: "ខ្ញុំបានចុច Link ផ្ទៀងផ្ទាត់រួចរាល់",
+    resendVerificationBtn: "ផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់ម្តងទៀត",
+    verificationEmailSent: "បានផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់រួចរាល់ សូមពិនិត្យប្រអប់សំបុត្ររបស់អ្នក!",
+    emailVerifiedSuccess: "អ៊ីមែលរបស់អ្នកត្រូវបានផ្ទៀងផ្ទាត់ជោគជ័យ!",
+    emailNotVerifiedYet: "អ៊ីមែលមិនទាន់បានផ្ទៀងផ្ទាត់នៅឡើយទេ។ សូមពិនិត្យមើល Link ក្នុងប្រអប់សំបុត្រ Email របស់អ្នក (រួមទាំង Spam)។",
+    disposableEmailError: "សូមប្រើប្រាស់អ៊ីមែលពិតប្រាកដ (Gmail, Outlook, Yahoo...)។ ប្រព័ន្ធមិនអនុញ្ញាតអ៊ីមែលបណ្តោះអាសន្នទេ។"
   },
   en: {
     appName: "Tra Frames",
@@ -270,7 +278,15 @@ const translations = {
     resultsFound: "frames",
     autoSlugHint: "Slug generated automatically from title",
     creatorDashboard: "Creator Dashboard",
-    creatorStats: "Campaign Statistics"
+    creatorStats: "Campaign Statistics",
+    emailVerificationRequired: "Please Verify Your Email",
+    emailVerificationDesc: "To prevent spam and protect platform security, campaigns can only be published by accounts with verified emails. A verification link has been sent to:",
+    checkVerificationBtn: "I Have Verified (Check Status)",
+    resendVerificationBtn: "Resend Verification Email",
+    verificationEmailSent: "Verification email sent. Please check your inbox or spam!",
+    emailVerifiedSuccess: "Your email has been verified successfully!",
+    emailNotVerifiedYet: "Email is not verified yet. Please click the link in your inbox (or spam folder).",
+    disposableEmailError: "Please use a real email address (Gmail, Outlook, Yahoo). Disposable emails are not allowed."
   }
 };
 
