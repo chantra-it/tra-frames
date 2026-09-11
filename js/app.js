@@ -212,16 +212,19 @@ class TwibbonApp {
             <input type="email" id="authEmailInput" class="form-input" placeholder="name@example.com" required />
           </div>
 
-          <!-- Instant In-App VIP OTP Banner (Shown when OTP is requested/generated) -->
-          <div id="signUpOtpBanner" class="otp-instant-box" style="display: none;">
-            <div class="otp-instant-header">
-              <span>⚡ ${isKm ? 'លេខកូដ OTP របស់អ្នកគឺ៖' : 'Your OTP Code is:'}</span>
-              <span class="badge-instant">VIP Instant</span>
+          <!-- OTP Dispatched Status Banner (Never reveals secret code on screen) -->
+          <div id="signUpOtpBanner" class="otp-status-banner" style="display: none;">
+            <div class="otp-status-header">
+              <span>📩 ${isKm ? 'បានផ្ញើលេខកូដ OTP រួចរាល់' : 'OTP Code Dispatched'}</span>
+              <span class="badge-sent">Sent</span>
             </div>
-            <div class="otp-instant-code" id="authOtpDisplayCode">------</div>
-            <button type="button" class="btn-autofill-otp" id="btnAutoFillSignUpOtp">
-              ✨ ${isKm ? 'ចុចបំពេញលេខកូដស្វ័យប្រវត្តិ (1-Click Auto-Fill)' : '1-Click Auto-Fill Code'}
-            </button>
+            <p class="otp-status-text">
+              ${isKm ? 'លេខកូដសម្ងាត់ ៦ ខ្ទង់ត្រូវបានផ្ញើទៅកាន់អ៊ីមែល៖' : 'A 6-digit verification code has been sent to:'}<br>
+              <strong id="authSentEmailDisplay" style="color: var(--accent-primary); word-break: break-all;"></strong>
+            </p>
+            <div class="otp-status-hint">
+              💡 ${isKm ? 'សូមបើកប្រអប់សំបុត្រ <strong>Email (Inbox ឬ Spam)</strong> របស់អ្នក រួចចម្លងលេខកូដ ៦ ខ្ទង់មកបំពេញក្នុងប្រអប់ខាងក្រោម។' : 'Please check your <strong>Email (Inbox or Spam)</strong> and enter the 6-digit code below.'}
+            </div>
           </div>
 
           <!-- 6-Digit Segmented OTP Grid (Sign Up only) -->
@@ -267,8 +270,7 @@ class TwibbonApp {
     const groupName = overlay.querySelector('#groupDisplayName');
     const btnRequestOtp = overlay.querySelector('#btnRequestOtp');
     const signUpOtpBanner = overlay.querySelector('#signUpOtpBanner');
-    const authOtpDisplayCode = overlay.querySelector('#authOtpDisplayCode');
-    const btnAutoFillSignUpOtp = overlay.querySelector('#btnAutoFillSignUpOtp');
+    const authSentEmailDisplay = overlay.querySelector('#authSentEmailDisplay');
     const groupSignUpOtpInputs = overlay.querySelector('#groupSignUpOtpInputs');
     const authOtpTimerBadge = overlay.querySelector('#authOtpTimerBadge');
     const authOtpCountdown = overlay.querySelector('#authOtpCountdown');
@@ -306,12 +308,9 @@ class TwibbonApp {
 
       // Check if existing valid OTP in session
       const currentEmail = authEmailInput.value.trim();
-      if (currentEmail) {
-        const lastCode = OtpService.getLastOtpCode(currentEmail);
-        if (lastCode) {
-          authOtpDisplayCode.textContent = lastCode;
-          signUpOtpBanner.style.display = 'block';
-        }
+      if (currentEmail && OtpService.hasActiveOtp(currentEmail)) {
+        if (authSentEmailDisplay) authSentEmailDisplay.textContent = currentEmail;
+        signUpOtpBanner.style.display = 'block';
       }
     });
 
@@ -408,10 +407,10 @@ class TwibbonApp {
       try {
         const res = await OtpService.generateOtp(email, authDisplayNameInput.value.trim());
         if (res && res.otpCode) {
-          authOtpDisplayCode.textContent = res.otpCode;
+          if (authSentEmailDisplay) authSentEmailDisplay.textContent = email;
           signUpOtpBanner.style.display = 'block';
           startAuthOtpCountdown();
-          this.showToast(isKm ? `📩 លេខកូដ OTP របស់អ្នកគឺ៖ ${res.otpCode}` : `📩 Your OTP Code: ${res.otpCode}`, 'info', 9000);
+          this.showToast(isKm ? "📩 បានផ្ញើលេខកូដ OTP ទៅកាន់អ៊ីមែលរបស់អ្នករួចរាល់! សូមពិនិត្យមើល Inbox ឬ Spam" : "📩 OTP Code sent to your email! Please check Inbox or Spam.", 'success', 8000);
 
           // 60s cooldown on request button
           let left = 60;
@@ -438,19 +437,6 @@ class TwibbonApp {
     };
 
     btnRequestOtp.addEventListener('click', handleRequestOtp);
-
-    // 1-Click Auto-Fill OTP Button
-    btnAutoFillSignUpOtp.addEventListener('click', () => {
-      const code = authOtpDisplayCode.textContent.trim();
-      if (code && /^\d{6}$/.test(code)) {
-        for (let i = 0; i < 6; i++) {
-          authOtpDigits[i].value = code[i];
-          authOtpDigits[i].classList.add('filled');
-        }
-        authPasswordInput.focus();
-        this.showToast(isKm ? "✨ បានបំពេញលេខកូដ OTP រួចរាល់! សូមកំណត់ពាក្យសម្ងាត់" : "✨ OTP Auto-Filled! Please set your password", 'success');
-      }
-    });
 
     // Handle Google Login
     overlay.querySelector('#btnAuthGoogle').addEventListener('click', async () => {
@@ -486,15 +472,15 @@ class TwibbonApp {
           }
 
           let enteredOtp = getEnteredSignUpOtp();
-          // If user hasn't entered OTP yet, check session or auto-generate!
+          // If user hasn't entered OTP yet, check session or send to email!
           if (enteredOtp.length !== 6) {
-            const lastCode = OtpService.getLastOtpCode(email);
-            if (!lastCode) {
+            const hasOtp = OtpService.hasActiveOtp(email);
+            if (!hasOtp) {
               await handleRequestOtp();
-              this.showToast(isKm ? "💡 ប្រព័ន្ធបានបង្កើតលេខកូដ OTP ជូនអ្នករួចរាល់! សូមចុច 'បំពេញស្វ័យប្រវត្តិ' រួចចុចចុះឈ្មោះ" : "OTP generated! Please click Auto-Fill and then register.", 'info', 8000);
+              this.showToast(isKm ? "💡 បានផ្ញើលេខកូដ OTP ទៅ Email រួចរាល់! សូមពិនិត្យ Email រួចយកលេខកូដមកបំពេញ" : "OTP sent to your email! Please check your inbox and enter the code here.", 'info', 8000);
               return;
             } else {
-              this.showToast(isKm ? "សូមបំពេញលេខកូដ OTP ៦ ខ្ទង់ ឬចុច 'បំពេញស្វ័យប្រវត្តិ'" : "Please enter the 6-digit OTP code or click Auto-Fill", 'error');
+              this.showToast(isKm ? "សូមបើក Email របស់អ្នក រួចយកលេខកូដ OTP ៦ ខ្ទង់មកបំពេញក្នុងប្រអប់" : "Please check your email and enter the 6-digit OTP code below", 'error');
               authOtpDigits[0].focus();
               return;
             }
@@ -592,22 +578,10 @@ class TwibbonApp {
           ${t('otpModalTitle')}
         </h2>
         
-        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.5rem;">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.85rem;">
           ${t('otpModalSubtitle')}<br>
           <strong style="color: var(--accent-primary); word-break: break-all;">${cleanEmail}</strong>
         </p>
-
-        <!-- Instant In-App VIP OTP Banner -->
-        <div class="otp-instant-box" id="modalOtpInstantBox" style="margin: 0.6rem 0 0.8rem;">
-          <div class="otp-instant-header">
-            <span>⚡ ${isKm ? 'លេខកូដ OTP របស់អ្នកគឺ៖' : 'Your OTP Code is:'}</span>
-            <span class="badge-instant">VIP Instant</span>
-          </div>
-          <div class="otp-instant-code" id="modalOtpInstantCode">------</div>
-          <button type="button" class="btn-autofill-otp" id="btnModalAutoFillOtp">
-            ✨ ${isKm ? 'ចុចបំពេញលេខកូដស្វ័យប្រវត្តិ (1-Click Auto-Fill)' : '1-Click Auto-Fill Code'}
-          </button>
-        </div>
 
         <!-- 6-Digit Segmented Inputs -->
         <div class="otp-inputs-grid" id="otpInputsGrid">
@@ -634,7 +608,7 @@ class TwibbonApp {
         </div>
 
         <div style="margin-top: 1.25rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; background: var(--bg-secondary); padding: 0.65rem 0.85rem; border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
-          💡 ${isKm ? 'ប្រសិនបើមិនឃើញ Email ក្នុង Inbox សូមពិនិត្យមើលក្នុងប្រអប់ <strong>Spam</strong> ឬ <strong>Junk</strong>' : 'If you do not see the email, please check your <strong>Spam</strong> or <strong>Junk</strong> folder'}
+          💡 ${isKm ? 'សូមបើកប្រអប់សំបុត្រ <strong>Email (Inbox ឬ Spam)</strong> របស់អ្នក រួចយកលេខកូដ ៦ ខ្ទង់មកបំពេញទីនេះ' : 'Please check your <strong>Email (Inbox or Spam)</strong> and enter the 6-digit code here'}
         </div>
       </div>
     `;
@@ -645,38 +619,6 @@ class TwibbonApp {
     const submitBtn = overlay.querySelector('#btnOtpSubmit');
     const resendBtn = overlay.querySelector('#btnOtpResend');
     const countdownEl = overlay.querySelector('#otpCountdown');
-    const instantCodeEl = overlay.querySelector('#modalOtpInstantCode');
-    const btnAutoFill = overlay.querySelector('#btnModalAutoFillOtp');
-
-    const updateInstantBanner = (code) => {
-      if (instantCodeEl && code) {
-        instantCodeEl.textContent = code;
-      }
-    };
-
-    // Load active code or generate one
-    const existingCode = OtpService.getLastOtpCode(targetEmail);
-    if (existingCode) {
-      updateInstantBanner(existingCode);
-    } else {
-      OtpService.generateOtp(targetEmail).then(res => {
-        if (res && res.otpCode) updateInstantBanner(res.otpCode);
-      }).catch(() => {});
-    }
-
-    // Auto-fill button click
-    if (btnAutoFill) {
-      btnAutoFill.addEventListener('click', () => {
-        const code = instantCodeEl ? instantCodeEl.textContent.trim() : '';
-        if (code && /^\d{6}$/.test(code)) {
-          for (let i = 0; i < 6; i++) {
-            digits[i].value = code[i];
-            digits[i].classList.add('filled');
-          }
-          checkFull();
-        }
-      });
-    }
 
     // Focus first input box
     setTimeout(() => {
@@ -830,9 +772,8 @@ class TwibbonApp {
     resendBtn.addEventListener('click', async () => {
       resendBtn.disabled = true;
       try {
-        const res = await OtpService.generateOtp(targetEmail);
+        await OtpService.generateOtp(targetEmail);
         this.showToast(t('verificationEmailSent'), 'success');
-        if (res && res.otpCode) updateInstantBanner(res.otpCode);
         startResendCooldown();
         digits.forEach(d => { d.value = ''; d.classList.remove('filled'); });
         digits[0].focus();
@@ -851,15 +792,6 @@ class TwibbonApp {
         overlay.remove();
       });
     }
-
-    // In-App OTP Notification listener (helps user see OTP instantly)
-    const onOtpDispatched = (e) => {
-      if (e.detail && e.detail.otpCode) {
-        updateInstantBanner(e.detail.otpCode);
-        this.showToast(isKm ? `📩 លេខកូដ OTP របស់អ្នកគឺ៖ ${e.detail.otpCode}` : `📩 OTP Code: ${e.detail.otpCode}`, 'info', 8000);
-      }
-    };
-    window.addEventListener('tra_otp_dispatched', onOtpDispatched);
   }
 
   async copyToClipboard(text) {
