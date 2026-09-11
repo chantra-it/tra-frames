@@ -22,7 +22,7 @@
       <!-- Brand Logo -->
       <div class="nav-brand" onclick="window.location.hash='#explore'">
         <div class="brand-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5" style="width:20px;height:20px;"><rect width="18" height="18" x="3" y="3" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
         </div>
         <span>Tra <span style="color:var(--accent-primary);">Frames</span></span>
       </div>
@@ -30,16 +30,16 @@
       <!-- Desktop Nav Links -->
       <nav class="nav-links">
         <a class="nav-link active" data-route="explore" onclick="window.location.hash='#explore'">
-          <span data-i18n="explore">រុករកយុទ្ធនាការ</span>
+          <span data-i18n="navExplore">រុករក</span>
         </a>
         <a class="nav-link" data-route="create" onclick="window.location.hash='#create'">
-          <span data-i18n="createCampaign">បង្កើតយុទ្ធនាការ</span>
+          <span data-i18n="navCreate">បង្កើត</span>
         </a>
         <a class="nav-link" data-route="designer" onclick="window.location.hash='#designer'">
-          <span data-i18n="frameDesigner">រចនាស៊ុមក្នុង App</span>
+          <span data-i18n="navDesigner">រចនា</span>
         </a>
         <a class="nav-link" data-route="my-campaigns" onclick="window.location.hash='#my-campaigns'">
-          <span data-i18n="myCampaigns">យុទ្ធនាការរបស់ខ្ញុំ</span>
+          <span data-i18n="navMine">របស់ខ្ញុំ</span>
         </a>
       </nav>
 
@@ -60,8 +60,8 @@
 
         <!-- Quick Create Button (Desktop only) -->
         <button class="btn btn-primary btn-nav-create" onclick="window.location.hash='#create'">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
-          <span data-i18n="createCampaign">បង្កើតយុទ្ធនាការ</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+          <span data-i18n="navCreate">បង្កើត</span>
         </button>
       </div>
     </div>
@@ -75,20 +75,20 @@
   <!-- Mobile Bottom Navigation Bar -->
   <div class="mobile-bottom-bar">
     <div class="mobile-nav-item active" data-route="explore" onclick="window.location.hash='#explore'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
-      <span data-i18n="explore">រុករក</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/></svg>
+      <span data-i18n="navExplore">រុករក</span>
     </div>
     <div class="mobile-nav-item" data-route="create" onclick="window.location.hash='#create'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
-      <span data-i18n="createCampaign">បង្កើត</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span data-i18n="navCreate">បង្កើត</span>
     </div>
     <div class="mobile-nav-item" data-route="designer" onclick="window.location.hash='#designer'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="m19 11-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 .8 2.8 0L19 11Z"/></svg>
-      <span data-i18n="frameDesigner">រចនាស៊ុម</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><circle cx="13.5" cy="6.5" r="1" fill="currentColor"/><circle cx="17.5" cy="10.5" r="1" fill="currentColor"/><circle cx="8.5" cy="7.5" r="1" fill="currentColor"/><circle cx="6.5" cy="12.5" r="1" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.7 1.7-1.7h2c3.1 0 5.6-2.5 5.6-5.6C21.9 6 17.5 2 12 2z"/></svg>
+      <span data-i18n="navDesigner">រចនា</span>
     </div>
     <div class="mobile-nav-item" data-route="my-campaigns" onclick="window.location.hash='#my-campaigns'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span data-i18n="myCampaigns">របស់ខ្ញុំ</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span data-i18n="navMine">របស់ខ្ញុំ</span>
     </div>
   </div>
 
