@@ -1868,27 +1868,36 @@ class TwibbonApp {
   loadDesignerView() {
     this.currentView = 'designer';
     const container = document.getElementById('appContent');
+    const isKm = getLanguage() === 'km';
 
     container.innerHTML = `
-      <div style="margin-bottom: 1.25rem;">
+      <div class="designer-top-nav">
         <button class="btn btn-secondary" onclick="window.location.hash='#explore'">
           ${Icons.back} <span>${t('backToHome')}</span>
         </button>
       </div>
 
-      <div style="text-align: center; margin-bottom: 2rem;">
-        <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.4rem; color: var(--text-primary);">${t('designerTitle')}</h1>
-        <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">${t('designerSubtitle')}</p>
+      <div class="designer-header-wrap">
+        <h1 class="designer-title">${t('designerTitle')}</h1>
+        <p class="designer-subtitle">${t('designerSubtitle')}</p>
       </div>
 
-      <div class="studio-layout">
+      <div class="studio-layout designer-studio-layout">
         <!-- Canvas Left Column -->
-        <div class="canvas-wrapper-card">
-          <div class="canvas-container" style="max-width: 400px;">
+        <div class="canvas-wrapper-card designer-canvas-card">
+          <div class="designer-card-meta">
+            <span class="designer-live-badge">
+              <span class="live-dot"></span> <span>${isKm ? 'ការមើលផ្ទាល់' : 'Live Canvas'}</span>
+            </span>
+            <span class="designer-res-badge">1000×1000 PNG</span>
+          </div>
+
+          <div class="canvas-container designer-canvas-container" id="designerCanvasWrap">
             <canvas id="designerCanvas" width="1000" height="1000"></canvas>
           </div>
-          <div style="display: flex; gap: 0.75rem; width: 100%;">
-            <button class="btn btn-primary" id="btnUseAsCampaign" style="flex: 1;">
+
+          <div class="designer-action-buttons">
+            <button class="btn btn-primary" id="btnUseAsCampaign">
               ${Icons.plus} <span>${t('exportAsFrame')}</span>
             </button>
             <button class="btn btn-secondary" id="btnDownloadDesignerFrame">
@@ -1898,10 +1907,14 @@ class TwibbonApp {
         </div>
 
         <!-- Controls Right Column -->
-        <div class="studio-controls-card">
+        <div class="studio-controls-card designer-controls-card">
+          <div class="controls-card-header">
+            <h3>🎨 <span>${isKm ? 'កំណត់រចនាប័ទ្មស៊ុម' : 'Customize Frame'}</span></h3>
+          </div>
+
           <!-- Shape Selection with Visual Icons -->
           <div class="form-group">
-            <label class="form-label">${t('cutoutShape')}</label>
+            <label class="form-label">🎯 ${t('cutoutShape')}</label>
             <div class="shape-picker-grid">
               <button type="button" class="shape-picker-btn active" data-shape="circle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/></svg>
@@ -1928,7 +1941,7 @@ class TwibbonApp {
 
           <!-- Theme / Gradient Swatches -->
           <div class="form-group">
-            <label class="form-label">${t('frameTheme')}</label>
+            <label class="form-label">🌈 ${t('frameTheme')}</label>
             <div class="color-swatch-picker">
               <button type="button" class="color-swatch-btn active" data-theme-name="royalBlue" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);" title="Royal Blue"></button>
               <button type="button" class="color-swatch-btn" data-theme-name="emerald" style="background: linear-gradient(135deg, #065f46, #10b981);" title="Emerald"></button>
@@ -1942,13 +1955,13 @@ class TwibbonApp {
 
           <!-- Header Badge Text -->
           <div class="form-group">
-            <label class="form-label">${t('badgeText')}</label>
+            <label class="form-label">🏷️ ${t('badgeText')}</label>
             <input type="text" id="designerHeaderInput" class="form-input" value="CLASS OF 2026" placeholder="${t('badgePlaceholder')}" />
           </div>
 
           <!-- Footer Badge Text -->
           <div class="form-group">
-            <label class="form-label">${t('subBadgeText')}</label>
+            <label class="form-label">✨ ${t('subBadgeText')}</label>
             <input type="text" id="designerFooterInput" class="form-input" value="CONGRATULATIONS!" placeholder="${t('subBadgePlaceholder')}" />
           </div>
         </div>
