@@ -75,11 +75,45 @@ class FrameDesigner {
       }
     };
 
+    // Dirty & Unsaved Work State
+    this.isDirty = false;
+    this.isExported = false;
+
+    // Restore draft from sessionStorage if available
+    try {
+      const saved = sessionStorage.getItem('tra_designer_draft');
+      if (saved) {
+        this.settings = { ...this.settings, ...JSON.parse(saved) };
+        this.isDirty = true;
+      }
+    } catch (e) {}
+
     this.render();
+  }
+
+  saveDraft() {
+    try {
+      sessionStorage.setItem('tra_designer_draft', JSON.stringify(this.settings));
+    } catch (e) {}
+  }
+
+  hasUnsavedWork() {
+    return this.isDirty && !this.isExported;
+  }
+
+  clearDirty() {
+    this.isDirty = false;
+    this.isExported = true;
+    try {
+      sessionStorage.removeItem('tra_designer_draft');
+    } catch (e) {}
   }
 
   update(newSettings) {
     this.settings = { ...this.settings, ...newSettings };
+    this.isDirty = true;
+    this.isExported = false;
+    this.saveDraft();
     this.render();
   }
 
