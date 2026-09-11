@@ -8,6 +8,7 @@ class TwibbonApp {
     this.activeDesigner = null;
     this.currentCategory = 'all';
     this.searchQuery = '';
+    this.sortOrder = 'popular';
 
     // Force default to clean light mode
     const storedTheme = localStorage.getItem('twibbon_theme');
@@ -497,6 +498,13 @@ class TwibbonApp {
       return matchCat && matchSearch;
     });
 
+    // Apply sorting
+    if (this.sortOrder === 'newest') {
+      filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    } else {
+      filtered.sort((a, b) => (b.supporters || 0) - (a.supporters || 0));
+    }
+
     container.innerHTML = `
       <!-- Super Clean Minimal Search Header -->
       <section class="explore-hero-minimal">
@@ -513,6 +521,11 @@ class TwibbonApp {
             value="${this.searchQuery}"
             id="campaignSearchInput"
           />
+          ${this.searchQuery ? `
+            <button type="button" class="hero-search-clear" id="btnSearchClear" title="${t('clearSearch')}">
+              ${Icons.clear}
+            </button>
+          ` : ''}
         </div>
       </section>
 
@@ -538,14 +551,25 @@ class TwibbonApp {
         </button>
       </div>
 
-      <!-- Minimal Section Title -->
+      <!-- Section Title & Sort Toggle -->
       <div class="explore-section-header">
-        <h2 class="explore-section-title">
-          ${t('sortPopular')}
-        </h2>
-        <span class="explore-section-count">
-          ${filtered.length}
-        </span>
+        <div class="explore-section-title-wrap">
+          <h2 class="explore-section-title">
+            ${this.searchQuery ? (isKm ? 'លទ្ធផលស្វែងរក' : 'Search Results') : (this.sortOrder === 'newest' ? t('sortNewest') : t('sortPopular'))}
+          </h2>
+          <span class="explore-section-count">
+            ${filtered.length} ${t('resultsFound')}
+          </span>
+        </div>
+
+        <div class="explore-sort-toggle">
+          <button class="sort-btn ${this.sortOrder === 'popular' ? 'active' : ''}" id="btnSortPopular">
+            ${t('sortPopular')}
+          </button>
+          <button class="sort-btn ${this.sortOrder === 'newest' ? 'active' : ''}" id="btnSortNewest">
+            ${t('sortNewest')}
+          </button>
+        </div>
       </div>
 
       <!-- Campaign Grid -->
@@ -564,6 +588,32 @@ class TwibbonApp {
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         this.searchQuery = e.target.value;
+        this.loadExploreView();
+      });
+    }
+
+    // Bind Clear Button
+    const btnClear = document.getElementById('btnSearchClear');
+    if (btnClear) {
+      btnClear.addEventListener('click', () => {
+        this.searchQuery = '';
+        this.loadExploreView();
+      });
+    }
+
+    // Bind Sort Buttons
+    const btnSortPop = document.getElementById('btnSortPopular');
+    if (btnSortPop) {
+      btnSortPop.addEventListener('click', () => {
+        this.sortOrder = 'popular';
+        this.loadExploreView();
+      });
+    }
+
+    const btnSortNew = document.getElementById('btnSortNewest');
+    if (btnSortNew) {
+      btnSortNew.addEventListener('click', () => {
+        this.sortOrder = 'newest';
         this.loadExploreView();
       });
     }
@@ -670,6 +720,17 @@ class TwibbonApp {
     const caption = (isKm ? campaign.captionKm : campaign.captionEn) || '';
 
     container.innerHTML = `
+      <!-- Sleek Studio Mobile/Desktop Top Bar -->
+      <div class="studio-top-bar">
+        <button class="btn-icon" onclick="window.location.hash='#explore'" title="${t('backToHome')}">
+          ${Icons.chevronLeft}
+        </button>
+        <div class="studio-top-title">${title}</div>
+        <button class="btn-icon" id="btnTopNativeShare" title="${t('shareCampaign')}">
+          ${Icons.share2}
+        </button>
+      </div>
+
       <div class="studio-header-bar">
         <button class="btn btn-secondary" onclick="window.location.hash='#explore'">
           ${Icons.back} <span>${t('backToHome')}</span>
@@ -727,7 +788,7 @@ class TwibbonApp {
             </div>
           </div>
 
-          <!-- Step 2: Zoom Slider -->
+          <!-- Step 2: Zoom Slider with Stepper Buttons -->
           <div class="slider-group zoom-slider-group">
             <div class="slider-header">
               <span style="font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.35rem;">
@@ -735,12 +796,17 @@ class TwibbonApp {
               </span>
               <span id="zoomVal" class="slider-val-badge">100%</span>
             </div>
-            <input type="range" class="range-slider" id="zoomSlider" min="20" max="350" value="100" />
+            <div class="zoom-stepper-wrap">
+              <button type="button" class="zoom-stepper-btn" id="btnZoomMinus" title="Zoom Out">${Icons.minus}</button>
+              <input type="range" class="range-slider" id="zoomSlider" min="20" max="350" value="100" />
+              <button type="button" class="zoom-stepper-btn" id="btnZoomPlus" title="Zoom In">${Icons.plusMini}</button>
+            </div>
           </div>
 
-          <!-- Step 3: Primary Download Button -->
-          <button class="btn btn-success btn-download-main" id="btnDownloadHD">
+          <!-- Step 3: Hero High-Res Download Button -->
+          <button class="btn-download-hero" id="btnDownloadHD">
             ${Icons.download} <span>${t('downloadFrame')}</span>
+            <span class="hd-badge">1080p</span>
           </button>
         </div>
 
@@ -753,36 +819,40 @@ class TwibbonApp {
             </div>
           ` : ''}
 
-          <!-- Fine-tune Filters (Brightness, Contrast, Saturation) -->
-          <div>
-            <div class="tool-section-title">${Icons.sliders} <span>${t('filters')}</span></div>
-
-            <div class="sliders-grid">
-              <!-- Brightness -->
-              <div class="slider-group">
-                <div class="slider-header">
-                  <span>${t('brightness')}</span>
-                  <span id="brightnessVal" class="slider-val-badge">100%</span>
+          <!-- Fine-tune Filters Collapsible Accordion -->
+          <div class="collapsible-section" id="filtersSection">
+            <button type="button" class="collapsible-header" id="btnToggleFilters">
+              <span class="tool-section-title">${Icons.tune} <span>${t('adjustments')}</span></span>
+              <span class="collapsible-arrow">▼</span>
+            </button>
+            <div class="collapsible-body" id="filtersBody">
+              <div class="sliders-grid">
+                <!-- Brightness -->
+                <div class="slider-group">
+                  <div class="slider-header">
+                    <span>${t('brightness')}</span>
+                    <span id="brightnessVal" class="slider-val-badge">100%</span>
+                  </div>
+                  <input type="range" class="range-slider" id="brightnessSlider" min="50" max="160" value="100" />
                 </div>
-                <input type="range" class="range-slider" id="brightnessSlider" min="50" max="160" value="100" />
-              </div>
 
-              <!-- Contrast -->
-              <div class="slider-group">
-                <div class="slider-header">
-                  <span>${t('contrast')}</span>
-                  <span id="contrastVal" class="slider-val-badge">100%</span>
+                <!-- Contrast -->
+                <div class="slider-group">
+                  <div class="slider-header">
+                    <span>${t('contrast')}</span>
+                    <span id="contrastVal" class="slider-val-badge">100%</span>
+                  </div>
+                  <input type="range" class="range-slider" id="contrastSlider" min="50" max="160" value="100" />
                 </div>
-                <input type="range" class="range-slider" id="contrastSlider" min="50" max="160" value="100" />
-              </div>
 
-              <!-- Saturation -->
-              <div class="slider-group">
-                <div class="slider-header">
-                  <span>${t('saturation')}</span>
-                  <span id="satVal" class="slider-val-badge">100%</span>
+                <!-- Saturation -->
+                <div class="slider-group">
+                  <div class="slider-header">
+                    <span>${t('saturation')}</span>
+                    <span id="satVal" class="slider-val-badge">100%</span>
+                  </div>
+                  <input type="range" class="range-slider" id="satSlider" min="0" max="200" value="100" />
                 </div>
-                <input type="range" class="range-slider" id="satSlider" min="0" max="200" value="100" />
               </div>
             </div>
           </div>
@@ -792,7 +862,12 @@ class TwibbonApp {
             <div class="tool-section-title">${Icons.share} <span>${t('shareCampaign')}</span></div>
             
             <div class="campaign-share-box">
-              <div class="share-box-header">
+              <!-- 1-Tap Native Share Button -->
+              <button class="btn btn-primary" id="btnNativeShare" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 700;">
+                ${Icons.share2} <span>${t('shareNative')}</span>
+              </button>
+
+              <div class="share-box-header" style="margin-top: 0.35rem;">
                 <span>🔗 ${isKm ? 'តំណភ្ជាប់ចែករំលែក (Share Link)' : 'Campaign Share Link'}:</span>
               </div>
               <div class="share-link-input-group">
@@ -802,7 +877,7 @@ class TwibbonApp {
                 </button>
               </div>
 
-              <!-- Instant Mobile QR Code -->
+              <!-- Instant Mobile QR Code (Desktop view only) -->
               <div class="share-qr-container">
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(this.getShareableLink(campaign))}" class="share-qr-img" alt="QR Code" />
                 <div class="share-qr-desc">
@@ -916,17 +991,46 @@ class TwibbonApp {
     document.getElementById('btnFlipV').addEventListener('click', () => this.activeStudio.toggleFlipV());
     document.getElementById('btnResetPos').addEventListener('click', () => this.activeStudio.resetPosition());
 
-    // Sliders
+    // Sliders & Zoom Steppers
     const zoomSlider = document.getElementById('zoomSlider');
-    zoomSlider.addEventListener('input', (e) => {
-      this.activeStudio.setScale(e.target.value / 100);
-    });
+    if (zoomSlider) {
+      zoomSlider.addEventListener('input', (e) => {
+        this.activeStudio.setScale(e.target.value / 100);
+      });
+    }
+
+    const btnZoomMinus = document.getElementById('btnZoomMinus');
+    if (btnZoomMinus) {
+      btnZoomMinus.addEventListener('click', () => {
+        const next = Math.max(0.2, this.activeStudio.state.scale - 0.1);
+        this.activeStudio.setScale(next);
+      });
+    }
+
+    const btnZoomPlus = document.getElementById('btnZoomPlus');
+    if (btnZoomPlus) {
+      btnZoomPlus.addEventListener('click', () => {
+        const next = Math.min(3.5, this.activeStudio.state.scale + 0.1);
+        this.activeStudio.setScale(next);
+      });
+    }
+
+    // Toggle Fine-tune Filters Accordion
+    const btnToggleFilters = document.getElementById('btnToggleFilters');
+    const filtersSec = document.getElementById('filtersSection');
+    if (btnToggleFilters && filtersSec) {
+      btnToggleFilters.addEventListener('click', () => {
+        filtersSec.classList.toggle('open');
+      });
+    }
 
     const brightSlider = document.getElementById('brightnessSlider');
-    brightSlider.addEventListener('input', (e) => {
-      this.activeStudio.setFilter('brightness', e.target.value);
-      document.getElementById('brightnessVal').textContent = `${e.target.value}%`;
-    });
+    if (brightSlider) {
+      brightSlider.addEventListener('input', (e) => {
+        this.activeStudio.setFilter('brightness', e.target.value);
+        document.getElementById('brightnessVal').textContent = `${e.target.value}%`;
+      });
+    }
 
     const contrastSlider = document.getElementById('contrastSlider');
     contrastSlider.addEventListener('input', (e) => {
@@ -1016,6 +1120,32 @@ class TwibbonApp {
       });
     }
 
+    // 1-Tap Native Web Share API (Mobile Telegram, Messenger, etc.)
+    const handleNativeShare = async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: rawTitle,
+            text: caption || rawTitle,
+            url: shareableUrl
+          });
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            await this.copyToClipboard(shareableUrl);
+            this.showToast(t('linkCopied'), 'success');
+          }
+        }
+      } else {
+        await this.copyToClipboard(shareableUrl);
+        this.showToast(t('linkCopied'), 'success');
+      }
+    };
+
+    const btnNativeShare = document.getElementById('btnNativeShare');
+    if (btnNativeShare) btnNativeShare.addEventListener('click', handleNativeShare);
+    const btnTopShare = document.getElementById('btnTopNativeShare');
+    if (btnTopShare) btnTopShare.addEventListener('click', handleNativeShare);
+
     // Social Sharing Links (with safe null-checks)
     const btnShareTelegram = document.getElementById('btnShareTelegram');
     if (btnShareTelegram) {
@@ -1101,13 +1231,43 @@ class TwibbonApp {
       : '';
 
     container.innerHTML = `
-      <div style="max-width: 720px; margin: 0 auto;">
-        <div style="margin-bottom: 2rem; text-align: center;">
-          <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.4rem; color: var(--text-primary);">${t('newCampaignTitle')}</h1>
-          <p style="color: var(--text-secondary);">${t('tagline')}</p>
+      <div style="margin-bottom: 1.5rem; text-align: center;">
+        <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.35rem; color: var(--text-primary);">${t('newCampaignTitle')}</h1>
+        <p style="color: var(--text-secondary); font-size: 0.95rem;">${t('tagline')}</p>
+      </div>
+
+      <div class="create-split-layout">
+        <!-- Sticky Live Preview Column (Left) -->
+        <div class="create-preview-sticky">
+          <div class="live-preview-box">
+            <div class="live-preview-header">
+              ${Icons.eye} <span>${t('livePreview')}</span>
+            </div>
+            <div class="card-preview-wrapper">
+              <img src="${SAMPLE_AVATARS[0]}" class="card-sample-backdrop" alt="Backdrop" />
+              <img id="liveCardFrameImg" src="${initialFrame}" class="card-preview-frame" alt="Frame" />
+              <div id="liveCardCategoryBadge" class="card-badge-category">${t('catEducation')}</div>
+              <div class="card-badge-supporters">${Icons.users} <span>1</span></div>
+            </div>
+            <div class="card-content">
+              <h3 id="liveCardTitle" class="card-title">${isKm ? 'ចំណងជើងយុទ្ធនាការ' : 'Campaign Title'}</h3>
+              <div id="liveCardCreator" class="card-creator">${Icons.avatar} <span>${t('by')} ${defaultCreator || (isKm ? 'ឈ្មោះអ្នកបង្កើត' : 'Creator')}</span></div>
+            </div>
+          </div>
+
+          <!-- Raw Cutout Verification Box -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem; display: flex; align-items: center; gap: 0.85rem;">
+            <div class="checkerboard-preview" style="width: 50px; height: 50px; border-radius: var(--radius-xs); flex-shrink: 0; border: 1px solid var(--border-color);">
+              <img id="rawFrameImg" src="${initialFrame}" style="width:100%;height:100%;object-fit:contain;" />
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
+              ${t('frameUploadHint')}
+            </div>
+          </div>
         </div>
 
-        <form id="createCampaignForm" class="studio-controls-card" style="gap: 1.4rem;">
+        <!-- Form Column (Right) -->
+        <form id="createCampaignForm" class="studio-controls-card" style="gap: 1.25rem;">
           <div class="form-group">
             <label class="form-label">${t('fieldTitle')} *</label>
             <input type="text" id="campaignTitle" class="form-input" placeholder="${t('fieldTitlePlaceholder')}" required />
@@ -1150,22 +1310,14 @@ class TwibbonApp {
           <!-- Frame Selection / Upload -->
           <div class="form-group">
             <label class="form-label">${t('fieldFrameUpload')} *</label>
-            <div style="display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap;">
-              <div style="width: 120px; height: 120px; border-radius: var(--radius-md); border: 1px solid var(--border-color); overflow: hidden; background: #f1f5f9; display: flex; align-items: center; justify-content: center;">
-                <img id="framePreviewImg" src="${initialFrame}" style="width: 100%; height: 100%; object-fit: contain;" />
-              </div>
-              <div style="flex: 1; display: flex; flex-direction: column; gap: 0.65rem;">
-                <input type="file" id="frameFileInput" accept="image/png,image/svg+xml,image/webp" style="display: none;" />
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                  <button type="button" class="btn btn-secondary" onclick="document.getElementById('frameFileInput').click()">
-                    ${Icons.upload} <span>Upload PNG</span>
-                  </button>
-                  <button type="button" class="btn btn-outline" onclick="window.location.hash='#designer'">
-                    ${Icons.paint} <span>${t('designerTitle')}</span>
-                  </button>
-                </div>
-                <div style="font-size: 0.8rem; color: var(--text-muted);">${t('frameUploadHint')}</div>
-              </div>
+            <div style="display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap;">
+              <input type="file" id="frameFileInput" accept="image/png,image/svg+xml,image/webp" style="display: none;" />
+              <button type="button" class="btn btn-secondary" onclick="document.getElementById('frameFileInput').click()">
+                ${Icons.upload} <span>Upload PNG</span>
+              </button>
+              <button type="button" class="btn btn-outline" onclick="window.location.hash='#designer'">
+                ${Icons.paint} <span>${t('designerTitle')}</span>
+              </button>
             </div>
           </div>
 
@@ -1176,14 +1328,14 @@ class TwibbonApp {
             </div>
             <div style="display: flex; gap: 0.65rem; overflow-x: auto; padding-bottom: 0.5rem;">
               ${Object.keys(PRESET_FRAMES).map(key => `
-                <div class="sample-avatar-btn" style="width: 50px; height: 50px; flex-shrink: 0;" data-preset="${key}">
+                <div class="sample-avatar-btn" style="width: 48px; height: 48px; flex-shrink: 0;" data-preset="${key}">
                   <img src="${PRESET_FRAMES[key]}" />
                 </div>
               `).join('')}
             </div>
           </div>
 
-          <button type="submit" class="btn btn-primary" style="padding: 0.95rem; font-size: 1.05rem; margin-top: 0.5rem;">
+          <button type="submit" class="btn-download-hero" style="margin-top: 0.5rem;">
             ${Icons.sparkles} <span>${t('publishCampaign')}</span>
           </button>
         </form>
@@ -1191,6 +1343,53 @@ class TwibbonApp {
     `;
 
     let selectedFrameDataUrl = initialFrame;
+
+    // Live Preview Binding Elements
+    const titleInput = document.getElementById('campaignTitle');
+    const slugInput = document.getElementById('campaignSlug');
+    const catInput = document.getElementById('campaignCategory');
+    const creatorInput = document.getElementById('campaignCreator');
+    const liveCardTitle = document.getElementById('liveCardTitle');
+    const liveCardCreator = document.getElementById('liveCardCreator');
+    const liveCardCat = document.getElementById('liveCardCategoryBadge');
+    const liveCardFrame = document.getElementById('liveCardFrameImg');
+    const rawFrame = document.getElementById('rawFrameImg');
+
+    let slugManual = false;
+    if (slugInput) {
+      slugInput.addEventListener('input', () => { slugManual = true; });
+    }
+
+    if (titleInput) {
+      titleInput.addEventListener('input', (e) => {
+        const val = e.target.value.trim();
+        if (liveCardTitle) liveCardTitle.textContent = val || (isKm ? 'ចំណងជើងយុទ្ធនាការ' : 'Campaign Title');
+        if (!slugManual && slugInput) {
+          const auto = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          if (auto) slugInput.value = auto;
+        }
+      });
+    }
+
+    if (creatorInput) {
+      creatorInput.addEventListener('input', (e) => {
+        const val = e.target.value.trim();
+        if (liveCardCreator) liveCardCreator.innerHTML = `${Icons.avatar} <span>${t('by')} ${val || (isKm ? 'ឈ្មោះអ្នកបង្កើត' : 'Creator')}</span>`;
+      });
+    }
+
+    if (catInput) {
+      catInput.addEventListener('change', (e) => {
+        const cat = e.target.value;
+        if (liveCardCat) liveCardCat.textContent = t('cat' + (cat.charAt(0).toUpperCase() + cat.slice(1)));
+      });
+    }
+
+    const updateFramePreviews = (url) => {
+      selectedFrameDataUrl = url;
+      if (liveCardFrame) liveCardFrame.src = url;
+      if (rawFrame) rawFrame.src = url;
+    };
 
     // Handle File Upload
     const frameFileInput = document.getElementById('frameFileInput');
@@ -1205,10 +1404,9 @@ class TwibbonApp {
         }
         const reader = new FileReader();
         reader.onload = async (event) => {
-          const isKm = getLanguage() === 'km';
           this.showToast(isKm ? 'កំពុងដំណើរការ Optimize រូបភាព...' : 'Optimizing frame image...');
-          selectedFrameDataUrl = await CampaignService.compressFrameDataUrl(event.target.result);
-          document.getElementById('framePreviewImg').src = selectedFrameDataUrl;
+          const compressed = await CampaignService.compressFrameDataUrl(event.target.result);
+          updateFramePreviews(compressed);
           this.showToast(isKm ? 'បានផ្ទុករូបភាពស៊ុមជោគជ័យ!' : 'Frame uploaded successfully!');
         };
         reader.readAsDataURL(file);
@@ -1220,8 +1418,7 @@ class TwibbonApp {
       btn.addEventListener('click', () => {
         const key = btn.getAttribute('data-preset');
         if (PRESET_FRAMES[key]) {
-          selectedFrameDataUrl = PRESET_FRAMES[key];
-          document.getElementById('framePreviewImg').src = selectedFrameDataUrl;
+          updateFramePreviews(PRESET_FRAMES[key]);
           this.showToast(`Selected preset: ${key}`);
         }
       });
@@ -1230,7 +1427,6 @@ class TwibbonApp {
     // Form Submit
     document.getElementById('createCampaignForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const isKm = getLanguage() === 'km';
       const submitBtn = e.target.querySelector('button[type="submit"]');
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -1299,29 +1495,44 @@ class TwibbonApp {
 
         <!-- Controls Right Column -->
         <div class="studio-controls-card">
-          <!-- Shape Selection -->
+          <!-- Shape Selection with Visual Icons -->
           <div class="form-group">
             <label class="form-label">${t('cutoutShape')}</label>
-            <div class="categories-bar" style="flex-wrap: wrap; margin-bottom: 0;">
-              <button class="category-chip active" data-shape="circle">${t('shapeCircle')}</button>
-              <button class="category-chip" data-shape="rounded">${t('shapeRounded')}</button>
-              <button class="category-chip" data-shape="square">${t('shapeSquare')}</button>
-              <button class="category-chip" data-shape="arch">${t('shapeArch')}</button>
-              <button class="category-chip" data-shape="octagon">${t('shapeOctagon')}</button>
+            <div class="shape-picker-grid">
+              <button type="button" class="shape-picker-btn active" data-shape="circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/></svg>
+                <span>${t('shapeCircle')}</span>
+              </button>
+              <button type="button" class="shape-picker-btn" data-shape="rounded">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="5"/></svg>
+                <span>${t('shapeRounded')}</span>
+              </button>
+              <button type="button" class="shape-picker-btn" data-shape="square">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="0"/></svg>
+                <span>${t('shapeSquare')}</span>
+              </button>
+              <button type="button" class="shape-picker-btn" data-shape="arch">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 21V10a8 8 0 0 1 16 0v11"/></svg>
+                <span>${t('shapeArch')}</span>
+              </button>
+              <button type="button" class="shape-picker-btn" data-shape="octagon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/></svg>
+                <span>${t('shapeOctagon')}</span>
+              </button>
             </div>
           </div>
 
-          <!-- Theme / Gradient Selection -->
+          <!-- Theme / Gradient Swatches -->
           <div class="form-group">
             <label class="form-label">${t('frameTheme')}</label>
-            <div class="categories-bar" style="flex-wrap: wrap; margin-bottom: 0;">
-              <button class="category-chip active" data-theme-name="royalBlue">Royal Blue 👑</button>
-              <button class="category-chip" data-theme-name="emerald">Emerald 🌿</button>
-              <button class="category-chip" data-theme-name="crimson">Crimson Red 🇰🇭</button>
-              <button class="category-chip" data-theme-name="sunset">Sunset Orange 🌅</button>
-              <button class="category-chip" data-theme-name="midnightGold">Midnight Gold ✨</button>
-              <button class="category-chip" data-theme-name="cyberNeon">Cyber Neon ⚡</button>
-              <button class="category-chip" data-theme-name="rosePink">Rose Pink 💖</button>
+            <div class="color-swatch-picker">
+              <button type="button" class="color-swatch-btn active" data-theme-name="royalBlue" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);" title="Royal Blue"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="emerald" style="background: linear-gradient(135deg, #065f46, #10b981);" title="Emerald"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="crimson" style="background: linear-gradient(135deg, #881337, #e11d48);" title="Crimson Red"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="sunset" style="background: linear-gradient(135deg, #c2410c, #f97316);" title="Sunset Orange"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="midnightGold" style="background: linear-gradient(135deg, #0f172a, #eab308);" title="Midnight Gold"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="cyberNeon" style="background: linear-gradient(135deg, #581c87, #06b6d4);" title="Cyber Neon"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="rosePink" style="background: linear-gradient(135deg, #9d174d, #ec4899);" title="Rose Pink"></button>
             </div>
           </div>
 
@@ -1436,12 +1647,43 @@ class TwibbonApp {
     }
 
     const myCampaigns = CampaignService.getUserCampaigns();
+    const user = (typeof AuthService !== 'undefined' && AuthService.currentUser) ? AuthService.currentUser : null;
+    const userName = (user && (user.displayName || user.email?.split('@')[0])) || 'Creator';
+    const userEmail = (user && user.email) || '';
+    const userInitial = userName.charAt(0).toUpperCase();
+    const userPhoto = user && user.photoURL ? user.photoURL : null;
+    const totalSupporters = myCampaigns.reduce((sum, c) => sum + (c.supporters || 0), 0);
 
     container.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+      <!-- Creator Profile & Stats Dashboard -->
+      <div class="creator-profile-card">
+        <div class="creator-profile-info">
+          ${userPhoto ? `
+            <img src="${SecurityUtils.sanitizeUrl(userPhoto)}" class="creator-avatar-circle" style="object-fit: cover;" alt="${SecurityUtils.escapeHtml(userName)}" />
+          ` : `
+            <div class="creator-avatar-circle">${userInitial}</div>
+          `}
+          <div class="creator-profile-meta">
+            <h2>${SecurityUtils.escapeHtml(userName)}</h2>
+            <p>${SecurityUtils.escapeHtml(userEmail)}</p>
+          </div>
+        </div>
+        <div class="creator-stats-row">
+          <div class="creator-stat-box">
+            <span class="creator-stat-num">${myCampaigns.length}</span>
+            <span class="creator-stat-label">${t('totalCampaigns')}</span>
+          </div>
+          <div class="creator-stat-box">
+            <span class="creator-stat-num">${totalSupporters.toLocaleString()}</span>
+            <span class="creator-stat-label">${t('totalSupporters')}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
         <div>
-          <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--text-primary);">${t('myCampaigns')}</h1>
-          <p style="color: var(--text-secondary); font-size: 0.92rem;">${myCampaigns.length} campaigns created</p>
+          <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin: 0;">${t('myCampaigns')}</h1>
+          <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0.25rem 0 0 0;">${myCampaigns.length} campaigns</p>
         </div>
         <button class="btn btn-primary" onclick="window.location.hash='#create'">
           ${Icons.plus} <span>${t('createCampaign')}</span>
