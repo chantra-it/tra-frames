@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(creatorUid) {
+      return isAuthenticated() && request.auth.uid == creatorUid;
+    }
+
+    function isValidCampaignData(data) {
+      return data.titleKm is string && data.titleKm.size() <= 120 &&
+             data.titleEn is string && data.titleEn.size() <= 120 &&
+             data.slug is string && data.slug.size() <= 60 &&
+             data.category in ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'] &&
+             data.creator is string && data.creator.size() <= 80 &&
+             data.descriptionKm is string && data.descriptionKm.size() <= 1000 &&
+             data.descriptionEn is string && data.descriptionEn.size() <= 1000 &&
+             data.captionKm is string && data.captionKm.size() <= 1000 &&
+             data.captionEn is string && data.captionEn.size() <= 1000 &&
+             data.frameUrl is string && data.frameUrl.size() <= 2000000 &&
+             data.supporters is int && data.supporters >= 1 &&
+             data.createdAt is string && data.createdAt.size() <= 25;
+    }
+
+    // Campaigns Collection
+    match /campaigns/{campaignId} {
+      // 1. Public Read: anyone can view frames and explore
+      allow read: if true;
+
+      // 2. Create: Only authenticated users, must own the document, strict schema validation
+      allow create: if isAuthenticated() &&
+                       request.resource.data.creatorUid == request.auth.uid &&
+                       isValidCampaignData(request.resource.data);
+
+      // 3. Update:
+      // Option A: Owner updating their campaign (cannot change creatorUid or createdAt)
+      // Option B: Anyone incrementing the supporter count by exactly 1
+      allow update: if (
+        // Creator updating metadata
+        (isOwner(resource.data.creatorUid) &&
+         request.resource.data.creatorUid == resource.data.creatorUid &&
+         request.resource.data.createdAt == resource.data.createdAt &&
+         isValidCampaignData(request.resource.data)) ||
+        // Public atomic supporter increment
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['supporters']) &&
+         request.resource.data.supporters == resource.data.supporters + 1)
+      );
+
+      // 4. Delete: Strictly owner only (Anti-IDOR / Anti-Tampering)
+      allow delete: if isOwner(resource.data.creatorUid);
+    }
+
+    // Deny all other collections by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
