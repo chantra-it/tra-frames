@@ -1109,16 +1109,20 @@ class TwibbonApp {
 
   getShareableLink(campaign) {
     if (!campaign) return window.location.href;
-    const slug = encodeURIComponent(String(campaign.slug || campaign.id || '').trim());
+    const rawSlug = String(campaign.slug || campaign.id || '').trim();
+    const cleanSlug = (typeof CampaignService !== 'undefined' && typeof CampaignService.normalizeSlug === 'function')
+      ? (CampaignService.normalizeSlug(rawSlug) || rawSlug)
+      : encodeURIComponent(rawSlug);
     if (window.location.protocol === 'file:') {
-      return `https://frame.tra4me.com/#campaign/${slug}`;
+      return `https://frame.tra4me.com/#campaign/${cleanSlug}`;
     }
-    return `${window.location.origin}${window.location.pathname}#campaign/${slug}`;
+    return `${window.location.origin}${window.location.pathname}#campaign/${cleanSlug}`;
   }
 
   openShareModalById(identifier) {
     if (!identifier) return;
-    const cleanId = String(identifier).trim();
+    let cleanId = String(identifier).trim();
+    try { cleanId = decodeURIComponent(cleanId).trim(); } catch (e) {}
     const campaign = CampaignService.getCampaignBySlugOrId(cleanId);
     if (campaign) {
       this.openShareModal(campaign);
@@ -1210,7 +1214,11 @@ class TwibbonApp {
     const hash = rawHash.slice(1) || 'explore';
     const parts = hash.split('/');
     const mainRoute = parts[0];
-    const param = parts[1];
+    let param = parts.slice(1).join('/');
+    if (param) {
+      try { param = decodeURIComponent(param); } catch (e) {}
+      param = param.trim();
+    }
 
     this.updateNavLinks(mainRoute);
 
@@ -1490,7 +1498,10 @@ class TwibbonApp {
   // ==========================================
   loadCampaignView(identifier, directCampaign = null) {
     this.currentView = 'studio';
-    const campaign = directCampaign || CampaignService.getCampaignBySlugOrId(identifier);
+    let cleanId = String(identifier || '').trim();
+    try { cleanId = decodeURIComponent(cleanId).trim(); } catch (e) {}
+
+    const campaign = directCampaign || CampaignService.getCampaignBySlugOrId(cleanId);
     const container = document.getElementById('appContent');
 
     if (!campaign) {
@@ -1502,9 +1513,9 @@ class TwibbonApp {
           <p style="color: var(--text-secondary); margin: 0.5rem 0 1.5rem 0;">${isKm ? 'សូមរង់ចាំមួយភ្លែត ប្រព័ន្ធកំពុងទាញទិន្នន័យពី Cloud Firestore...' : 'Fetching live campaign data from Cloud Firestore...'}</p>
         </div>
       `;
-      CampaignService.fetchCloudCampaign(identifier).then(cloudCampaign => {
+      CampaignService.fetchCloudCampaign(cleanId).then(cloudCampaign => {
         if (cloudCampaign) {
-          this.loadCampaignView(cloudCampaign.slug || identifier, cloudCampaign);
+          this.loadCampaignView(cloudCampaign.slug || cleanId, cloudCampaign);
         } else {
           container.innerHTML = `
             <div style="text-align: center; padding: 4rem 1.2rem; max-width: 540px; margin: 0 auto;">
@@ -1512,8 +1523,8 @@ class TwibbonApp {
               <h2 style="color: var(--text-primary); font-weight: 800; font-size: 1.4rem;">${isKm ? 'រកមិនឃើញយុទ្ធនាការនេះទេ' : 'Campaign Not Found'}</h2>
               <p style="color: var(--text-secondary); margin: 1rem 0 1.5rem 0; line-height: 1.6; font-size: 0.95rem;">
                 ${isKm 
-                  ? 'យុទ្ធនាការនេះមិនទាន់បាន Upload ឡើង Cloud នៅឡើយទេ ឬត្រូវបានលុប។<br><br>💡 <strong>ប្រសិនបើបងបានបង្កើតវានៅលើកុំព្យូទ័រ៖</strong> សូមបើក Tab វេបសាយនៅលើកុំព្យូទ័រនោះ រួចចុច <strong>Refresh (Reload)</strong> ម្តង ដើម្បីឱ្យប្រព័ន្ធ Sync ឡើង Cloud ដោយស្វ័យប្រវត្តិ។' 
-                  : 'The campaign you are looking for has not been synced to Cloud Firestore yet or was removed.<br><br>💡 If you created this on your computer, please refresh the page on your computer to sync it to the Cloud.'}
+                  ? 'យុទ្ធនាការនេះមិនទាន់បាន Upload ឡើង Cloud នៅឡើយទេ ឬត្រូវបានលុប។<br><br>💡 <strong>ប្រសិនបើបងបានបង្កើតវានៅលើទូរស័ព្ទ ឬកុំព្យូទ័រ៖</strong> សូមបើកមើលទំព័រនេះនៅលើឧបករណ៍ដែលបងបានបង្កើត រួចចុច <strong>Share (ចែករំលែក)</strong> ដើម្បីឱ្យប្រព័ន្ធ Upload ឡើង Cloud ជាស្វ័យប្រវត្តិ។' 
+                  : 'The campaign you are looking for has not been synced to Cloud Firestore yet or was removed.<br><br>💡 If you created this on another device, please open it on that device and tap Share to sync it to the Cloud.'}
               </p>
               <button class="btn btn-primary" onclick="window.location.hash='#explore'">${t('backToHome')}</button>
             </div>
@@ -1521,6 +1532,13 @@ class TwibbonApp {
         }
       });
       return;
+    }
+
+    // Found campaign! Normalize URL hash if needed (without triggering an extra route reload)
+    if (campaign.slug && (cleanId.includes(' ') || cleanId.includes('%20') || cleanId !== campaign.slug)) {
+      try {
+        history.replaceState(null, '', `${window.location.pathname}#campaign/${campaign.slug}`);
+      } catch (e) {}
     }
 
     // Found campaign locally! Automatically ensure it's synced to Cloud Firestore
