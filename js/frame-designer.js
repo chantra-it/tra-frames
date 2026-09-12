@@ -15,6 +15,35 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 
 // Built-in Twibbon Frame Designer Studio Engine
 class FrameDesigner {
+  static FONTS = {
+    moul: { id: 'moul', name: 'អក្សរមូល (Moul)', family: "'Moul', cursive", weight: '400', preview: 'សួស្តីឆ្នាំថ្មី Moul' },
+    koulen: { id: 'koulen', name: 'កូលែន (Koulen)', family: "'Koulen', cursive", weight: '400', preview: 'កូលែន Koulen' },
+    kantumruy: { id: 'kantumruy', name: 'កន្ទុំរុយ (Kantumruy Pro)', family: "'Kantumruy Pro', sans-serif", weight: '700', preview: 'កន្ទុំរុយ Kantumruy' },
+    battambang: { id: 'battambang', name: 'បាត់ដំបង (Battambang)', family: "'Battambang', cursive", weight: '700', preview: 'បាត់ដំបង Battambang' },
+    bayon: { id: 'bayon', name: 'បាយ័ន (Bayon)', family: "'Bayon', cursive", weight: '400', preview: 'បាយ័ន Bayon' },
+    siemreap: { id: 'siemreap', name: 'សៀមរាប (Siemreap)', family: "'Siemreap', cursive", weight: '700', preview: 'សៀមរាប Siemreap' },
+    bokor: { id: 'bokor', name: 'បូកគោ (Bokor)', family: "'Bokor', cursive", weight: '400', preview: 'បូកគោ Bokor' },
+    inter: { id: 'inter', name: 'Inter (Modern Sans)', family: "'Inter', sans-serif", weight: '800', preview: 'Inter Modern' }
+  };
+
+  static BANNER_STYLES = {
+    ribbon: { id: 'ribbon', name: 'បដាទង់ (Ribbon)', icon: '🎗️' },
+    pill: { id: 'pill', name: 'គ្រាប់ថ្នាំ (Pill)', icon: '💊' },
+    luxury: { id: 'luxury', name: 'មាសប្រណិត (Luxury)', icon: '👑' },
+    neon: { id: 'neon', name: 'ណេអុង (Neon)', icon: '⚡' },
+    ornate: { id: 'ornate', name: 'ក្បាច់បុរាណ (Ornate)', icon: '🛕' },
+    glass: { id: 'glass', name: 'កញ្ចក់ថ្លា (Glass)', icon: '🪟' },
+    minimal: { id: 'minimal', name: 'សាមញ្ញ (Minimal)', icon: '✨' }
+  };
+
+  static TEXT_EFFECTS = {
+    clean: { id: 'clean', name: 'ធម្មតា (Clean)', icon: '🌟' },
+    goldGlow: { id: 'goldGlow', name: 'ពន្លឺមាស (Gold)', icon: '👑' },
+    neonGlow: { id: 'neonGlow', name: 'ពន្លឺណេអុង (Neon)', icon: '⚡' },
+    outline: { id: 'outline', name: 'គែមច្បាស់ (Stroke)', icon: '✏️' },
+    shadow3d: { id: 'shadow3d', name: 'ស្រមោល 3D (3D)', icon: '🏔️' }
+  };
+
   static TEMPLATES = {
     graduation: {
       shape: 'arch',
@@ -159,10 +188,15 @@ class FrameDesigner {
       headerColor: '#fbbf24',
       headerBg: '#0f172a',
       showHeader: true,
+      headerFontSize: 32,
       footerText: 'CONGRATULATIONS!',
       footerColor: '#ffffff',
       footerBg: '#0f172a',
       showFooter: true,
+      footerFontSize: 28,
+      fontFamily: 'kantumruy', // moul, koulen, kantumruy, battambang, bayon, siemreap, bokor, inter
+      bannerStyle: 'ribbon', // ribbon, pill, luxury, neon, ornate, glass, minimal
+      textEffect: 'clean', // clean, goldGlow, neonGlow, outline, shadow3d
       sticker: 'none', // none, graduation, khmer, trophy, heart, crown, party, rocket, lotus, star, fire
       stickerPos: 'top-right',
       customLogo: null, // HTMLImageElement or dataUrl
@@ -236,8 +270,20 @@ class FrameDesigner {
     } catch (e) {}
   }
 
+  ensureFontLoaded(fontKey) {
+    const fontInfo = FrameDesigner.FONTS[fontKey];
+    if (fontInfo && document.fonts && document.fonts.load) {
+      document.fonts.load(`${fontInfo.weight || 'normal'} 32px ${fontInfo.family}`).then(() => {
+        this.render();
+      }).catch(() => {});
+    }
+  }
+
   update(newSettings) {
     this.settings = { ...this.settings, ...newSettings };
+    if (newSettings.fontFamily) {
+      this.ensureFontLoaded(newSettings.fontFamily);
+    }
     this.isDirty = true;
     this.isExported = false;
     this.saveDraft();
@@ -266,6 +312,13 @@ class FrameDesigner {
     const borderStyle = rand(borderStyles);
     const cornerStyle = rand(cornerStyles);
     const sticker = Math.random() > 0.4 ? rand(stickers) : 'none';
+    const fonts = Object.keys(FrameDesigner.FONTS);
+    const bannerStyles = Object.keys(FrameDesigner.BANNER_STYLES);
+    const textEffects = Object.keys(FrameDesigner.TEXT_EFFECTS);
+
+    const fontFamily = rand(fonts);
+    const bannerStyle = rand(bannerStyles);
+    const textEffect = rand(textEffects);
 
     this.update({
       shape,
@@ -273,7 +326,10 @@ class FrameDesigner {
       pattern,
       borderStyle,
       cornerStyle,
-      sticker
+      sticker,
+      fontFamily,
+      bannerStyle,
+      textEffect
     });
   }
 
@@ -781,65 +837,14 @@ class FrameDesigner {
     // 6. Corner Accents
     this.drawCorners(ctx, s, ringColor);
 
-    // 7. Header Badge Pill
-    if (this.settings.showHeader && this.settings.headerText.trim()) {
-      ctx.save();
-      ctx.font = "900 32px 'Segoe UI', 'Kantumruy Pro', sans-serif";
-      ctx.shadowColor = 'rgba(0,0,0,0.45)';
-      ctx.shadowBlur = 18;
-      ctx.shadowOffsetY = 6;
-
-      const badgeWidth = Math.min(Math.max(ctx.measureText(this.settings.headerText.toUpperCase()).width + 120, 480), 780);
-      const badgeHeight = 78;
-      const bx = center - badgeWidth / 2;
-      const by = 48;
-
-      // Outer pill
-      ctx.fillStyle = this.settings.headerBg || '#0f172a';
-      ctx.beginPath();
-      ctx.roundRect(bx, by, badgeWidth, badgeHeight, badgeHeight / 2);
-      ctx.fill();
-
-      // Border on pill
-      ctx.strokeStyle = this.settings.headerColor || ringColor;
-      ctx.lineWidth = 3.5;
-      ctx.stroke();
-
-      // Text
-      ctx.fillStyle = this.settings.headerColor || ringColor;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(this.settings.headerText.toUpperCase(), center, by + badgeHeight / 2);
-      ctx.restore();
+    // 7. Header Banner / Badge
+    if (this.settings.showHeader && this.settings.headerText && this.settings.headerText.trim()) {
+      this.drawBannerSection(ctx, s, center, true, ringColor);
     }
 
-    // 8. Footer Badge / Ribbon
-    if (this.settings.showFooter && this.settings.footerText.trim()) {
-      ctx.save();
-      ctx.font = "800 30px 'Segoe UI', 'Kantumruy Pro', sans-serif";
-      ctx.shadowColor = 'rgba(0,0,0,0.45)';
-      ctx.shadowBlur = 18;
-      ctx.shadowOffsetY = 6;
-
-      const footerWidth = Math.min(Math.max(ctx.measureText(this.settings.footerText.toUpperCase()).width + 120, 460), 800);
-      const footerHeight = 78;
-      const fx = center - footerWidth / 2;
-      const fy = s - 128;
-
-      ctx.fillStyle = this.settings.footerBg || '#0f172a';
-      ctx.beginPath();
-      ctx.roundRect(fx, fy, footerWidth, footerHeight, 20);
-      ctx.fill();
-
-      ctx.strokeStyle = ringColor;
-      ctx.lineWidth = 3.5;
-      ctx.stroke();
-
-      ctx.fillStyle = this.settings.footerColor || '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(this.settings.footerText.toUpperCase(), center, fy + footerHeight / 2);
-      ctx.restore();
+    // 8. Footer Banner / Ribbon
+    if (this.settings.showFooter && this.settings.footerText && this.settings.footerText.trim()) {
+      this.drawBannerSection(ctx, s, center, false, ringColor);
     }
 
     // 9. Sticker Stamp
@@ -866,4 +871,317 @@ class FrameDesigner {
 
     return dataUrl;
   }
+
+  // Ensure requested web font is fully loaded
+  ensureFontLoaded(fontKey) {
+    const fontObj = FrameDesigner.FONTS[fontKey] || FrameDesigner.FONTS.kantumruy;
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load(`32px ${fontObj.family}`).then(() => {
+        this.render();
+      }).catch(() => {});
+    }
+  }
+
+  // Draw Header or Footer Banner with full styling
+  drawBannerSection(ctx, s, center, isHeader, ringColor) {
+    const text = isHeader ? this.settings.headerText.trim() : this.settings.footerText.trim();
+    if (!text) return;
+
+    ctx.save();
+    const fontObj = FrameDesigner.FONTS[this.settings.fontFamily] || FrameDesigner.FONTS.kantumruy;
+    const baseFontSize = isHeader ? (this.settings.headerFontSize || 32) : (this.settings.footerFontSize || 28);
+    const weight = fontObj.weight || '700';
+
+    ctx.font = `${weight} ${baseFontSize}px ${fontObj.family}`;
+    let textWidth = ctx.measureText(text).width;
+
+    // Auto-fit long text gracefully
+    let actualFontSize = baseFontSize;
+    const maxTextWidth = 660;
+    if (textWidth > maxTextWidth) {
+      const scale = maxTextWidth / textWidth;
+      actualFontSize = Math.max(Math.floor(baseFontSize * scale), 18);
+      ctx.font = `${weight} ${actualFontSize}px ${fontObj.family}`;
+      textWidth = ctx.measureText(text).width;
+    }
+
+    const bannerPadding = 110;
+    const bannerWidth = Math.min(Math.max(textWidth + bannerPadding, 460), 840);
+    const bannerHeight = Math.max(actualFontSize + 44, 76);
+
+    const bx = center - bannerWidth / 2;
+    const by = isHeader ? 52 : (s - bannerHeight - 50);
+
+    const bgColor = (isHeader ? this.settings.headerBg : this.settings.footerBg) || '#0f172a';
+    const textColor = (isHeader ? this.settings.headerColor : this.settings.footerColor) || (isHeader ? ringColor : '#ffffff');
+    const borderColor = ringColor || '#fbbf24';
+    const bannerStyle = this.settings.bannerStyle || 'ribbon';
+    const textEffect = this.settings.textEffect || 'clean';
+
+    // 1. Draw Banner Background Shape
+    this.drawBannerShape(ctx, bx, by, bannerWidth, bannerHeight, bannerStyle, bgColor, borderColor, isHeader);
+
+    // 2. Draw Styled Text
+    const fontStr = `${weight} ${actualFontSize}px ${fontObj.family}`;
+    const cy = by + bannerHeight / 2 + (isHeader ? 1 : 0);
+    this.drawStyledText(ctx, text, center, cy, fontStr, textColor, textEffect, borderColor);
+
+    ctx.restore();
+  }
+
+  // Draw Banner Background Shape
+  drawBannerShape(ctx, bx, by, bw, bh, style, bgColor, borderColor, isHeader) {
+    ctx.save();
+
+    if (style === 'ribbon') {
+      // Classic Celebration Ribbon with 3D folded triangular notched tails
+      const tailW = 46;
+      const foldOffset = isHeader ? 12 : -12;
+      const notch = 18;
+
+      // Shaded Back Folds
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.beginPath();
+      ctx.moveTo(bx, by + (isHeader ? bh : 0));
+      ctx.lineTo(bx - 14, by + bh / 2);
+      ctx.lineTo(bx, by + (isHeader ? 0 : bh));
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(bx + bw, by + (isHeader ? bh : 0));
+      ctx.lineTo(bx + bw + 14, by + bh / 2);
+      ctx.lineTo(bx + bw, by + (isHeader ? 0 : bh));
+      ctx.fill();
+
+      // Left Tail
+      ctx.fillStyle = bgColor;
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(bx, by + foldOffset);
+      ctx.lineTo(bx - tailW, by + foldOffset);
+      ctx.lineTo(bx - tailW + notch, by + foldOffset + bh / 2);
+      ctx.lineTo(bx - tailW, by + foldOffset + bh);
+      ctx.lineTo(bx, by + foldOffset + bh);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Right Tail
+      ctx.beginPath();
+      ctx.moveTo(bx + bw, by + foldOffset);
+      ctx.lineTo(bx + bw + tailW, by + foldOffset);
+      ctx.lineTo(bx + bw + tailW - notch, by + foldOffset + bh / 2);
+      ctx.lineTo(bx + bw + tailW, by + foldOffset + bh);
+      ctx.lineTo(bx + bw, by + foldOffset + bh);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Main Banner Center Body
+      ctx.fillStyle = bgColor;
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+      ctx.shadowBlur = 16;
+      ctx.shadowOffsetY = 6;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      // Subtle Stitched Inner Line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(bx + 4, by + 4, bw - 8, bh - 8);
+
+    } else if (style === 'pill') {
+      // Capsule Pill
+      ctx.fillStyle = bgColor;
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 6;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, bh / 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Subtle inner rim
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(bx + 4, by + 4, bw - 8, bh - 8, (bh - 8) / 2);
+      ctx.stroke();
+
+    } else if (style === 'luxury') {
+      // Luxury Gold Double Frame with Diamond Ornaments
+      ctx.fillStyle = bgColor;
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = 'rgba(251, 191, 36, 0.45)';
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 4;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      // Inner gold hairline
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(bx + 5, by + 5, bw - 10, bh - 10, 6);
+      ctx.stroke();
+
+      // Left & Right Diamond Accents
+      const drawDiamond = (cx, cy) => {
+        ctx.fillStyle = '#fde047';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 5);
+        ctx.lineTo(cx + 5, cy);
+        ctx.lineTo(cx, cy + 5);
+        ctx.lineTo(cx - 5, cy);
+        ctx.closePath();
+        ctx.fill();
+      };
+      drawDiamond(bx + 14, by + bh / 2);
+      drawDiamond(bx + bw - 14, by + bh / 2);
+
+    } else if (style === 'neon') {
+      // Cyber Neon Glow
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 3;
+      ctx.shadowColor = borderColor;
+      ctx.shadowBlur = 24;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(bx + 4, by + 4, bw - 8, bh - 8, 8);
+      ctx.stroke();
+
+    } else if (style === 'ornate') {
+      // Traditional Khmer Crest with Pointed Ornamental End Tips
+      const tipW = 32;
+      ctx.fillStyle = bgColor;
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      ctx.shadowBlur = 16;
+      ctx.shadowOffsetY = 6;
+      ctx.beginPath();
+      ctx.moveTo(bx, by + bh / 2);
+      ctx.lineTo(bx + tipW, by);
+      ctx.lineTo(bx + bw - tipW, by);
+      ctx.lineTo(bx + bw, by + bh / 2);
+      ctx.lineTo(bx + bw - tipW, by + bh);
+      ctx.lineTo(bx + tipW, by + bh);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Inset accent points
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(bx + 10, by + bh / 2);
+      ctx.lineTo(bx + tipW + 2, by + 5);
+      ctx.lineTo(bx + bw - tipW - 2, by + 5);
+      ctx.lineTo(bx + bw - 10, by + bh / 2);
+      ctx.lineTo(bx + bw - tipW - 2, by + bh - 5);
+      ctx.lineTo(bx + tipW + 2, by + bh - 5);
+      ctx.closePath();
+      ctx.stroke();
+
+    } else if (style === 'glass') {
+      // Frosted Glass
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 14);
+      ctx.fill();
+      ctx.stroke();
+
+    } else {
+      // Minimal Underline & Frame Accents
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 6);
+      ctx.fill();
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(bx + 16, by + bh);
+      ctx.lineTo(bx + bw - 16, by + bh);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  // Draw Text with Typography Effects
+  drawStyledText(ctx, text, cx, cy, fontStr, textColor, effect, borderColor) {
+    ctx.save();
+    ctx.font = fontStr;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (effect === 'outline') {
+      // High contrast outline stroke around text for maximum readability
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 6;
+      ctx.lineJoin = 'round';
+      ctx.miterLimit = 2;
+      ctx.strokeText(text, cx, cy);
+      ctx.fillStyle = textColor;
+      ctx.fillText(text, cx, cy);
+
+    } else if (effect === 'goldGlow') {
+      // Rich Golden Bloom
+      ctx.shadowColor = '#fbbf24';
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.fillStyle = textColor || '#fde047';
+      ctx.fillText(text, cx, cy);
+
+    } else if (effect === 'neonGlow') {
+      // Electric Neon Bloom
+      ctx.shadowColor = borderColor || '#06b6d4';
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.fillStyle = textColor || '#ffffff';
+      ctx.fillText(text, cx, cy);
+
+    } else if (effect === 'shadow3d') {
+      // Multi-layer 3D Extrusion Shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.fillText(text, cx + 2, cy + 2);
+      ctx.fillText(text, cx + 3, cy + 4);
+      ctx.fillStyle = textColor;
+      ctx.fillText(text, cx, cy);
+
+    } else {
+      // Clean Crisp with Soft Shadow
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 2;
+      ctx.fillStyle = textColor;
+      ctx.fillText(text, cx, cy);
+    }
+
+    ctx.restore();
+  }
+
 }
