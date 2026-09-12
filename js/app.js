@@ -2686,6 +2686,22 @@ class TwibbonApp {
     const userPhoto = user && user.photoURL ? user.photoURL : null;
     const totalSupporters = myCampaigns.reduce((sum, c) => sum + (c.supporters || 0), 0);
 
+    // Sync authentic user campaigns from cloud in background
+    if (typeof CampaignService.fetchUserCampaignsFromCloud === 'function' && !this._fetchingUserCampaigns) {
+      this._fetchingUserCampaigns = true;
+      CampaignService.fetchUserCampaignsFromCloud().then(cloudCampaigns => {
+        this._fetchingUserCampaigns = false;
+        if (cloudCampaigns && cloudCampaigns.length > 0) {
+          const fresh = CampaignService.getUserCampaigns();
+          if (fresh.length !== myCampaigns.length) {
+            this.loadMyCampaignsView();
+          }
+        }
+      }).catch(() => {
+        this._fetchingUserCampaigns = false;
+      });
+    }
+
     container.innerHTML = `
       <!-- Creator Profile & Stats Dashboard -->
       <div class="creator-profile-card">
