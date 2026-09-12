@@ -1963,6 +1963,16 @@ button, input, textarea, select {
   font-family: inherit;
 }
 
+.btn-google-clean svg,
+.btn-google svg {
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+}
+
 .btn-google-clean:hover {
   background: var(--bg-secondary);
   border-color: rgba(37, 99, 235, 0.35);
