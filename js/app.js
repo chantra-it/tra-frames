@@ -2051,7 +2051,8 @@ class TwibbonApp {
         <div class="create-preview-sticky">
           <div class="live-preview-box">
             <div class="live-preview-header">
-              ${Icons.eye} <span>${t('livePreview')}</span>
+              <span style="display:inline-flex;align-items:center;width:18px;height:18px;color:var(--accent-primary);flex-shrink:0;">${Icons.eye}</span>
+              <span>${t('livePreview')}</span>
             </div>
             <div class="card-preview-wrapper">
               <img src="${SAMPLE_AVATARS[0]}" class="card-sample-backdrop" alt="Backdrop" />
@@ -2122,11 +2123,11 @@ class TwibbonApp {
             <label class="form-label">${t('fieldFrameUpload')} *</label>
             <div style="display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap;">
               <input type="file" id="frameFileInput" accept="image/png,image/svg+xml,image/webp" style="display: none;" />
-              <button type="button" class="btn btn-secondary" onclick="document.getElementById('frameFileInput').click()">
+              <button type="button" class="btn btn-primary" onclick="document.getElementById('frameFileInput').click()">
                 ${Icons.upload} <span>Upload PNG</span>
               </button>
               <button type="button" class="btn btn-outline" onclick="window.location.hash='#designer'">
-                ${Icons.paint} <span>${t('designerTitle')}</span>
+                ${Icons.paint} <span>${t('navDesigner')}</span>
               </button>
             </div>
           </div>
@@ -2136,10 +2137,10 @@ class TwibbonApp {
             <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.45rem;">
               ${t('orChooseTemplate')}:
             </div>
-            <div style="display: flex; gap: 0.65rem; overflow-x: auto; padding-bottom: 0.5rem;">
+            <div class="preset-frame-picker">
               ${Object.keys(PRESET_FRAMES).map(key => `
-                <div class="sample-avatar-btn" style="width: 48px; height: 48px; flex-shrink: 0;" data-preset="${key}">
-                  <img src="${PRESET_FRAMES[key]}" />
+                <div class="preset-frame-chip ${initialFrame === PRESET_FRAMES[key] ? 'active' : ''}" data-preset="${key}" title="${key}">
+                  <img src="${PRESET_FRAMES[key]}" alt="${key}" />
                 </div>
               `).join('')}
             </div>
@@ -2263,8 +2264,10 @@ class TwibbonApp {
       btn.addEventListener('click', () => {
         const key = btn.getAttribute('data-preset');
         if (PRESET_FRAMES[key]) {
+          container.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
           updateFramePreviews(PRESET_FRAMES[key]);
-          this.showToast(`Selected preset: ${key}`);
+          this.showToast(isKm ? `បានជ្រើសរើសស៊ុម៖ ${key}` : `Selected preset: ${key}`);
         }
       });
     });
