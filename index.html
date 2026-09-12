@@ -4037,6 +4037,178 @@ button, input, textarea, select {
   margin-bottom: 1rem;
 }
 
+/* Admin Table Checkboxes & Row Selection */
+.admin-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent-primary, #2563eb);
+  border-radius: 4px;
+  vertical-align: middle;
+  transition: transform 0.12s ease;
+}
+
+.admin-checkbox:hover {
+  transform: scale(1.1);
+}
+
+.admin-row-selected td {
+  background: rgba(37, 99, 235, 0.08) !important;
+}
+
+[data-theme="dark"] .admin-row-selected td {
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+
+/* Admin Batch Actions Toolbar */
+.admin-batch-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(99, 102, 241, 0.08));
+  border: 1px solid rgba(37, 99, 235, 0.28);
+  border-radius: var(--radius-lg, 12px);
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.15rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+  animation: slideDownBatch 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.08);
+}
+
+[data-theme="dark"] .admin-batch-bar {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(99, 102, 241, 0.14));
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes slideDownBatch {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-batch-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-batch-badge {
+  background: var(--accent-primary, #2563eb);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-full, 9999px);
+  min-width: 26px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
+.admin-batch-text {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.admin-batch-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.btn-batch-delete {
+  background: #ef4444;
+  color: #ffffff !important;
+  border: none;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+}
+
+.btn-batch-delete:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.btn-batch-export {
+  background: #2563eb;
+  color: #ffffff !important;
+  border: none;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.btn-batch-export:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.btn-batch-cat {
+  background: #8b5cf6;
+  color: #ffffff !important;
+  border: none;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.25);
+}
+
+.btn-batch-cat:hover {
+  background: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.btn-batch-close {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  font-size: 0.86rem;
+  transition: all 0.15s ease;
+}
+
+.btn-batch-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+
 
 
 </style>
@@ -4410,7 +4582,17 @@ const translations = {
     adminRecentCampaigns: "យុទ្ធនាការដែលទើបបង្កើតថ្មីៗ",
     adminCategoryDistribution: "ការបែងចែកយុទ្ធនាការតាមប្រភេទ",
     adminRestoreConfirm: "តើអ្នកពិតជាចង់បញ្ចូលទិន្នន័យពី File Backup នេះមែនទេ? ទិន្នន័យដែលមានស្រាប់នឹងត្រូវ Update។",
-    adminRestoreSuccess: "ទិន្នន័យត្រូវបានស្ដារជោគជ័យ!"
+    adminRestoreSuccess: "ទិន្នន័យត្រូវបានស្ដារជោគជ័យ!",
+    adminSelectAll: "ជ្រើសរើសទាំងអស់",
+    adminSelectedCount: "បានជ្រើសរើស {count} យុទ្ធនាការ",
+    adminBatchDelete: "លុបដែលបានជ្រើស",
+    adminBatchDeleteConfirm: "⚠️ តើអ្នកពិតជាចង់លុប {count} យុទ្ធនាការដែលបានជ្រើសរើសនេះមែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់ក្រោយវិញបានឡើយ!",
+    adminBatchDeletedSuccess: "បានលុបយុទ្ធនាការចំនួន {count} ដោយជោគជ័យ!",
+    adminBatchExport: "ទាញយក Backup (JSON)",
+    adminBatchChangeCategory: "ប្តូរប្រភេទ Category",
+    adminBatchCategoryPrompt: "សូមជ្រើសរើស Category ថ្មីសម្រាប់យុទ្ធនាការទាំង {count}៖",
+    adminBatchCategoryUpdated: "បានប្តូរប្រភេទយុទ្ធនាការចំនួន {count} ដោយជោគជ័យ!",
+    adminDeselectAll: "ដកការជ្រើសរើស"
   },
   en: {
     appName: "Tra Frames",
@@ -4625,7 +4807,17 @@ const translations = {
     adminRecentCampaigns: "Recently Created Campaigns",
     adminCategoryDistribution: "Campaigns by Category",
     adminRestoreConfirm: "Are you sure you want to restore data from this backup file? Existing documents will be merged and updated.",
-    adminRestoreSuccess: "Database restored successfully from backup!"
+    adminRestoreSuccess: "Database restored successfully from backup!",
+    adminSelectAll: "Select All",
+    adminSelectedCount: "{count} campaigns selected",
+    adminBatchDelete: "Delete Selected",
+    adminBatchDeleteConfirm: "⚠️ Are you sure you want to permanently delete {count} selected campaigns? This action cannot be undone!",
+    adminBatchDeletedSuccess: "Successfully deleted {count} campaigns!",
+    adminBatchExport: "Export Selected (JSON)",
+    adminBatchChangeCategory: "Change Category",
+    adminBatchCategoryPrompt: "Choose a new category for the {count} selected campaigns:",
+    adminBatchCategoryUpdated: "Successfully updated category for {count} campaigns!",
+    adminDeselectAll: "Deselect"
   }
 };
 
@@ -7000,6 +7192,185 @@ const AdminService = {
     return { success: true, deletedIdentifiers: idList };
   },
 
+  // Admin Batch Delete: permanently remove multiple campaigns across all sources
+  async adminBatchDeleteCampaigns(targetKeys) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    if (!Array.isArray(targetKeys) || targetKeys.length === 0) {
+      return { success: true, count: 0, deletedIdentifiers: [] };
+    }
+
+    const all = await this.fetchAllCampaignsAdmin();
+    const allIdentifiersToDelete = new Set();
+    const resolvedDocIds = new Set();
+
+    targetKeys.forEach(rawKey => {
+      const safeKey = String(rawKey).trim();
+      if (!safeKey) return;
+      allIdentifiersToDelete.add(safeKey);
+
+      const found = all.find(c => c.slug === safeKey || c.id === safeKey || c._docId === safeKey) ||
+                    (CampaignService._memoryCache ? (CampaignService._memoryCache.get(safeKey) || {}) : {});
+      if (found.slug) allIdentifiersToDelete.add(found.slug);
+      if (found.id) allIdentifiersToDelete.add(found.id);
+      if (found._docId) allIdentifiersToDelete.add(found._docId);
+
+      const docId = found._docId || found.slug || safeKey;
+      if (docId) resolvedDocIds.add(docId);
+    });
+
+    const idList = Array.from(allIdentifiersToDelete).filter(Boolean);
+
+    // 1. Save to Persistent Deleted Registry
+    this.saveDeletedCampaignId(idList);
+
+    // 2. Check and suppress presets
+    try {
+      const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+      let suppressedChanged = false;
+      idList.forEach(id => {
+        const isPreset = INITIAL_CAMPAIGNS.some(p => p.id === id || p.slug === id);
+        if (isPreset && !suppressed.includes(id)) {
+          suppressed.push(id);
+          suppressedChanged = true;
+        }
+      });
+      if (suppressedChanged) {
+        localStorage.setItem('tra_suppressed_presets', JSON.stringify(suppressed));
+      }
+    } catch (e) {}
+
+    // 3. Remove from Overrides
+    try {
+      const overrides = this.getCampaignOverrides();
+      idList.forEach(id => { delete overrides[id]; });
+      localStorage.setItem('tra_admin_campaign_overrides', JSON.stringify(overrides));
+    } catch (e) {}
+
+    // 4. Remove from Memory Cache
+    if (CampaignService._memoryCache) {
+      idList.forEach(id => CampaignService._memoryCache.delete(id));
+    }
+
+    // 5. Remove from LocalStorage user campaigns
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        let userCampaigns = JSON.parse(stored);
+        userCampaigns = userCampaigns.filter(c => !idList.includes(c.id) && !idList.includes(c.slug));
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+      }
+    } catch (e) {}
+
+    // 6. Batch Delete from Cloud Firestore
+    const db = initFirestore();
+    if (db) {
+      const promises = Array.from(resolvedDocIds).map(docId => {
+        return db.collection("campaigns").doc(docId).delete()
+          .then(() => console.log("🔥 Admin batch-deleted doc from Cloud Firestore:", docId))
+          .catch(err => console.warn("Firestore SDK batch-delete notice:", docId, err));
+      });
+      await Promise.allSettled(promises);
+    }
+
+    return { success: true, count: targetKeys.length, deletedIdentifiers: idList };
+  },
+
+  // Admin Batch Update Category: assign category to multiple campaigns
+  async adminBatchUpdateCategory(targetKeys, newCategory) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    const validCategories = ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'];
+    if (!validCategories.includes(newCategory)) {
+      throw new Error("Invalid category: " + newCategory);
+    }
+    if (!Array.isArray(targetKeys) || targetKeys.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    const all = await this.fetchAllCampaignsAdmin();
+    const updatedCampaigns = [];
+    const db = initFirestore();
+
+    for (const rawKey of targetKeys) {
+      const safeKey = String(rawKey).trim();
+      if (!safeKey) continue;
+      const found = all.find(c => c.slug === safeKey || c.id === safeKey || c._docId === safeKey);
+      if (!found) continue;
+
+      const updated = {
+        ...found,
+        category: newCategory,
+        updatedAt: new Date().toISOString()
+      };
+
+      this.saveCampaignOverride(updated);
+
+      if (CampaignService._memoryCache) {
+        if (updated.slug) CampaignService._memoryCache.set(updated.slug, updated);
+        if (updated.id) CampaignService._memoryCache.set(updated.id, updated);
+        if (updated._docId) CampaignService._memoryCache.set(updated._docId, updated);
+      }
+
+      // Update local storage user campaign if present
+      try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (stored) {
+          let userCampaigns = JSON.parse(stored);
+          const idx = userCampaigns.findIndex(c => c.id === safeKey || c.slug === safeKey);
+          if (idx !== -1) {
+            userCampaigns[idx] = { ...userCampaigns[idx], category: newCategory, updatedAt: new Date().toISOString() };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+          }
+        }
+      } catch (e) {}
+
+      const docId = updated._docId || updated.slug || updated.id;
+      if (db && docId) {
+        db.collection("campaigns").doc(docId).set({ category: newCategory, updatedAt: new Date().toISOString() }, { merge: true })
+          .catch(err => console.warn("Batch category cloud update notice:", docId, err));
+      }
+
+      updatedCampaigns.push(updated);
+    }
+
+    return { success: true, count: updatedCampaigns.length, category: newCategory };
+  },
+
+  // Export Selected Campaigns Backup as JSON file
+  async exportSelectedCampaignsBackup(targetKeys) {
+    const all = await this.fetchAllCampaignsAdmin();
+    const targetSet = new Set(targetKeys.map(k => String(k).trim()));
+    
+    const selectedCampaigns = all.filter(c => 
+      targetSet.has(c.slug) || targetSet.has(c.id) || (c._docId && targetSet.has(c._docId))
+    );
+
+    const exportData = {
+      appName: "Tra Frames",
+      type: "selected_campaigns_backup",
+      exportTimestamp: new Date().toISOString(),
+      exportDateFormatted: new Date().toLocaleString(),
+      count: selectedCampaigns.length,
+      campaigns: selectedCampaigns
+    };
+
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().split('T')[0];
+    a.href = url;
+    a.download = `tra-frames-selected-${selectedCampaigns.length}-items-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return exportData;
+  },
+
   // Fetch list of registered users and campaign creators
   async fetchUsersList() {
     const userMap = new Map();
@@ -8145,6 +8516,7 @@ class TwibbonApp {
     this.designer = null;
     this.isCreateFormDirty = false;
     this.isAuthPendingOtp = false;
+    this.adminSelectedCampaigns = new Set();
 
     // Restore Explore states from sessionStorage
     try {
@@ -11442,6 +11814,28 @@ class TwibbonApp {
           </div>
         </div>
 
+        <!-- Batch Actions Toolbar -->
+        <div id="adminBatchBar" class="admin-batch-bar" style="display: none;">
+          <div class="admin-batch-bar-left">
+            <span class="admin-batch-badge" id="adminBatchCountBadge">0</span>
+            <span class="admin-batch-text" id="adminBatchCountText">${t('adminSelectedCount').replace('{count}', '0')}</span>
+          </div>
+          <div class="admin-batch-bar-actions">
+            <button class="btn btn-sm btn-batch-delete" onclick="app.handleAdminBatchDelete()" title="${t('adminBatchDelete')}">
+              ${Icons.trash || '🗑️'} <span>${t('adminBatchDelete')}</span>
+            </button>
+            <button class="btn btn-sm btn-batch-export" onclick="app.handleAdminBatchExport()" title="${t('adminBatchExport')}">
+              ${Icons.download || '📦'} <span>${t('adminBatchExport')}</span>
+            </button>
+            <button class="btn btn-sm btn-batch-cat" onclick="app.openAdminBatchCategoryModal()" title="${t('adminBatchChangeCategory')}">
+              🏷️ <span>${t('adminBatchChangeCategory')}</span>
+            </button>
+            <button class="btn btn-sm btn-batch-close" onclick="app.handleAdminDeselectAll()" title="${t('adminDeselectAll')}">
+              ${t('adminDeselectAll')}
+            </button>
+          </div>
+        </div>
+
         <!-- Table Summary Counter -->
         <div class="admin-table-meta-bar">
           <span id="adminTableCountLabel">${isKm ? `បង្ហាញយុទ្ធនាការសរុបចំនួន ${campaigns.length}` : `Showing all ${campaigns.length} campaigns`}</span>
@@ -11469,14 +11863,17 @@ class TwibbonApp {
       <table class="admin-table">
         <thead>
           <tr>
-            <th style="width: 60px;">${isKm ? 'ស៊ុម' : 'Frame'}</th>
+            <th style="width: 44px; text-align: center;">
+              <input type="checkbox" id="adminMasterCb" class="admin-checkbox" onchange="app.handleAdminMasterCheckboxToggle(this.checked)" title="${t('adminSelectAll')}" />
+            </th>
+            <th style="width: 54px;">${isKm ? 'ស៊ុម' : 'Frame'}</th>
             <th>${isKm ? 'ព័ត៌មានយុទ្ធនាការ (Title & Slug)' : 'Campaign (Title & Slug)'}</th>
             <th>${isKm ? 'ប្រភេទ' : 'Category'}</th>
             <th>${isKm ? 'អ្នកបង្កើត (Creator)' : 'Creator'}</th>
             <th style="text-align: right;">${isKm ? 'អ្នកគាំទ្រ' : 'Supporters'}</th>
             <th>${isKm ? 'ប្រភព' : 'Source'}</th>
             <th>${isKm ? 'កាលបរិច្ឆេទ' : 'Date'}</th>
-            <th style="text-align: center; width: 140px;">${isKm ? 'សកម្មភាព' : 'Actions'}</th>
+            <th style="text-align: center; width: 130px;">${isKm ? 'សកម្មភាព' : 'Actions'}</th>
           </tr>
         </thead>
         <tbody>
@@ -11493,13 +11890,17 @@ class TwibbonApp {
             const campKey = c.slug || c.id || c._docId;
             const safeCampId = SecurityUtils.escapeHtml(campKey);
             const safeTitleEscaped = SecurityUtils.escapeHtml(displayTitle).replace(/'/g, "\\'");
+            const isSelected = this.adminSelectedCampaigns && this.adminSelectedCampaigns.has(campKey);
 
             let sourceBadge = `<span class="badge-source badge-cloud">Cloud</span>`;
             if (source === 'local') sourceBadge = `<span class="badge-source badge-local">Local</span>`;
             if (source === 'preset') sourceBadge = `<span class="badge-source badge-preset">Preset</span>`;
 
             return `
-              <tr id="adminRow_${safeCampId}">
+              <tr id="adminRow_${safeCampId}" class="${isSelected ? 'admin-row-selected' : ''}">
+                <td style="text-align: center; width: 44px;">
+                  <input type="checkbox" class="admin-checkbox admin-camp-cb" data-key="${safeCampId}" ${isSelected ? 'checked' : ''} onchange="app.handleAdminRowCheckboxToggle('${safeCampId}', this.checked)" />
+                </td>
                 <td>
                   <div class="admin-table-thumb" onclick="app.navigateTo('campaign/${slug}')" title="Click to view">
                     <img src="${SAMPLE_AVATARS[0]}" class="admin-thumb-bg" />
@@ -11840,6 +12241,7 @@ class TwibbonApp {
 
         if (tableContainer) {
           tableContainer.innerHTML = this.buildCampaignsTableHtml(filtered, isKm);
+          this.updateAdminBatchBarUI();
         }
         if (countLabel) {
           countLabel.textContent = isKm 
@@ -12124,25 +12526,250 @@ class TwibbonApp {
 
       this.showToast(t('adminCampaignDeleted'), 'success');
 
-      // Refresh table immediately
-      const tableWrap = document.getElementById('adminCampTableContainer');
-      if (tableWrap) {
-        tableWrap.innerHTML = this.buildCampaignsTableHtml(this.adminData.campaigns, isKm);
-        this.initAdminTabListeners('campaigns', isKm);
-        const countLabel = document.getElementById('adminTableCountLabel');
-        if (countLabel) {
-          countLabel.textContent = isKm 
-            ? `បង្ហាញយុទ្ធនាការសរុបចំនួន ${this.adminData.campaigns.length}`
-            : `Showing all ${this.adminData.campaigns.length} campaigns`;
-        }
-        const campTabPill = document.querySelector('.admin-tab-item:nth-child(2) .admin-tab-counter');
-        if (campTabPill) campTabPill.textContent = this.adminData.campaigns.length;
-      } else {
-        await this.loadAdminView('campaigns');
+      // Remove from selection if deleted
+      if (this.adminSelectedCampaigns) {
+        this.adminSelectedCampaigns.delete(campaignId);
       }
+
+      this.refreshAdminCampaignsTable();
     } catch (err) {
       console.error("Admin delete error:", err);
       this.showToast("Error deleting campaign: " + (err.message || ''), 'error');
+    }
+  }
+
+  // =========================================================
+  // ADMIN BATCH SELECTION & ACTIONS
+  // =========================================================
+  handleAdminRowCheckboxToggle(safeCampId, isChecked) {
+    if (!this.adminSelectedCampaigns) this.adminSelectedCampaigns = new Set();
+    if (isChecked) {
+      this.adminSelectedCampaigns.add(safeCampId);
+    } else {
+      this.adminSelectedCampaigns.delete(safeCampId);
+    }
+    const row = document.getElementById(`adminRow_${safeCampId}`);
+    if (row) {
+      if (isChecked) row.classList.add('admin-row-selected');
+      else row.classList.remove('admin-row-selected');
+    }
+    this.updateAdminBatchBarUI();
+  }
+
+  handleAdminMasterCheckboxToggle(isChecked) {
+    if (!this.adminSelectedCampaigns) this.adminSelectedCampaigns = new Set();
+    const cbs = document.querySelectorAll('.admin-camp-cb');
+    cbs.forEach(cb => {
+      cb.checked = isChecked;
+      const key = cb.getAttribute('data-key');
+      if (key) {
+        if (isChecked) this.adminSelectedCampaigns.add(key);
+        else this.adminSelectedCampaigns.delete(key);
+      }
+      const row = cb.closest('tr');
+      if (row) {
+        if (isChecked) row.classList.add('admin-row-selected');
+        else row.classList.remove('admin-row-selected');
+      }
+    });
+    this.updateAdminBatchBarUI();
+  }
+
+  updateAdminBatchBarUI() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const count = this.adminSelectedCampaigns ? this.adminSelectedCampaigns.size : 0;
+    const batchBar = document.getElementById('adminBatchBar');
+    const badge = document.getElementById('adminBatchCountBadge');
+    const text = document.getElementById('adminBatchCountText');
+
+    if (batchBar) {
+      if (count > 0) {
+        batchBar.style.display = 'flex';
+        if (badge) badge.textContent = count;
+        if (text) text.textContent = t('adminSelectedCount').replace('{count}', count);
+      } else {
+        batchBar.style.display = 'none';
+      }
+    }
+
+    const allVisibleCbs = Array.from(document.querySelectorAll('.admin-camp-cb'));
+    const masterCb = document.getElementById('adminMasterCb');
+    if (masterCb) {
+      if (allVisibleCbs.length === 0) {
+        masterCb.checked = false;
+        masterCb.indeterminate = false;
+      } else {
+        const checkedCount = allVisibleCbs.filter(cb => cb.checked).length;
+        masterCb.checked = (checkedCount === allVisibleCbs.length);
+        masterCb.indeterminate = (checkedCount > 0 && checkedCount < allVisibleCbs.length);
+      }
+    }
+  }
+
+  handleAdminDeselectAll() {
+    if (this.adminSelectedCampaigns) this.adminSelectedCampaigns.clear();
+    document.querySelectorAll('.admin-camp-cb').forEach(cb => {
+      cb.checked = false;
+      cb.closest('tr')?.classList.remove('admin-row-selected');
+    });
+    const masterCb = document.getElementById('adminMasterCb');
+    if (masterCb) {
+      masterCb.checked = false;
+      masterCb.indeterminate = false;
+    }
+    this.updateAdminBatchBarUI();
+  }
+
+  async handleAdminBatchDelete() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const count = this.adminSelectedCampaigns ? this.adminSelectedCampaigns.size : 0;
+    if (count === 0) return;
+
+    const confirmMsg = t('adminBatchDeleteConfirm').replace('{count}', count);
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      this.showToast(isKm ? 'កំពុងលុបយុទ្ធនាការដែលបានជ្រើស...' : 'Deleting selected campaigns...', 'info');
+      const targetKeys = Array.from(this.adminSelectedCampaigns);
+
+      const res = await AdminService.adminBatchDeleteCampaigns(targetKeys);
+
+      // Update in-memory campaigns
+      if (this.adminData && this.adminData.campaigns) {
+        const deletedSet = new Set(res.deletedIdentifiers || targetKeys);
+        this.adminData.campaigns = this.adminData.campaigns.filter(c => 
+          !deletedSet.has(c.slug) && !deletedSet.has(c.id) && !(c._docId && deletedSet.has(c._docId))
+        );
+        this.adminData.metrics = AdminService.getPlatformMetrics(this.adminData.campaigns, this.adminData.users);
+      }
+
+      this.adminSelectedCampaigns.clear();
+      this.showToast(t('adminBatchDeletedSuccess').replace('{count}', count), 'success');
+      this.refreshAdminCampaignsTable();
+    } catch (err) {
+      console.error("Batch delete error:", err);
+      this.showToast("Error during batch delete: " + (err.message || ''), 'error');
+    }
+  }
+
+  async handleAdminBatchExport() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const count = this.adminSelectedCampaigns ? this.adminSelectedCampaigns.size : 0;
+    if (count === 0) return;
+
+    try {
+      this.showToast(isKm ? 'កំពុងបង្កើត Backup...' : 'Generating JSON backup...', 'info');
+      const targetKeys = Array.from(this.adminSelectedCampaigns);
+      await AdminService.exportSelectedCampaignsBackup(targetKeys);
+      this.showToast(isKm ? `បានទាញយក Backup យុទ្ធនាការចំនួន ${count}!` : `Exported ${count} selected campaigns!`, 'success');
+    } catch (err) {
+      console.error("Batch export error:", err);
+      this.showToast("Error exporting campaigns: " + (err.message || ''), 'error');
+    }
+  }
+
+  openAdminBatchCategoryModal() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const count = this.adminSelectedCampaigns ? this.adminSelectedCampaigns.size : 0;
+    if (count === 0) return;
+
+    const existing = document.getElementById('adminBatchCatModalOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'adminBatchCatModalOverlay';
+
+    overlay.innerHTML = `
+      <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-header">
+          <div>
+            <h3 style="font-weight: 800; font-size: 1.2rem;">🏷️ ${t('adminBatchChangeCategory')}</h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+              ${t('adminBatchCategoryPrompt').replace('{count}', count)}
+            </p>
+          </div>
+          <button class="modal-close-btn" onclick="document.getElementById('adminBatchCatModalOverlay').remove()">&times;</button>
+        </div>
+
+        <form onsubmit="event.preventDefault(); app.handleAdminSaveBatchCategory();">
+          <div class="form-group" style="margin: 1.25rem 0;">
+            <label class="form-label">${t('fieldCategory')} *</label>
+            <select id="batchNewCategorySelect" class="form-select" style="padding: 0.75rem 1rem; font-size: 1rem;">
+              <option value="celebration">🎉 ${t('catCelebration')}</option>
+              <option value="education">🎓 ${t('catEducation')}</option>
+              <option value="culture">🏛️ ${t('catCulture')}</option>
+              <option value="charity">❤️ ${t('catCharity')}</option>
+              <option value="sports">⚽ ${t('catSports')}</option>
+              <option value="tech">💻 ${t('catTech')}</option>
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('adminBatchCatModalOverlay').remove()">
+              ${t('adminCancel')}
+            </button>
+            <button type="submit" class="btn btn-primary">
+              💾 <span>${isKm ? `ប្តូរទៅ Category ថ្មី (${count})` : `Update Category (${count})`}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+  }
+
+  async handleAdminSaveBatchCategory() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const select = document.getElementById('batchNewCategorySelect');
+    const newCat = select ? select.value : 'celebration';
+    const targetKeys = Array.from(this.adminSelectedCampaigns);
+    const count = targetKeys.length;
+
+    try {
+      this.showToast(isKm ? 'កំពុងកែប្រែ Category...' : 'Updating categories...', 'info');
+      await AdminService.adminBatchUpdateCategory(targetKeys, newCat);
+
+      // Update in-memory campaigns
+      if (this.adminData && this.adminData.campaigns) {
+        const targetSet = new Set(targetKeys);
+        this.adminData.campaigns.forEach(c => {
+          if (targetSet.has(c.slug) || targetSet.has(c.id) || (c._docId && targetSet.has(c._docId))) {
+            c.category = newCat;
+          }
+        });
+        this.adminData.metrics = AdminService.getPlatformMetrics(this.adminData.campaigns, this.adminData.users);
+      }
+
+      const modal = document.getElementById('adminBatchCatModalOverlay');
+      if (modal) modal.remove();
+
+      this.showToast(t('adminBatchCategoryUpdated').replace('{count}', count), 'success');
+      this.refreshAdminCampaignsTable();
+    } catch (err) {
+      console.error("Batch category update error:", err);
+      this.showToast("Error updating category: " + (err.message || ''), 'error');
+    }
+  }
+
+  refreshAdminCampaignsTable() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const tableWrap = document.getElementById('adminCampTableContainer');
+    if (tableWrap && this.adminData) {
+      tableWrap.innerHTML = this.buildCampaignsTableHtml(this.adminData.campaigns, isKm);
+      this.initAdminTabListeners('campaigns', isKm);
+      const countLabel = document.getElementById('adminTableCountLabel');
+      if (countLabel) {
+        countLabel.textContent = isKm 
+          ? `បង្ហាញយុទ្ធនាការសរុបចំនួន ${this.adminData.campaigns.length}`
+          : `Showing all ${this.adminData.campaigns.length} campaigns`;
+      }
+      const campTabPill = document.querySelector('.admin-tab-item:nth-child(2) .admin-tab-counter');
+      if (campTabPill) campTabPill.textContent = this.adminData.campaigns.length;
+      this.updateAdminBatchBarUI();
+    } else {
+      this.loadAdminView('campaigns');
     }
   }
 
