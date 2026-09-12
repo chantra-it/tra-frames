@@ -4021,4 +4021,176 @@ button, input, textarea, select {
   margin-bottom: 1rem;
 }
 
+/* Admin Table Checkboxes & Row Selection */
+.admin-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent-primary, #2563eb);
+  border-radius: 4px;
+  vertical-align: middle;
+  transition: transform 0.12s ease;
+}
+
+.admin-checkbox:hover {
+  transform: scale(1.1);
+}
+
+.admin-row-selected td {
+  background: rgba(37, 99, 235, 0.08) !important;
+}
+
+[data-theme="dark"] .admin-row-selected td {
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+
+/* Admin Batch Actions Toolbar */
+.admin-batch-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(99, 102, 241, 0.08));
+  border: 1px solid rgba(37, 99, 235, 0.28);
+  border-radius: var(--radius-lg, 12px);
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.15rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+  animation: slideDownBatch 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.08);
+}
+
+[data-theme="dark"] .admin-batch-bar {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(99, 102, 241, 0.14));
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes slideDownBatch {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-batch-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-batch-badge {
+  background: var(--accent-primary, #2563eb);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-full, 9999px);
+  min-width: 26px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
+.admin-batch-text {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.admin-batch-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.btn-batch-delete {
+  background: #ef4444;
+  color: #ffffff !important;
+  border: none;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+}
+
+.btn-batch-delete:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.btn-batch-export {
+  background: #2563eb;
+  color: #ffffff !important;
+  border: none;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.btn-batch-export:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.btn-batch-cat {
+  background: #8b5cf6;
+  color: #ffffff !important;
+  border: none;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.25);
+}
+
+.btn-batch-cat:hover {
+  background: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.btn-batch-close {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  font-size: 0.86rem;
+  transition: all 0.15s ease;
+}
+
+.btn-batch-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+
 
