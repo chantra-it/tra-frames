@@ -2951,17 +2951,17 @@ button, input, textarea, select {
 
 .otp-inputs-grid {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   justify-content: center;
-  margin: 1.5rem 0 1.25rem;
+  margin: 1.25rem 0 1.25rem;
   direction: ltr;
 }
 
 .otp-digit {
-  width: 48px;
-  height: 58px;
+  width: 56px;
+  height: 64px;
   text-align: center;
-  font-size: 1.6rem;
+  font-size: 1.85rem;
   font-weight: 800;
   font-family: monospace, inherit;
   color: var(--text-primary);
@@ -3403,7 +3403,7 @@ const translations = {
     emailNotVerifiedYet: "អ៊ីមែលមិនទាន់បានផ្ទៀងផ្ទាត់នៅឡើយទេ។ សូមពិនិត្យមើល Link ក្នុងប្រអប់សំបុត្រ Email របស់អ្នក (រួមទាំង Spam)។",
     disposableEmailError: "សូមប្រើប្រាស់អ៊ីមែលពិតប្រាកដ (Gmail, Outlook, Yahoo...)។ ប្រព័ន្ធមិនអនុញ្ញាតអ៊ីមែលបណ្តោះអាសន្នទេ។",
     otpModalTitle: "ផ្ទៀងផ្ទាត់លេខកូដ OTP",
-    otpModalSubtitle: "យើងបានផ្ញើលេខកូដសម្ងាត់ ៦ ខ្ទង់ទៅកាន់អ៊ីមែល៖",
+    otpModalSubtitle: "យើងបានផ្ញើលេខកូដសម្ងាត់ ៤ ខ្ទង់ទៅកាន់អ៊ីមែល៖",
     otpVerifyBtn: "ផ្ទៀងផ្ទាត់លេខកូដ",
     otpResendBtn: "ផ្ញើលេខកូដឡើងវិញ",
     otpResendWait: "ផ្ញើឡើងវិញក្នុងរយៈពេល",
@@ -3558,7 +3558,7 @@ const translations = {
     emailNotVerifiedYet: "Email is not verified yet. Please click the link in your inbox (or spam folder).",
     disposableEmailError: "Please use a real email address (Gmail, Outlook, Yahoo). Disposable emails are not allowed.",
     otpModalTitle: "Verify OTP Code",
-    otpModalSubtitle: "We have sent a 6-digit verification code to:",
+    otpModalSubtitle: "We have sent a 4-digit verification code to:",
     otpVerifyBtn: "Verify Code",
     otpResendBtn: "Resend Code",
     otpResendWait: "Resend in",
@@ -4189,7 +4189,7 @@ function initFirebaseAuth() {
 }
 
 // ==========================================
-// 6-DIGIT EMAIL OTP VERIFICATION SERVICE
+// 4-DIGIT EMAIL OTP VERIFICATION SERVICE
 // ==========================================
 const OtpService = {
   async generateOtp(email, displayName = '') {
@@ -4207,14 +4207,14 @@ const OtpService = {
       throw err;
     }
 
-    // Generate cryptographically random 6-digit number
+    // Generate cryptographically random 4-digit number (1000 - 9999)
     let otpCode = '';
     if (window.crypto && window.crypto.getRandomValues) {
       const arr = new Uint32Array(1);
       window.crypto.getRandomValues(arr);
-      otpCode = (100000 + (arr[0] % 900000)).toString();
+      otpCode = (1000 + (arr[0] % 9000)).toString();
     } else {
-      otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      otpCode = Math.floor(1000 + Math.random() * 9000).toString();
     }
 
     // Hash the OTP with salt for secure storage
@@ -4224,6 +4224,7 @@ const OtpService = {
     const record = {
       email: cleanEmail,
       hash: otpHash,
+      code: otpCode, // store code for reliable client verification
       expiresAt: expiresAt,
       attempts: 0
     };
@@ -4232,7 +4233,7 @@ const OtpService = {
       sessionStorage.setItem("tra_otp_record", JSON.stringify(record));
     } catch (e) {}
 
-    // Dispatch email
+    // Dispatch email across all configured delivery channels
     await this.sendOtpEmail(cleanEmail, otpCode, displayName);
 
     return { email: cleanEmail, otpCode, expiresAt };
@@ -4267,7 +4268,7 @@ const OtpService = {
           },
           window.EMAILJS_CONFIG.publicKey
         );
-        console.log("📩 [EmailJS] OTP sent successfully to", cleanEmail);
+        console.log("📩 [EmailJS] 4-digit OTP sent successfully to", cleanEmail);
       } catch (e) {
         console.warn("EmailJS delivery notice:", e);
       }
@@ -4277,20 +4278,20 @@ const OtpService = {
     const db = initFirestore();
     if (db) {
       try {
-        db.collection("mail").add({
+        await db.collection("mail").add({
           to: [cleanEmail],
           message: {
             subject: `Tra Frames - លេខកូដផ្ទៀងផ្ទាត់ OTP របស់អ្នកគឺ៖ ${otpCode}`,
-            text: `សួស្តី ${name}!\nលេខកូដសម្ងាត់ ៦ ខ្ទង់របស់អ្នកគឺ៖ ${otpCode}\nលេខកូដនេះមានសុពលភាពរយៈពេល ១០ នាទី។`,
+            text: `សួស្តី ${name}!\nលេខកូដសម្ងាត់ ៤ ខ្ទង់របស់អ្នកគឺ៖ ${otpCode}\nលេខកូដនេះមានសុពលភាពរយៈពេល ១០ នាទី។`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 25px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; text-align: center;">
                 <h2 style="color: #2563eb; margin-bottom: 6px;">Tra Frames</h2>
                 <p style="color: #64748b; font-size: 14px; margin-top: 0;">វេទិកាស៊ុមរូបថតយុទ្ធនាការ និងព្រឹត្តិការណ៍</p>
                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 18px 0;">
                 <p style="color: #334155; font-size: 15px;">សួស្តី <strong>${name}</strong>,</p>
-                <p style="color: #475569; font-size: 14px;">នេះជាលេខកូដផ្ទៀងផ្ទាត់អ៊ីមែល (OTP) របស់អ្នក៖</p>
+                <p style="color: #475569; font-size: 14px;">នេះជាលេខកូដផ្ទៀងផ្ទាត់អ៊ីមែល OTP (៤ ខ្ទង់) របស់អ្នក៖</p>
                 <div style="margin: 24px 0;">
-                  <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f172a; background: #eff6ff; padding: 12px 24px; border-radius: 8px; border: 2px dashed #2563eb; display: inline-block;">
+                  <span style="font-size: 40px; font-weight: 800; letter-spacing: 12px; color: #0f172a; background: #eff6ff; padding: 14px 28px; border-radius: 8px; border: 2px dashed #2563eb; display: inline-block; font-family: monospace;">
                     ${otpCode}
                   </span>
                 </div>
@@ -4299,9 +4300,11 @@ const OtpService = {
               </div>
             `
           }
-        }).then(() => console.log("🔥 [Firestore Mail] Trigger Email queued for", cleanEmail))
-          .catch(e => console.warn("Firestore mail queue notice:", e));
-      } catch (e) {}
+        });
+        console.log("🔥 [Firestore Mail] Trigger Email queued for", cleanEmail);
+      } catch (e) {
+        console.warn("Firestore mail queue notice:", e);
+      }
     }
 
     // Channel 3: Firebase Auth Action Code in background
@@ -4316,7 +4319,7 @@ const OtpService = {
     window.dispatchEvent(new CustomEvent('tra_otp_dispatched', {
       detail: { email: cleanEmail, otpCode }
     }));
-    console.log(`%c🔑 [Tra Frames OTP] Code generated for ${cleanEmail}: ${otpCode}`, "color: #2563eb; font-weight: bold; font-size: 14px;");
+    console.log(`%c🔑 [Tra Frames OTP] 4-digit code generated for ${cleanEmail}: ${otpCode}`, "color: #2563eb; font-weight: bold; font-size: 15px;");
   },
 
   async verifyOtp(email, enteredCode) {
@@ -4355,7 +4358,8 @@ const OtpService = {
     }
 
     const inputHash = await SecurityUtils.hashPassword(cleanCode, `otp_${cleanEmail}`);
-    if (inputHash !== record.hash) {
+    const matchesCode = record.code && record.code.toString() === cleanCode;
+    if (inputHash !== record.hash && !matchesCode) {
       record.attempts = (record.attempts || 0) + 1;
       try {
         sessionStorage.setItem("tra_otp_record", JSON.stringify(record));
@@ -4368,44 +4372,61 @@ const OtpService = {
       sessionStorage.removeItem("tra_otp_record");
     } catch (e) {}
 
-    // Update active user state
+    // Mark email as verified across all persistence layers
+    await this.markEmailVerified(cleanEmail);
+
+    return { success: true };
+  },
+
+  async markEmailVerified(email, uid = null) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) return;
+
+    // 1. Add to persistent verified emails list in localStorage
+    try {
+      const list = JSON.parse(localStorage.getItem("tra_verified_emails") || "[]");
+      if (!list.includes(cleanEmail)) {
+        list.push(cleanEmail);
+        localStorage.setItem("tra_verified_emails", JSON.stringify(list));
+      }
+    } catch (e) {}
+
+    // 2. Update active user in memory and localStorage
     if (AuthService.currentUser) {
       AuthService.currentUser.emailVerified = true;
       try {
         localStorage.setItem("tra_active_user", JSON.stringify(AuthService.currentUser));
       } catch (e) {}
-
-      // Update local account database if local
-      if (AuthService.currentUser.isLocal) {
-        const accounts = AuthService.getLocalAccounts();
-        const acc = accounts.find(a => a.email && a.email.toLowerCase() === cleanEmail);
-        if (acc) {
-          acc.emailVerified = true;
-          try {
-            localStorage.setItem("tra_local_accounts", JSON.stringify(accounts));
-          } catch (e) {}
-        }
-      }
-
-      // Record in Cloud Firestore verified_users collection
-      const db = initFirestore();
-      if (db && AuthService.currentUser.uid) {
-        try {
-          await db.collection("verified_users").doc(AuthService.currentUser.uid).set({
-            email: cleanEmail,
-            verifiedAt: new Date().toISOString(),
-            method: "email_otp"
-          }, { merge: true });
-          console.log("🔥 [Cloud Verified] User verified in Firestore:", AuthService.currentUser.uid);
-        } catch (e) {
-          console.warn("Firestore verified_users update notice:", e);
-        }
-      }
-
-      AuthService.notifyListeners();
+      uid = uid || AuthService.currentUser.uid;
     }
 
-    return { success: true };
+    // 3. Update local account if applicable
+    const accounts = AuthService.getLocalAccounts();
+    const acc = accounts.find(a => a.email && a.email.toLowerCase() === cleanEmail);
+    if (acc) {
+      acc.emailVerified = true;
+      try {
+        localStorage.setItem("tra_local_accounts", JSON.stringify(accounts));
+      } catch (e) {}
+    }
+
+    // 4. Record in Firestore verified_users
+    const db = initFirestore();
+    if (db && uid) {
+      try {
+        await db.collection("verified_users").doc(uid).set({
+          email: cleanEmail,
+          verified: true,
+          verifiedAt: new Date().toISOString(),
+          method: "email_otp_4digits"
+        }, { merge: true });
+        console.log("🔥 [Cloud Verified] User verified in Firestore:", uid);
+      } catch (e) {
+        console.warn("Firestore verified_users update notice:", e);
+      }
+    }
+
+    AuthService.notifyListeners();
   }
 };
 
@@ -4434,19 +4455,30 @@ const AuthService = {
     auth.onAuthStateChanged((user) => {
       if (user) {
         const isGoogle = user.providerData && user.providerData.some(p => p.providerId === 'google.com');
+        let isVerified = isGoogle || !!user.emailVerified;
+
+        if (!isVerified) {
+          try {
+            const list = JSON.parse(localStorage.getItem("tra_verified_emails") || "[]");
+            if (user.email && list.includes(user.email.toLowerCase())) {
+              isVerified = true;
+            }
+          } catch (e) {}
+        }
+
         this.currentUser = {
           uid: user.uid,
           email: user.email || '',
           displayName: SecurityUtils.cleanText(user.displayName || (user.email ? user.email.split('@')[0] : 'Creator'), 50),
           photoURL: SecurityUtils.sanitizeUrl(user.photoURL || ''),
-          emailVerified: isGoogle ? true : !!user.emailVerified,
+          emailVerified: isVerified,
           isLocal: false
         };
 
-        // Check if verified via OTP in Firestore
-        if (!this.currentUser.emailVerified) {
-          const db = initFirestore();
-          if (db) {
+        // Check or sync verified status in Firestore
+        const db = initFirestore();
+        if (db) {
+          if (!this.currentUser.emailVerified) {
             db.collection("verified_users").doc(user.uid).get().then(doc => {
               if (doc.exists && this.currentUser && this.currentUser.uid === user.uid) {
                 this.currentUser.emailVerified = true;
@@ -4454,6 +4486,13 @@ const AuthService = {
                 this.notifyListeners();
               }
             }).catch(() => {});
+          } else {
+            db.collection("verified_users").doc(user.uid).set({
+              email: (user.email || '').toLowerCase(),
+              verified: true,
+              verifiedAt: new Date().toISOString(),
+              method: "email_otp_4digits"
+            }, { merge: true }).catch(() => {});
           }
         }
 
@@ -4492,6 +4531,12 @@ const AuthService = {
   isEmailVerified() {
     if (!this.currentUser) return false;
     if (this.currentUser.emailVerified === true) return true;
+    try {
+      const list = JSON.parse(localStorage.getItem("tra_verified_emails") || "[]");
+      if (this.currentUser.email && list.includes(this.currentUser.email.toLowerCase())) {
+        return true;
+      }
+    } catch (e) {}
     if (this.currentUser.isLocal && this.currentUser.emailVerified !== false) return true;
     return false;
   },
@@ -4687,8 +4732,10 @@ const AuthService = {
         };
         try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
 
-        // Dispatch 6-digit OTP code to email only if not pre-verified
-        if (!preVerified) {
+        if (preVerified) {
+          await OtpService.markEmailVerified(cleanEmail, result.user.uid);
+        } else {
+          // Dispatch 4-digit OTP code to email if not pre-verified
           try {
             await OtpService.generateOtp(cleanEmail, safeDisplayName);
           } catch (otpErr) {
@@ -4742,8 +4789,10 @@ const AuthService = {
       localStorage.setItem("tra_active_user", JSON.stringify(user));
     } catch (e) {}
 
-    // Dispatch 6-digit OTP code to email if not pre-verified
-    if (!preVerified) {
+    if (preVerified) {
+      await OtpService.markEmailVerified(cleanEmail, uid);
+    } else {
+      // Dispatch 4-digit OTP code to email if not pre-verified
       try {
         await OtpService.generateOtp(cleanEmail, safeDisplayName);
       } catch (otpErr) {
@@ -6409,26 +6458,26 @@ class TwibbonApp {
             <input type="email" id="authEmailInput" class="form-input" placeholder="name@example.com" required />
           </div>
 
-          <!-- OTP Dispatched Status Banner (Never reveals secret code on screen) -->
+          <!-- OTP Dispatched Status Banner -->
           <div id="signUpOtpBanner" class="otp-status-banner" style="display: none;">
             <div class="otp-status-header">
               <span>📩 ${isKm ? 'បានផ្ញើលេខកូដ OTP រួចរាល់' : 'OTP Code Dispatched'}</span>
               <span class="badge-sent">Sent</span>
             </div>
             <p class="otp-status-text">
-              ${isKm ? 'លេខកូដសម្ងាត់ ៦ ខ្ទង់ត្រូវបានផ្ញើទៅកាន់អ៊ីមែល៖' : 'A 6-digit verification code has been sent to:'}<br>
+              ${isKm ? 'លេខកូដសម្ងាត់ ៤ ខ្ទង់ត្រូវបានផ្ញើទៅកាន់អ៊ីមែល៖' : 'A 4-digit verification code has been sent to:'}<br>
               <strong id="authSentEmailDisplay" style="color: var(--accent-primary); word-break: break-all;"></strong>
             </p>
             <div class="otp-status-hint">
-              💡 ${isKm ? 'សូមបើកប្រអប់សំបុត្រ <strong>Email (Inbox ឬ Spam)</strong> របស់អ្នក រួចចម្លងលេខកូដ ៦ ខ្ទង់មកបំពេញក្នុងប្រអប់ខាងក្រោម។' : 'Please check your <strong>Email (Inbox or Spam)</strong> and enter the 6-digit code below.'}
+              💡 ${isKm ? 'សូមបើកប្រអប់សំបុត្រ <strong>Email (Inbox ឬ Spam)</strong> របស់អ្នក រួចចម្លងលេខកូដ ៤ ខ្ទង់មកបំពេញក្នុងប្រអប់ខាងក្រោម។' : 'Please check your <strong>Email (Inbox or Spam)</strong> and enter the 4-digit code below.'}
             </div>
           </div>
 
-          <!-- 6-Digit Segmented OTP Grid (Sign Up only) -->
+          <!-- 4-Digit Segmented OTP Grid (Sign Up only) -->
           <div class="form-group" id="groupSignUpOtpInputs" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
               <label class="form-label" style="margin-bottom: 0;">
-                🔑 ${isKm ? 'លេខកូដផ្ទៀងផ្ទាត់ OTP (៦ ខ្ទង់) *' : '6-Digit OTP Code *'}
+                🔑 ${isKm ? 'លេខកូដផ្ទៀងផ្ទាត់ OTP (៤ ខ្ទង់) *' : '4-Digit OTP Code *'}
               </label>
               <span id="authOtpTimerBadge" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-primary); display: none;">
                 ⏱️ <span id="authOtpCountdown">10:00</span>
@@ -6439,8 +6488,6 @@ class TwibbonApp {
               <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="1">
               <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="2">
               <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="3">
-              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="4">
-              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="5">
             </div>
           </div>
 
@@ -6511,7 +6558,7 @@ class TwibbonApp {
       }
     });
 
-    // 6-Digit OTP Segmented Inputs Event Listeners
+    // 4-Digit OTP Segmented Inputs Event Listeners
     const getEnteredSignUpOtp = () => Array.from(authOtpDigits).map(d => d.value).join('');
 
     authOtpDigits.forEach((input, idx) => {
@@ -6520,7 +6567,7 @@ class TwibbonApp {
         e.target.value = val ? val[val.length - 1] : '';
         if (e.target.value) {
           e.target.classList.add('filled');
-          if (idx < 5) authOtpDigits[idx + 1].focus();
+          if (idx < 3) authOtpDigits[idx + 1].focus();
         } else {
           e.target.classList.remove('filled');
         }
@@ -6538,7 +6585,7 @@ class TwibbonApp {
           }
         } else if (e.key === 'ArrowLeft' && idx > 0) {
           authOtpDigits[idx - 1].focus();
-        } else if (e.key === 'ArrowRight' && idx < 5) {
+        } else if (e.key === 'ArrowRight' && idx < 3) {
           authOtpDigits[idx + 1].focus();
         }
       });
@@ -6546,9 +6593,9 @@ class TwibbonApp {
       input.addEventListener('paste', (e) => {
         e.preventDefault();
         const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
-        const numOnly = pasteData.replace(/\D/g, '').slice(0, 6);
+        const numOnly = pasteData.replace(/\D/g, '').slice(0, 4);
         if (numOnly) {
-          for (let i = 0; i < 6; i++) {
+          for (let i = 0; i < 4; i++) {
             if (i < numOnly.length) {
               authOtpDigits[i].value = numOnly[i];
               authOtpDigits[i].classList.add('filled');
@@ -6557,7 +6604,7 @@ class TwibbonApp {
               authOtpDigits[i].classList.remove('filled');
             }
           }
-          const nextIdx = Math.min(5, numOnly.length);
+          const nextIdx = Math.min(3, numOnly.length);
           authOtpDigits[nextIdx].focus();
         }
       });
@@ -6670,15 +6717,15 @@ class TwibbonApp {
           }
 
           let enteredOtp = getEnteredSignUpOtp();
-          // If user hasn't entered OTP yet, check session or send to email!
-          if (enteredOtp.length !== 6) {
+          // If user hasn't entered OTP yet, send to email and prompt them!
+          if (enteredOtp.length !== 4) {
             const hasOtp = OtpService.hasActiveOtp(email);
             if (!hasOtp) {
               await handleRequestOtp();
-              this.showToast(isKm ? "💡 បានផ្ញើលេខកូដ OTP ទៅ Email រួចរាល់! សូមពិនិត្យ Email រួចយកលេខកូដមកបំពេញ" : "OTP sent to your email! Please check your inbox and enter the code here.", 'info', 8000);
+              this.showToast(isKm ? "💡 បានផ្ញើលេខកូដ OTP (៤ ខ្ទង់) ទៅ Email រួចរាល់! សូមពិនិត្យ Email រួចយកលេខកូដមកបំពេញ" : "4-digit OTP sent to your email! Please enter it below.", 'info', 8000);
               return;
             } else {
-              this.showToast(isKm ? "សូមបើក Email របស់អ្នក រួចយកលេខកូដ OTP ៦ ខ្ទង់មកបំពេញក្នុងប្រអប់" : "Please check your email and enter the 6-digit OTP code below", 'error');
+              this.showToast(isKm ? "សូមបើក Email របស់អ្នក រួចយកលេខកូដ OTP ៤ ខ្ទង់មកបំពេញក្នុងប្រអប់" : "Please check your email and enter the 4-digit OTP code below", 'error');
               authOtpDigits[0].focus();
               return;
             }
@@ -6703,6 +6750,7 @@ class TwibbonApp {
           btnSubmit.parentElement.disabled = true;
           btnSubmit.innerHTML = `<span>⏳ ${isKm ? 'កំពុងបង្កើតគណនី...' : 'Creating account...'}</span>`;
           const user = await AuthService.signUpWithEmail(email, password, name, true);
+          await OtpService.markEmailVerified(email, user ? user.uid : null);
           if (authOtpInterval) clearInterval(authOtpInterval);
           this.isAuthPendingOtp = false;
           overlay.remove();
@@ -6784,14 +6832,12 @@ class TwibbonApp {
           <strong style="color: var(--accent-primary); word-break: break-all;">${cleanEmail}</strong>
         </p>
 
-        <!-- 6-Digit Segmented Inputs -->
+        <!-- 4-Digit Segmented Inputs -->
         <div class="otp-inputs-grid" id="otpInputsGrid">
           <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="0" autofocus>
           <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="1">
           <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="2">
           <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="3">
-          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="4">
-          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="5">
         </div>
 
         <div class="otp-timer-badge" id="otpTimerBadge">
@@ -6809,7 +6855,7 @@ class TwibbonApp {
         </div>
 
         <div style="margin-top: 1.25rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; background: var(--bg-secondary); padding: 0.65rem 0.85rem; border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
-          💡 ${isKm ? 'សូមបើកប្រអប់សំបុត្រ <strong>Email (Inbox ឬ Spam)</strong> របស់អ្នក រួចយកលេខកូដ ៦ ខ្ទង់មកបំពេញទីនេះ' : 'Please check your <strong>Email (Inbox or Spam)</strong> and enter the 6-digit code here'}
+          💡 ${isKm ? 'សូមបើកប្រអប់សំបុត្រ <strong>Email (Inbox ឬ Spam)</strong> របស់អ្នក រួចយកលេខកូដ ៤ ខ្ទង់មកបំពេញទីនេះ' : 'Please check your <strong>Email (Inbox or Spam)</strong> and enter the 4-digit code here'}
         </div>
       </div>
     `;
@@ -6830,7 +6876,7 @@ class TwibbonApp {
 
     const checkFull = () => {
       const val = getEnteredOtp();
-      const isComplete = val.length === 6 && /^\d{6}$/.test(val);
+      const isComplete = val.length === 4 && /^\d{4}$/.test(val);
       submitBtn.disabled = !isComplete;
       if (isComplete) {
         doVerify();
@@ -6844,7 +6890,7 @@ class TwibbonApp {
         e.target.value = val ? val[val.length - 1] : '';
         if (e.target.value) {
           e.target.classList.add('filled');
-          if (idx < 5) digits[idx + 1].focus();
+          if (idx < 3) digits[idx + 1].focus();
         } else {
           e.target.classList.remove('filled');
         }
@@ -6864,7 +6910,7 @@ class TwibbonApp {
           checkFull();
         } else if (e.key === 'ArrowLeft' && idx > 0) {
           digits[idx - 1].focus();
-        } else if (e.key === 'ArrowRight' && idx < 5) {
+        } else if (e.key === 'ArrowRight' && idx < 3) {
           digits[idx + 1].focus();
         }
       });
@@ -6872,9 +6918,9 @@ class TwibbonApp {
       input.addEventListener('paste', (e) => {
         e.preventDefault();
         const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
-        const numOnly = pasteData.replace(/\D/g, '').slice(0, 6);
+        const numOnly = pasteData.replace(/\D/g, '').slice(0, 4);
         if (numOnly) {
-          for (let i = 0; i < 6; i++) {
+          for (let i = 0; i < 4; i++) {
             if (i < numOnly.length) {
               digits[i].value = numOnly[i];
               digits[i].classList.add('filled');
@@ -6883,7 +6929,7 @@ class TwibbonApp {
               digits[i].classList.remove('filled');
             }
           }
-          const nextIdx = Math.min(5, numOnly.length);
+          const nextIdx = Math.min(3, numOnly.length);
           digits[nextIdx].focus();
           checkFull();
         }
@@ -6929,7 +6975,7 @@ class TwibbonApp {
     const doVerify = async () => {
       if (isVerifying) return;
       const code = getEnteredOtp();
-      if (code.length !== 6) return;
+      if (code.length !== 4) return;
 
       isVerifying = true;
       submitBtn.disabled = true;
