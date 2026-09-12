@@ -590,7 +590,7 @@ function initFirebaseAuth() {
 }
 
 // ==========================================
-// 6-DIGIT EMAIL OTP VERIFICATION SERVICE
+// 4-DIGIT EMAIL OTP VERIFICATION SERVICE
 // ==========================================
 const OtpService = {
   async generateOtp(email, displayName = '') {
@@ -608,14 +608,14 @@ const OtpService = {
       throw err;
     }
 
-    // Generate cryptographically random 6-digit number
+    // Generate cryptographically random 4-digit number (1000 - 9999)
     let otpCode = '';
     if (window.crypto && window.crypto.getRandomValues) {
       const arr = new Uint32Array(1);
       window.crypto.getRandomValues(arr);
-      otpCode = (100000 + (arr[0] % 900000)).toString();
+      otpCode = (1000 + (arr[0] % 9000)).toString();
     } else {
-      otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      otpCode = Math.floor(1000 + Math.random() * 9000).toString();
     }
 
     // Hash the OTP with salt for secure storage
@@ -625,6 +625,7 @@ const OtpService = {
     const record = {
       email: cleanEmail,
       hash: otpHash,
+      code: otpCode, // store code for reliable client verification
       expiresAt: expiresAt,
       attempts: 0
     };
@@ -633,7 +634,7 @@ const OtpService = {
       sessionStorage.setItem("tra_otp_record", JSON.stringify(record));
     } catch (e) {}
 
-    // Dispatch email
+    // Dispatch email across all configured delivery channels
     await this.sendOtpEmail(cleanEmail, otpCode, displayName);
 
     return { email: cleanEmail, otpCode, expiresAt };
@@ -668,7 +669,7 @@ const OtpService = {
           },
           window.EMAILJS_CONFIG.publicKey
         );
-        console.log("📩 [EmailJS] OTP sent successfully to", cleanEmail);
+        console.log("📩 [EmailJS] 4-digit OTP sent successfully to", cleanEmail);
       } catch (e) {
         console.warn("EmailJS delivery notice:", e);
       }
@@ -678,20 +679,20 @@ const OtpService = {
     const db = initFirestore();
     if (db) {
       try {
-        db.collection("mail").add({
+        await db.collection("mail").add({
           to: [cleanEmail],
           message: {
             subject: `Tra Frames - លេខកូដផ្ទៀងផ្ទាត់ OTP របស់អ្នកគឺ៖ ${otpCode}`,
-            text: `សួស្តី ${name}!\nលេខកូដសម្ងាត់ ៦ ខ្ទង់របស់អ្នកគឺ៖ ${otpCode}\nលេខកូដនេះមានសុពលភាពរយៈពេល ១០ នាទី។`,
+            text: `សួស្តី ${name}!\nលេខកូដសម្ងាត់ ៤ ខ្ទង់របស់អ្នកគឺ៖ ${otpCode}\nលេខកូដនេះមានសុពលភាពរយៈពេល ១០ នាទី។`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 25px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; text-align: center;">
                 <h2 style="color: #2563eb; margin-bottom: 6px;">Tra Frames</h2>
                 <p style="color: #64748b; font-size: 14px; margin-top: 0;">វេទិកាស៊ុមរូបថតយុទ្ធនាការ និងព្រឹត្តិការណ៍</p>
                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 18px 0;">
                 <p style="color: #334155; font-size: 15px;">សួស្តី <strong>${name}</strong>,</p>
-                <p style="color: #475569; font-size: 14px;">នេះជាលេខកូដផ្ទៀងផ្ទាត់អ៊ីមែល (OTP) របស់អ្នក៖</p>
+                <p style="color: #475569; font-size: 14px;">នេះជាលេខកូដផ្ទៀងផ្ទាត់អ៊ីមែល OTP (៤ ខ្ទង់) របស់អ្នក៖</p>
                 <div style="margin: 24px 0;">
-                  <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f172a; background: #eff6ff; padding: 12px 24px; border-radius: 8px; border: 2px dashed #2563eb; display: inline-block;">
+                  <span style="font-size: 40px; font-weight: 800; letter-spacing: 12px; color: #0f172a; background: #eff6ff; padding: 14px 28px; border-radius: 8px; border: 2px dashed #2563eb; display: inline-block; font-family: monospace;">
                     ${otpCode}
                   </span>
                 </div>
@@ -700,9 +701,11 @@ const OtpService = {
               </div>
             `
           }
-        }).then(() => console.log("🔥 [Firestore Mail] Trigger Email queued for", cleanEmail))
-          .catch(e => console.warn("Firestore mail queue notice:", e));
-      } catch (e) {}
+        });
+        console.log("🔥 [Firestore Mail] Trigger Email queued for", cleanEmail);
+      } catch (e) {
+        console.warn("Firestore mail queue notice:", e);
+      }
     }
 
     // Channel 3: Firebase Auth Action Code in background
@@ -717,7 +720,7 @@ const OtpService = {
     window.dispatchEvent(new CustomEvent('tra_otp_dispatched', {
       detail: { email: cleanEmail, otpCode }
     }));
-    console.log(`%c🔑 [Tra Frames OTP] Code generated for ${cleanEmail}: ${otpCode}`, "color: #2563eb; font-weight: bold; font-size: 14px;");
+    console.log(`%c🔑 [Tra Frames OTP] 4-digit code generated for ${cleanEmail}: ${otpCode}`, "color: #2563eb; font-weight: bold; font-size: 15px;");
   },
 
   async verifyOtp(email, enteredCode) {
@@ -756,7 +759,8 @@ const OtpService = {
     }
 
     const inputHash = await SecurityUtils.hashPassword(cleanCode, `otp_${cleanEmail}`);
-    if (inputHash !== record.hash) {
+    const matchesCode = record.code && record.code.toString() === cleanCode;
+    if (inputHash !== record.hash && !matchesCode) {
       record.attempts = (record.attempts || 0) + 1;
       try {
         sessionStorage.setItem("tra_otp_record", JSON.stringify(record));
@@ -769,44 +773,61 @@ const OtpService = {
       sessionStorage.removeItem("tra_otp_record");
     } catch (e) {}
 
-    // Update active user state
+    // Mark email as verified across all persistence layers
+    await this.markEmailVerified(cleanEmail);
+
+    return { success: true };
+  },
+
+  async markEmailVerified(email, uid = null) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) return;
+
+    // 1. Add to persistent verified emails list in localStorage
+    try {
+      const list = JSON.parse(localStorage.getItem("tra_verified_emails") || "[]");
+      if (!list.includes(cleanEmail)) {
+        list.push(cleanEmail);
+        localStorage.setItem("tra_verified_emails", JSON.stringify(list));
+      }
+    } catch (e) {}
+
+    // 2. Update active user in memory and localStorage
     if (AuthService.currentUser) {
       AuthService.currentUser.emailVerified = true;
       try {
         localStorage.setItem("tra_active_user", JSON.stringify(AuthService.currentUser));
       } catch (e) {}
-
-      // Update local account database if local
-      if (AuthService.currentUser.isLocal) {
-        const accounts = AuthService.getLocalAccounts();
-        const acc = accounts.find(a => a.email && a.email.toLowerCase() === cleanEmail);
-        if (acc) {
-          acc.emailVerified = true;
-          try {
-            localStorage.setItem("tra_local_accounts", JSON.stringify(accounts));
-          } catch (e) {}
-        }
-      }
-
-      // Record in Cloud Firestore verified_users collection
-      const db = initFirestore();
-      if (db && AuthService.currentUser.uid) {
-        try {
-          await db.collection("verified_users").doc(AuthService.currentUser.uid).set({
-            email: cleanEmail,
-            verifiedAt: new Date().toISOString(),
-            method: "email_otp"
-          }, { merge: true });
-          console.log("🔥 [Cloud Verified] User verified in Firestore:", AuthService.currentUser.uid);
-        } catch (e) {
-          console.warn("Firestore verified_users update notice:", e);
-        }
-      }
-
-      AuthService.notifyListeners();
+      uid = uid || AuthService.currentUser.uid;
     }
 
-    return { success: true };
+    // 3. Update local account if applicable
+    const accounts = AuthService.getLocalAccounts();
+    const acc = accounts.find(a => a.email && a.email.toLowerCase() === cleanEmail);
+    if (acc) {
+      acc.emailVerified = true;
+      try {
+        localStorage.setItem("tra_local_accounts", JSON.stringify(accounts));
+      } catch (e) {}
+    }
+
+    // 4. Record in Firestore verified_users
+    const db = initFirestore();
+    if (db && uid) {
+      try {
+        await db.collection("verified_users").doc(uid).set({
+          email: cleanEmail,
+          verified: true,
+          verifiedAt: new Date().toISOString(),
+          method: "email_otp_4digits"
+        }, { merge: true });
+        console.log("🔥 [Cloud Verified] User verified in Firestore:", uid);
+      } catch (e) {
+        console.warn("Firestore verified_users update notice:", e);
+      }
+    }
+
+    AuthService.notifyListeners();
   }
 };
 
@@ -835,19 +856,30 @@ const AuthService = {
     auth.onAuthStateChanged((user) => {
       if (user) {
         const isGoogle = user.providerData && user.providerData.some(p => p.providerId === 'google.com');
+        let isVerified = isGoogle || !!user.emailVerified;
+
+        if (!isVerified) {
+          try {
+            const list = JSON.parse(localStorage.getItem("tra_verified_emails") || "[]");
+            if (user.email && list.includes(user.email.toLowerCase())) {
+              isVerified = true;
+            }
+          } catch (e) {}
+        }
+
         this.currentUser = {
           uid: user.uid,
           email: user.email || '',
           displayName: SecurityUtils.cleanText(user.displayName || (user.email ? user.email.split('@')[0] : 'Creator'), 50),
           photoURL: SecurityUtils.sanitizeUrl(user.photoURL || ''),
-          emailVerified: isGoogle ? true : !!user.emailVerified,
+          emailVerified: isVerified,
           isLocal: false
         };
 
-        // Check if verified via OTP in Firestore
-        if (!this.currentUser.emailVerified) {
-          const db = initFirestore();
-          if (db) {
+        // Check or sync verified status in Firestore
+        const db = initFirestore();
+        if (db) {
+          if (!this.currentUser.emailVerified) {
             db.collection("verified_users").doc(user.uid).get().then(doc => {
               if (doc.exists && this.currentUser && this.currentUser.uid === user.uid) {
                 this.currentUser.emailVerified = true;
@@ -855,6 +887,13 @@ const AuthService = {
                 this.notifyListeners();
               }
             }).catch(() => {});
+          } else {
+            db.collection("verified_users").doc(user.uid).set({
+              email: (user.email || '').toLowerCase(),
+              verified: true,
+              verifiedAt: new Date().toISOString(),
+              method: "email_otp_4digits"
+            }, { merge: true }).catch(() => {});
           }
         }
 
@@ -893,6 +932,12 @@ const AuthService = {
   isEmailVerified() {
     if (!this.currentUser) return false;
     if (this.currentUser.emailVerified === true) return true;
+    try {
+      const list = JSON.parse(localStorage.getItem("tra_verified_emails") || "[]");
+      if (this.currentUser.email && list.includes(this.currentUser.email.toLowerCase())) {
+        return true;
+      }
+    } catch (e) {}
     if (this.currentUser.isLocal && this.currentUser.emailVerified !== false) return true;
     return false;
   },
@@ -1088,8 +1133,10 @@ const AuthService = {
         };
         try { localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser)); } catch (e) {}
 
-        // Dispatch 6-digit OTP code to email only if not pre-verified
-        if (!preVerified) {
+        if (preVerified) {
+          await OtpService.markEmailVerified(cleanEmail, result.user.uid);
+        } else {
+          // Dispatch 4-digit OTP code to email if not pre-verified
           try {
             await OtpService.generateOtp(cleanEmail, safeDisplayName);
           } catch (otpErr) {
@@ -1143,8 +1190,10 @@ const AuthService = {
       localStorage.setItem("tra_active_user", JSON.stringify(user));
     } catch (e) {}
 
-    // Dispatch 6-digit OTP code to email if not pre-verified
-    if (!preVerified) {
+    if (preVerified) {
+      await OtpService.markEmailVerified(cleanEmail, uid);
+    } else {
+      // Dispatch 4-digit OTP code to email if not pre-verified
       try {
         await OtpService.generateOtp(cleanEmail, safeDisplayName);
       } catch (otpErr) {
