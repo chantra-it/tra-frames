@@ -30,23 +30,34 @@ const SecurityUtils = {
   sanitizeUrl(url) {
     if (!url || typeof url !== 'string') return '#';
     const trimmed = url.trim();
-    // Allow standard https, relative paths, hashes, and safe raster data URLs
+    // Allow standard https, http, relative paths, hashes, and safe raster data URLs
     if (/^(https?:\/\/|\/|#|data:image\/(png|jpeg|jpg|webp)[;,])/i.test(trimmed)) {
       return trimmed;
     }
     // For SVG data URLs, rigorously sanitize the SVG markup
-    if (/^data:image\/svg\+xml[;,]/i.test(trimmed)) {
+    if (/^data:image\/svg\+xml/i.test(trimmed)) {
       try {
-        let svgBody = '';
-        if (trimmed.includes(';base64,')) {
-          svgBody = atob(trimmed.split(';base64,')[1]);
-          const cleanSvg = this.sanitizeSvg(svgBody);
-          return `data:image/svg+xml;base64,${btoa(cleanSvg)}`;
-        } else if (trimmed.includes(';utf8,')) {
-          svgBody = decodeURIComponent(trimmed.split(';utf8,')[1]);
-          const cleanSvg = this.sanitizeSvg(svgBody);
-          return `data:image/svg+xml;utf8,${encodeURIComponent(cleanSvg)}`;
+        const commaIdx = trimmed.indexOf(',');
+        if (commaIdx === -1) return '#';
+        const meta = trimmed.slice(0, commaIdx).toLowerCase();
+        const body = trimmed.slice(commaIdx + 1);
+        let svgText = '';
+        if (meta.includes(';base64')) {
+          try {
+            svgText = decodeURIComponent(escape(atob(body)));
+          } catch (e) {
+            svgText = atob(body);
+          }
+        } else {
+          try {
+            svgText = decodeURIComponent(body);
+          } catch (e) {
+            svgText = body;
+          }
         }
+        const cleanSvg = this.sanitizeSvg(svgText);
+        if (!cleanSvg || !cleanSvg.includes('<svg')) return '#';
+        return `data:image/svg+xml;utf8,${encodeURIComponent(cleanSvg)}`;
       } catch (e) {
         return '#';
       }
@@ -1179,6 +1190,7 @@ const AuthService = {
       email: found.email,
       displayName: SecurityUtils.cleanText(found.displayName, 50),
       photoURL: SecurityUtils.sanitizeUrl(found.photoURL || ''),
+      emailVerified: found.emailVerified !== false,
       isLocal: true
     };
     this.currentUser = user;
@@ -1432,26 +1444,35 @@ const CampaignService = {
       else if (val.timestampValue !== undefined) result[key] = val.timestampValue;
       else if (val.nullValue !== undefined) result[key] = null;
     }
+    const docId = doc.name ? doc.name.split('/').pop() : null;
+    if (!result.id && docId) result.id = docId;
+    if (!result.slug && docId) result.slug = docId;
     return result;
   },
 
-  // Save to memory cache and local storage so subsequent loads are instant
+  // Save to memory cache (and local storage only if owned/created by user)
   cacheCloudCampaign(campaign) {
     if (!campaign) return;
     if (campaign.slug) this._memoryCache.set(campaign.slug, campaign);
     if (campaign.id) this._memoryCache.set(campaign.id, campaign);
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      let userCampaigns = stored ? JSON.parse(stored) : [];
-      const idx = userCampaigns.findIndex(c => c.slug === campaign.slug || c.id === campaign.id);
-      if (idx >= 0) {
-        userCampaigns[idx] = campaign;
-      } else {
-        userCampaigns.unshift(campaign);
+
+    // Only cache to local storage if it's explicitly user created or belongs to current user
+    const user = AuthService.currentUser;
+    const isOwner = (user && campaign.creatorUid && campaign.creatorUid === user.uid);
+    if (campaign.isUserCreated || isOwner) {
+      try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        let userCampaigns = stored ? JSON.parse(stored) : [];
+        const idx = userCampaigns.findIndex(c => c.slug === campaign.slug || c.id === campaign.id);
+        if (idx >= 0) {
+          userCampaigns[idx] = campaign;
+        } else {
+          userCampaigns.unshift(campaign);
+        }
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+      } catch (e) {
+        console.warn("Storage quota warning on cacheCloudCampaign:", e);
       }
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
-    } catch (e) {
-      console.warn("Storage quota warning on cacheCloudCampaign:", e);
     }
   },
 
@@ -1589,6 +1610,13 @@ const CampaignService = {
         userCampaigns = userCampaigns.filter(c => c.id !== safeId && c.slug !== safeId);
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
 
+        // Delete from memory cache so it doesn't re-appear on route changes
+        if (this._memoryCache) {
+          this._memoryCache.delete(safeId);
+          if (target && target.slug) this._memoryCache.delete(target.slug);
+          if (target && target.id) this._memoryCache.delete(target.id);
+        }
+
         // Delete from Cloud Firestore if authorized
         const db = initFirestore();
         if (db && target) {
@@ -1611,9 +1639,9 @@ const CampaignService = {
       const allUserCampaigns = stored ? JSON.parse(stored) : [];
       const user = AuthService.currentUser;
       if (user) {
-        return allUserCampaigns.filter(c => !c.creatorUid || c.creatorUid === user.uid);
+        return allUserCampaigns.filter(c => c.creatorUid === user.uid || (c.isUserCreated && !c.creatorUid));
       }
-      return allUserCampaigns;
+      return allUserCampaigns.filter(c => c.isUserCreated);
     } catch (e) {
       return [];
     }
