@@ -43,14 +43,14 @@
   --text-muted:     #8c9ab0;
   --text-on-accent: #ffffff;
 
-  /* ── Signature Emerald Accent ── */
-  --accent-primary:  #10b981;
-  --accent-dark:     #059669;
-  --accent-darker:   #047857;
-  --accent-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --accent-soft:     rgba(16, 185, 129, 0.09);
-  --accent-medium:   rgba(16, 185, 129, 0.18);
-  --accent-glow:     rgba(16, 185, 129, 0.28);
+  /* ── Signature Blue Accent ── */
+  --accent-primary:  #2563eb;
+  --accent-dark:     #1d4ed8;
+  --accent-darker:   #1e40af;
+  --accent-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  --accent-soft:     rgba(37, 99, 235, 0.09);
+  --accent-medium:   rgba(37, 99, 235, 0.18);
+  --accent-glow:     rgba(37, 99, 235, 0.28);
 
   /* ── Danger / Warning ── */
   --danger:          #ef4444;
@@ -84,7 +84,7 @@
   --shadow-lg:   0 16px 40px -4px rgba(0, 0, 0, 0.09), 0 4px 14px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl:   0 24px 60px -8px rgba(0, 0, 0, 0.12), 0 8px 24px -4px rgba(0, 0, 0, 0.06);
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px -3px rgba(0, 0, 0, 0.06);
-  --shadow-glow: 0 0 28px rgba(16, 185, 129, 0.3);
+  --shadow-glow: 0 0 28px rgba(37, 99, 235, 0.3);
 
   /* ── Transition ── */
   --ease-spring:  cubic-bezier(0.16, 1, 0.3, 1);
@@ -118,9 +118,9 @@
   --text-secondary: #8ba3c0;
   --text-muted:     #4e6a87;
 
-  --accent-soft:    rgba(16, 185, 129, 0.14);
-  --accent-medium:  rgba(16, 185, 129, 0.22);
-  --accent-glow:    rgba(16, 185, 129, 0.38);
+  --accent-soft:    rgba(37, 99, 235, 0.14);
+  --accent-medium:  rgba(37, 99, 235, 0.22);
+  --accent-glow:    rgba(37, 99, 235, 0.38);
 
   --shadow-xs:   0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.4);
@@ -128,7 +128,7 @@
   --shadow-lg:   0 16px 44px -4px rgba(0, 0, 0, 0.65);
   --shadow-xl:   0 24px 64px -8px rgba(0, 0, 0, 0.75);
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.4), 0 10px 32px -4px rgba(0, 0, 0, 0.55);
-  --shadow-glow: 0 0 32px rgba(16, 185, 129, 0.42);
+  --shadow-glow: 0 0 32px rgba(37, 99, 235, 0.42);
 }
 
 /* =========================================================
@@ -396,12 +396,12 @@ button, input, textarea, select {
   background: var(--accent-gradient);
   color: #ffffff !important;
   border: none;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
 }
 
 .btn-success:hover {
   filter: brightness(1.08);
-  box-shadow: 0 6px 22px rgba(16, 185, 129, 0.45);
+  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.45);
   transform: translateY(-1px);
 }
 
@@ -657,7 +657,7 @@ button, input, textarea, select {
   width: 80%;
   max-width: 680px;
   height: 280px;
-  background: radial-gradient(ellipse at 50% 30%, rgba(16, 185, 129, 0.18) 0%, rgba(16, 185, 129, 0.06) 45%, transparent 72%);
+  background: radial-gradient(ellipse at 50% 30%, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.06) 45%, transparent 72%);
   pointer-events: none;
   z-index: -1;
   border-radius: 50%;
@@ -670,7 +670,7 @@ button, input, textarea, select {
   padding: 0.38rem 1.05rem;
   border-radius: var(--radius-full);
   background: var(--accent-soft);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(37, 99, 235, 0.3);
   color: var(--accent-primary);
   font-size: 0.82rem;
   font-weight: 700;
@@ -1523,7 +1523,7 @@ button, input, textarea, select {
   background: var(--accent-gradient);
   color: #ffffff !important;
   border: none;
-  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.42);
+  box-shadow: 0 6px 24px rgba(37, 99, 235, 0.42);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1547,7 +1547,7 @@ button, input, textarea, select {
 
 .btn-download-hero:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 32px rgba(16, 185, 129, 0.52);
+  box-shadow: 0 10px 32px rgba(37, 99, 235, 0.52);
   filter: brightness(1.06);
 }
 
@@ -1555,7 +1555,7 @@ button, input, textarea, select {
 
 .btn-download-hero:active {
   transform: scale(0.98);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
 }
 
 .btn-download-hero svg { width: 22px; height: 22px; }
@@ -2111,7 +2111,7 @@ button, input, textarea, select {
   background: var(--accent-soft);
   padding: 0.25rem 0.65rem;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(37, 99, 235, 0.25);
 }
 
 .designer-card-meta .live-dot {
@@ -2976,7 +2976,7 @@ button, input, textarea, select {
 .otp-digit:focus {
   border-color: var(--accent-primary);
   background: var(--bg-card);
-  box-shadow: 0 0 0 4px var(--accent-soft), 0 4px 12px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 0 4px var(--accent-soft), 0 4px 12px rgba(37, 99, 235, 0.15);
   transform: translateY(-2px);
 }
 
@@ -3112,7 +3112,7 @@ button, input, textarea, select {
 
 
 </style>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><circle cx='12' cy='12' r='10'/></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'><circle cx='12' cy='12' r='10'/></svg>">
 </head>
 <body>
 
@@ -4017,8 +4017,8 @@ const SAMPLE_AVATARS = [
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
   <defs>
     <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10b981"/>
-      <stop offset="100%" stop-color="#047857"/>
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
     </linearGradient>
   </defs>
   <rect width="600" height="600" fill="url(#bg3)"/>
@@ -4284,13 +4284,13 @@ const OtpService = {
             text: `សួស្តី ${name}!\nលេខកូដសម្ងាត់ ៦ ខ្ទង់របស់អ្នកគឺ៖ ${otpCode}\nលេខកូដនេះមានសុពលភាពរយៈពេល ១០ នាទី។`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 25px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; text-align: center;">
-                <h2 style="color: #059669; margin-bottom: 6px;">Tra Frames</h2>
+                <h2 style="color: #2563eb; margin-bottom: 6px;">Tra Frames</h2>
                 <p style="color: #64748b; font-size: 14px; margin-top: 0;">វេទិកាស៊ុមរូបថតយុទ្ធនាការ និងព្រឹត្តិការណ៍</p>
                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 18px 0;">
                 <p style="color: #334155; font-size: 15px;">សួស្តី <strong>${name}</strong>,</p>
                 <p style="color: #475569; font-size: 14px;">នេះជាលេខកូដផ្ទៀងផ្ទាត់អ៊ីមែល (OTP) របស់អ្នក៖</p>
                 <div style="margin: 24px 0;">
-                  <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f172a; background: #f0fdf4; padding: 12px 24px; border-radius: 8px; border: 2px dashed #10b981; display: inline-block;">
+                  <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f172a; background: #eff6ff; padding: 12px 24px; border-radius: 8px; border: 2px dashed #2563eb; display: inline-block;">
                     ${otpCode}
                   </span>
                 </div>
@@ -4316,7 +4316,7 @@ const OtpService = {
     window.dispatchEvent(new CustomEvent('tra_otp_dispatched', {
       detail: { email: cleanEmail, otpCode }
     }));
-    console.log(`%c🔑 [Tra Frames OTP] Code generated for ${cleanEmail}: ${otpCode}`, "color: #059669; font-weight: bold; font-size: 14px;");
+    console.log(`%c🔑 [Tra Frames OTP] Code generated for ${cleanEmail}: ${otpCode}`, "color: #2563eb; font-weight: bold; font-size: 14px;");
   },
 
   async verifyOtp(email, enteredCode) {
@@ -5023,7 +5023,7 @@ const CampaignService = {
       if (cloudStatusEl) {
         const isKm = getLanguage() === 'km';
         cloudStatusEl.innerHTML = `☁️ ${isKm ? 'បាន Sync ឡើង Cloud Firestore រួចរាល់ • អាចបើកលើទូរស័ព្ទបាន' : 'Synced to Cloud Firestore • Accessible on Mobile'}`;
-        cloudStatusEl.style.color = '#10b981';
+        cloudStatusEl.style.color = '#2563eb';
       }
       return true;
     } catch (err) {
@@ -6372,7 +6372,7 @@ class TwibbonApp {
           <button class="modal-close-btn" onclick="if (typeof app !== 'undefined') app.isAuthPendingOtp = false; document.getElementById('authModalOverlay').remove()">&times;</button>
         </div>
 
-        <div style="background: var(--accent-soft); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 0.75rem 1rem; font-size: 0.84rem; color: var(--accent-primary); line-height: 1.5;">
+        <div style="background: var(--accent-soft); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: var(--radius-md); padding: 0.75rem 1rem; font-size: 0.84rem; color: var(--accent-primary); line-height: 1.5;">
           💡 <strong>${t('supporterNoLoginTip')}</strong>
         </div>
 
