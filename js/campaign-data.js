@@ -652,6 +652,20 @@ const OtpService = {
     return false;
   },
 
+  getActiveOtpCode(email) {
+    if (!email) return null;
+    const cleanEmail = email.trim().toLowerCase();
+    try {
+      const raw = sessionStorage.getItem("tra_otp_record");
+      if (!raw) return null;
+      const rec = JSON.parse(raw);
+      if (rec.email === cleanEmail && Date.now() < rec.expiresAt) {
+        return rec.code || null;
+      }
+    } catch (e) {}
+    return null;
+  },
+
   async sendOtpEmail(email, otpCode, displayName = '') {
     const cleanEmail = email.trim().toLowerCase();
     const name = displayName || cleanEmail.split('@')[0];
