@@ -1325,34 +1325,88 @@ const CampaignService = {
     return finalCampaigns;
   },
 
+  normalizeSlug(str) {
+    if (!str || typeof str !== 'string') return '';
+    let decoded = str;
+    try { decoded = decodeURIComponent(str); } catch (e) {}
+    return decoded.toLowerCase().trim()
+      .replace(/[\s_+]+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  },
+
+  normalizeNoPunct(str) {
+    if (!str || typeof str !== 'string') return '';
+    let decoded = str;
+    try { decoded = decodeURIComponent(str); } catch (e) {}
+    return decoded.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  },
+
   getCampaignBySlugOrId(identifier) {
     if (!identifier) return null;
+    let cleanId = String(identifier).trim();
+    try { cleanId = decodeURIComponent(cleanId).trim(); } catch (e) {}
+    if (!cleanId) return null;
+
+    const normSlug = this.normalizeSlug(cleanId);
+    const noPunct = this.normalizeNoPunct(cleanId);
+
     const deletedIds = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
     const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
-    if (GLOBAL_DELETED_CAMPAIGN_IDS.includes(identifier) || deletedIds.includes(identifier) || suppressed.includes(identifier)) {
+    if (
+      GLOBAL_DELETED_CAMPAIGN_IDS.includes(cleanId) || deletedIds.includes(cleanId) || suppressed.includes(cleanId) ||
+      (normSlug && (GLOBAL_DELETED_CAMPAIGN_IDS.includes(normSlug) || deletedIds.includes(normSlug)))
+    ) {
       return null;
     }
 
     const overrides = JSON.parse(localStorage.getItem('tra_admin_campaign_overrides') || '{}');
-    if (overrides[identifier]) {
-      return overrides[identifier];
+    if (overrides[cleanId]) return overrides[cleanId];
+    if (normSlug && overrides[normSlug]) return overrides[normSlug];
+
+    if (this._memoryCache) {
+      const probeKeys = [cleanId, normSlug, noPunct, identifier];
+      for (const k of probeKeys) {
+        if (k && this._memoryCache.has(k)) {
+          const cached = this._memoryCache.get(k);
+          if (cached) {
+            const o = overrides[cached.slug] || overrides[cached.id] || (cached._docId && overrides[cached._docId]);
+            return o ? { ...cached, ...o } : cached;
+          }
+        }
+      }
     }
 
-    if (this._memoryCache && this._memoryCache.has(identifier)) {
-      const cached = this._memoryCache.get(identifier);
-      if (cached && (
-        GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached.id) || (cached._docId && GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached._docId)) ||
-        deletedIds.includes(cached.slug) || deletedIds.includes(cached.id) || (cached._docId && deletedIds.includes(cached._docId))
-      )) {
-        return null;
-      }
-      if (cached) {
-        const o = overrides[cached.slug] || overrides[cached.id] || (cached._docId && overrides[cached._docId]);
-        return o ? { ...cached, ...o } : cached;
-      }
-    }
     const all = this.getCampaigns();
-    return all.find(c => c.slug === identifier || c.id === identifier || c._docId === identifier) || null;
+    // 1. Direct match (exact slug, id, or docId)
+    let found = all.find(c => 
+      c.slug === cleanId || c.id === cleanId || c._docId === cleanId ||
+      c.slug === identifier || c.id === identifier
+    );
+    if (found) return found;
+
+    // 2. Normalized slug match (e.g. 'fb frame js' or 'fb%20frame%20js' matches 'fb-frame-js' or 'fbframejs')
+    if (normSlug) {
+      found = all.find(c => this.normalizeSlug(c.slug) === normSlug || this.normalizeSlug(c.id) === normSlug);
+      if (found) return found;
+    }
+
+    // 3. No punctuation match
+    if (noPunct) {
+      found = all.find(c => this.normalizeNoPunct(c.slug) === noPunct || this.normalizeNoPunct(c.id) === noPunct);
+      if (found) return found;
+    }
+
+    // 4. Case-insensitive title match (Khmer or English)
+    const lowerClean = cleanId.toLowerCase();
+    found = all.find(c => 
+      (c.titleEn && c.titleEn.trim().toLowerCase() === lowerClean) ||
+      (c.titleKm && c.titleKm.trim().toLowerCase() === lowerClean)
+    );
+    if (found) return found;
+
+    return null;
   },
 
   async compressFrameDataUrl(dataUrl, maxDim = 1080) {
@@ -1430,12 +1484,10 @@ const CampaignService = {
     }
 
     // 2. Strict Slug Validation (lowercase alphanumeric and hyphens only, max 60 chars)
-    const rawSlug = typeof campaignData.slug === 'string' ? campaignData.slug : (campaignData.titleEn || "campaign");
-    const safeSlug = rawSlug
-      .toLowerCase()
-      .replace(/[^a-z0-9-]+/g, "")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60) || "campaign-" + Date.now();
+    const rawSlug = typeof campaignData.slug === 'string' && campaignData.slug.trim()
+      ? campaignData.slug.trim()
+      : (campaignData.titleEn || campaignData.titleKm || "campaign");
+    const safeSlug = this.normalizeSlug(rawSlug) || ("campaign-" + Date.now());
 
     // 3. Frame URL Sanitization and Compression
     let frameUrl = SecurityUtils.sanitizeUrl(campaignData.frameUrl);
@@ -1495,12 +1547,33 @@ const CampaignService = {
     // Save to Cloud Firestore so it is instantly accessible worldwide
     const db = initFirestore();
     if (db) {
-      db.collection("campaigns").doc(newCampaign.slug || newCampaign.id).set(newCampaign)
-        .then(() => console.log("🔥 Campaign synced to Cloud Firestore:", newCampaign.slug))
-        .catch(err => console.warn("Cloud Firestore sync error:", err));
+      const docId = newCampaign.slug || newCampaign.id;
+      db.collection("campaigns").doc(docId).set(newCampaign)
+        .then(() => {
+          console.log("🔥 Campaign synced to Cloud Firestore:", docId);
+          newCampaign.isSyncedToCloud = true;
+        })
+        .catch(err => {
+          console.warn("Cloud Firestore sync error:", err);
+          this.markPendingSync(newCampaign);
+        });
+    } else {
+      this.markPendingSync(newCampaign);
     }
 
     return newCampaign;
+  },
+
+  markPendingSync(campaign) {
+    if (!campaign) return;
+    try {
+      const pending = JSON.parse(localStorage.getItem('tra_pending_cloud_syncs') || '[]');
+      const id = campaign.slug || campaign.id;
+      if (!pending.some(p => (p.slug || p.id) === id)) {
+        pending.push(campaign);
+        localStorage.setItem('tra_pending_cloud_syncs', JSON.stringify(pending));
+      }
+    } catch (e) {}
   },
 
   // Sync a single campaign to Cloud Firestore
@@ -1517,15 +1590,30 @@ const CampaignService = {
       }
       await db.collection("campaigns").doc(docId).set(dataToSave, { merge: true });
       console.log("🔥 Synced campaign to Cloud Firestore:", docId);
+      campaign.isSyncedToCloud = true;
+
+      try {
+        const pending = JSON.parse(localStorage.getItem('tra_pending_cloud_syncs') || '[]');
+        const updated = pending.filter(p => (p.slug || p.id) !== docId);
+        localStorage.setItem('tra_pending_cloud_syncs', JSON.stringify(updated));
+      } catch (e) {}
+
       const cloudStatusEl = document.getElementById('cloudSyncStatus');
       if (cloudStatusEl) {
         const isKm = getLanguage() === 'km';
-        cloudStatusEl.innerHTML = `☁️ ${isKm ? 'បាន Sync ឡើង Cloud Firestore រួចរាល់ • អាចបើកលើទូរស័ព្ទបាន' : 'Synced to Cloud Firestore • Accessible on Mobile'}`;
-        cloudStatusEl.style.color = '#2563eb';
+        cloudStatusEl.innerHTML = `☁️ ${isKm ? 'បាន Sync ឡើង Cloud Firestore រួចរាល់ • អាចចែករំលែកបាន' : 'Synced to Cloud Firestore • Shareable Worldwide'}`;
+        cloudStatusEl.style.color = '#10b981';
       }
       return true;
     } catch (err) {
       console.warn("Failed syncing single campaign to Firestore:", docId, err);
+      this.markPendingSync(campaign);
+      const cloudStatusEl = document.getElementById('cloudSyncStatus');
+      if (cloudStatusEl) {
+        const isKm = getLanguage() === 'km';
+        cloudStatusEl.innerHTML = `⚠️ <span title="${err.message || ''}">${isKm ? 'រក្សាទុកលើម៉ាស៊ីននេះរួចរាល់ (មិនទាន់ឡើង Cloud)' : 'Saved locally (Not on Cloud yet)'}</span>`;
+        cloudStatusEl.style.color = '#f59e0b';
+      }
       return false;
     }
   },
@@ -1584,81 +1672,107 @@ const CampaignService = {
   // Fetch campaign from Cloud Firestore (SDK + High-Reliability REST fallback)
   async fetchCloudCampaign(identifier) {
     if (!identifier) return null;
+    let cleanId = String(identifier).trim();
+    try { cleanId = decodeURIComponent(cleanId).trim(); } catch (e) {}
+    if (!cleanId) return null;
+
+    const normSlug = this.normalizeSlug(cleanId);
+    const noPunct = this.normalizeNoPunct(cleanId);
 
     const deletedIds = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
     const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
-    if (GLOBAL_DELETED_CAMPAIGN_IDS.includes(identifier) || deletedIds.includes(identifier) || suppressed.includes(identifier)) {
+    if (
+      GLOBAL_DELETED_CAMPAIGN_IDS.includes(cleanId) || deletedIds.includes(cleanId) || suppressed.includes(cleanId) ||
+      (normSlug && (GLOBAL_DELETED_CAMPAIGN_IDS.includes(normSlug) || deletedIds.includes(normSlug)))
+    ) {
       return null;
     }
 
     const overrides = JSON.parse(localStorage.getItem('tra_admin_campaign_overrides') || '{}');
-    if (overrides[identifier]) {
-      return overrides[identifier];
-    }
+    if (overrides[cleanId]) return overrides[cleanId];
+    if (normSlug && overrides[normSlug]) return overrides[normSlug];
+
+    // Search keys to probe across Firestore (e.g. 'fb frame js', 'fb-frame-js', 'fbframejs')
+    const searchKeys = [...new Set([cleanId, normSlug, noPunct, identifier].filter(Boolean))];
 
     // Check memory cache first
-    if (this._memoryCache && this._memoryCache.has(identifier)) {
-      const cached = this._memoryCache.get(identifier);
-      if (cached && (
-        GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached.id) || (cached._docId && GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached._docId)) ||
-        deletedIds.includes(cached.slug) || deletedIds.includes(cached.id) || (cached._docId && deletedIds.includes(cached._docId))
-      )) {
-        return null;
+    if (this._memoryCache) {
+      for (const k of searchKeys) {
+        if (this._memoryCache.has(k)) {
+          const cached = this._memoryCache.get(k);
+          if (cached) {
+            const o = overrides[cached.slug] || overrides[cached.id] || (cached._docId && overrides[cached._docId]);
+            return o ? { ...cached, ...o } : cached;
+          }
+        }
       }
-      const o = cached ? (overrides[cached.slug] || overrides[cached.id] || (cached._docId && overrides[cached._docId])) : null;
-      return o ? { ...cached, ...o } : cached;
     }
 
     // 1. Try Firebase SDK if available
     const db = initFirestore();
     if (db) {
       try {
-        const docRef = await db.collection("campaigns").doc(identifier).get();
-        if (docRef.exists) {
-          let data = docRef.data();
-          if (data) {
-            data._docId = identifier;
-            if (
-              GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(identifier) ||
-              deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(identifier)
-            ) return null;
-            const o = overrides[data.slug] || overrides[data.id] || overrides[identifier];
-            if (o) data = { ...data, ...o };
-            this.cacheCloudCampaign(data);
-            return data;
-          }
+        // Probe document IDs directly
+        for (const docKey of searchKeys) {
+          try {
+            const docRef = await db.collection("campaigns").doc(docKey).get();
+            if (docRef.exists) {
+              let data = docRef.data();
+              if (data) {
+                data._docId = docKey;
+                if (
+                  GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) ||
+                  deletedIds.includes(data.slug) || deletedIds.includes(data.id)
+                ) return null;
+                const o = overrides[data.slug] || overrides[data.id] || overrides[docKey];
+                if (o) data = { ...data, ...o };
+                this.cacheCloudCampaign(data);
+                return data;
+              }
+            }
+          } catch (eDoc) {}
         }
 
-        const snapshot = await db.collection("campaigns").where("slug", "==", identifier).limit(1).get();
-        if (!snapshot.empty) {
-          let data = snapshot.docs[0].data();
-          if (data) {
-            data._docId = snapshot.docs[0].id;
-            if (
-              GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data._docId) ||
-              deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)
-            ) return null;
-            const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
-            if (o) data = { ...data, ...o };
-            this.cacheCloudCampaign(data);
-            return data;
-          }
+        // Probe by 'slug' field in Firestore
+        for (const sKey of searchKeys) {
+          try {
+            const snapshot = await db.collection("campaigns").where("slug", "==", sKey).limit(1).get();
+            if (!snapshot.empty) {
+              let data = snapshot.docs[0].data();
+              if (data) {
+                data._docId = snapshot.docs[0].id;
+                if (
+                  GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) ||
+                  deletedIds.includes(data.slug) || deletedIds.includes(data.id)
+                ) return null;
+                const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
+                if (o) data = { ...data, ...o };
+                this.cacheCloudCampaign(data);
+                return data;
+              }
+            }
+          } catch (eSlug) {}
         }
 
-        const idSnapshot = await db.collection("campaigns").where("id", "==", identifier).limit(1).get();
-        if (!idSnapshot.empty) {
-          let data = idSnapshot.docs[0].data();
-          if (data) {
-            data._docId = idSnapshot.docs[0].id;
-            if (
-              GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data._docId) ||
-              deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)
-            ) return null;
-            const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
-            if (o) data = { ...data, ...o };
-            this.cacheCloudCampaign(data);
-            return data;
-          }
+        // Probe by 'id' field in Firestore
+        for (const idKey of searchKeys) {
+          try {
+            const idSnapshot = await db.collection("campaigns").where("id", "==", idKey).limit(1).get();
+            if (!idSnapshot.empty) {
+              let data = idSnapshot.docs[0].data();
+              if (data) {
+                data._docId = idSnapshot.docs[0].id;
+                if (
+                  GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) ||
+                  deletedIds.includes(data.slug) || deletedIds.includes(data.id)
+                ) return null;
+                const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
+                if (o) data = { ...data, ...o };
+                this.cacheCloudCampaign(data);
+                return data;
+              }
+            }
+          } catch (eId) {}
         }
       } catch (err) {
         console.warn("Firestore SDK notice, switching to direct REST lookup:", err);
@@ -1666,26 +1780,46 @@ const CampaignService = {
     }
 
     // 2. High-speed Direct REST Fallback (Works 100% reliably on all mobile networks without auth)
+    for (const restKey of searchKeys) {
+      try {
+        const restUrl = `https://firestore.googleapis.com/v1/projects/tra-frames/databases/(default)/documents/campaigns/${encodeURIComponent(restKey)}`;
+        const res = await fetch(restUrl);
+        if (res.ok) {
+          const docJson = await res.json();
+          let data = this.parseFirestoreDoc(docJson);
+          if (data) {
+            if (
+              GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data._docId) ||
+              deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)
+            ) return null;
+            const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
+            if (o) data = { ...data, ...o };
+            this.cacheCloudCampaign(data);
+            return data;
+          }
+        }
+      } catch (restErr) {}
+    }
+
+    // 3. Fallback to all cloud campaigns search (catches fuzzy title or unnormalized slug)
     try {
-      const restUrl = `https://firestore.googleapis.com/v1/projects/tra-frames/databases/(default)/documents/campaigns/${encodeURIComponent(identifier)}`;
-      const res = await fetch(restUrl);
-      if (res.ok) {
-        const docJson = await res.json();
-        let data = this.parseFirestoreDoc(docJson);
-        if (data) {
-          if (
-            GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data._docId) ||
-            deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)
-          ) return null;
-          const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
-          if (o) data = { ...data, ...o };
-          this.cacheCloudCampaign(data);
-          return data;
+      const allCloud = await this.fetchAllCloudCampaigns();
+      if (allCloud && allCloud.length > 0) {
+        const lowerClean = cleanId.toLowerCase();
+        const found = allCloud.find(c => 
+          (c.slug && searchKeys.includes(c.slug)) ||
+          (c.id && searchKeys.includes(c.id)) ||
+          (c._docId && searchKeys.includes(c._docId)) ||
+          (c.slug && (this.normalizeSlug(c.slug) === normSlug || this.normalizeNoPunct(c.slug) === noPunct)) ||
+          (c.titleEn && c.titleEn.trim().toLowerCase() === lowerClean) ||
+          (c.titleKm && c.titleKm.trim().toLowerCase() === lowerClean)
+        );
+        if (found) {
+          this.cacheCloudCampaign(found);
+          return found;
         }
       }
-    } catch (restErr) {
-      console.warn("Firestore REST direct lookup error:", restErr);
-    }
+    } catch (eAll) {}
 
     return null;
   },
@@ -1736,11 +1870,20 @@ const CampaignService = {
     if (!db) return;
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (!stored) return;
-      const userCampaigns = JSON.parse(stored);
+      const pendingStored = localStorage.getItem('tra_pending_cloud_syncs');
+      let userCampaigns = stored ? JSON.parse(stored) : [];
+      let pendingList = pendingStored ? JSON.parse(pendingStored) : [];
+
+      // Combine both lists uniquely by id/slug
+      const map = new Map();
+      userCampaigns.forEach(c => map.set(c.slug || c.id, c));
+      pendingList.forEach(c => map.set(c.slug || c.id, c));
+
       let updatedAny = false;
-      for (let i = 0; i < userCampaigns.length; i++) {
-        let c = userCampaigns[i];
+      const allToSync = Array.from(map.values());
+
+      for (let i = 0; i < allToSync.length; i++) {
+        let c = allToSync[i];
         const docId = c.slug || c.id;
         if (!docId) continue;
 
@@ -1748,7 +1891,6 @@ const CampaignService = {
         if (toSync.frameUrl && toSync.frameUrl.length > 650000) {
           try {
             toSync.frameUrl = await this.compressFrameDataUrl(toSync.frameUrl);
-            userCampaigns[i] = toSync;
             updatedAny = true;
           } catch (e) {}
         }
@@ -1756,10 +1898,18 @@ const CampaignService = {
         try {
           await db.collection("campaigns").doc(docId).set(toSync, { merge: true });
           console.log("🔥 Synced local campaign to Cloud:", docId);
+          c.isSyncedToCloud = true;
+          // Remove from pending
+          pendingList = pendingList.filter(p => (p.slug || p.id) !== docId);
         } catch (e) {
           console.warn("Failed syncing campaign:", docId, e);
         }
       }
+
+      try {
+        localStorage.setItem('tra_pending_cloud_syncs', JSON.stringify(pendingList));
+      } catch (e) {}
+
       if (updatedAny) {
         try {
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
