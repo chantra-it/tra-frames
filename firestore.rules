@@ -61,7 +61,7 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.creatorUid);
     }
 
-    // Verified Users Collection (Stores users verified via 6-digit Email OTP)
+    // Verified Users Collection (Stores users verified via 4-digit Email OTP)
     match /verified_users/{userId} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() && request.auth.uid == userId;
@@ -69,7 +69,7 @@ service cloud.firestore {
 
     // Mail Collection (For Firebase Trigger Email extension)
     match /mail/{mailId} {
-      allow create: if isAuthenticated();
+      allow create: if request.resource.data.to is list && request.resource.data.to.size() == 1;
       allow read, update, delete: if false;
     }
 
