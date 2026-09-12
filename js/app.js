@@ -2741,16 +2741,165 @@ class TwibbonApp {
             </div>
           </div>
 
-          <!-- Header Badge Text -->
-          <div class="form-group">
-            <label class="form-label">🏷️ ${t('badgeText')}</label>
-            <input type="text" id="designerHeaderInput" class="form-input" value="CLASS OF 2026" placeholder="${t('badgePlaceholder')}" />
+          <!-- Typography & Banners Section -->
+          <div class="tool-section-title" style="margin-top: 1rem;">
+            <span>📝</span> <span>${t('typographyTitle')}</span>
           </div>
 
-          <!-- Footer Badge Text -->
+          <!-- 1. Font Family Picker (8 fonts with live preview) -->
           <div class="form-group">
-            <label class="form-label">✨ ${t('subBadgeText')}</label>
-            <input type="text" id="designerFooterInput" class="form-input" value="CONGRATULATIONS!" placeholder="${t('subBadgePlaceholder')}" />
+            <label class="form-label">🔤 ${t('fontFamilyTitle')}</label>
+            <div class="designer-font-grid" id="designerFontPicker">
+              <button type="button" class="designer-font-chip active" data-font="kantumruy" style="font-family:'Kantumruy Pro', sans-serif;">
+                <span class="font-chip-name">${t('fontKantumruy')}</span>
+                <span class="font-chip-preview">ទំនើប ស្រួលអាន</span>
+              </button>
+              <button type="button" class="designer-font-chip" data-font="moul" style="font-family:'Moul', cursive;">
+                <span class="font-chip-name">${t('fontMoul')}</span>
+                <span class="font-chip-preview">បុណ្យប្រពៃណី រាជ</span>
+              </button>
+              <button type="button" class="designer-font-chip" data-font="koulen" style="font-family:'Koulen', cursive;">
+                <span class="font-chip-name">${t('fontKoulen')}</span>
+                <span class="font-chip-preview">ក្រាស់ បែបបដា</span>
+              </button>
+              <button type="button" class="designer-font-chip" data-font="battambang" style="font-family:'Battambang', cursive;">
+                <span class="font-chip-name">${t('fontBattambang')}</span>
+                <span class="font-chip-preview">បុរាណ ផ្លូវការ</span>
+              </button>
+              <button type="button" class="designer-font-chip" data-font="bayon" style="font-family:'Bayon', cursive;">
+                <span class="font-chip-name">${t('fontBayon')}</span>
+                <span class="font-chip-preview">ក្បាច់វប្បធម៌</span>
+              </button>
+              <button type="button" class="designer-font-chip" data-font="siemreap" style="font-family:'Siemreap', cursive;">
+                <span class="font-chip-name">${t('fontSiemreap')}</span>
+                <span class="font-chip-preview">សហសម័យ ស្អាត</span>
+              </button>
+              <button type="button" class="designer-font-chip" data-font="bokor" style="font-family:'Bokor', cursive;">
+                <span class="font-chip-name">${t('fontBokor')}</span>
+                <span class="font-chip-preview">រលកសិល្បៈ</span>
+              </button>
+              <button type="button" class="designer-font-chip" data-font="inter" style="font-family:'Inter', sans-serif;">
+                <span class="font-chip-name">${t('fontInter')}</span>
+                <span class="font-chip-preview">Global Sans-serif</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Banner Style Picker (7 distinct banner shapes) -->
+          <div class="form-group">
+            <label class="form-label">🎗️ ${t('bannerStyleTitle')}</label>
+            <div class="designer-banner-grid" id="designerBannerPicker">
+              <button type="button" class="designer-banner-chip active" data-banner-style="ribbon">
+                <span class="banner-chip-icon">🎗️</span>
+                <span class="banner-chip-label">${t('styleRibbon')}</span>
+              </button>
+              <button type="button" class="designer-banner-chip" data-banner-style="pill">
+                <span class="banner-chip-icon">💊</span>
+                <span class="banner-chip-label">${t('stylePill')}</span>
+              </button>
+              <button type="button" class="designer-banner-chip" data-banner-style="luxury">
+                <span class="banner-chip-icon">👑</span>
+                <span class="banner-chip-label">${t('styleLuxury')}</span>
+              </button>
+              <button type="button" class="designer-banner-chip" data-banner-style="neon">
+                <span class="banner-chip-icon">⚡</span>
+                <span class="banner-chip-label">${t('styleNeon')}</span>
+              </button>
+              <button type="button" class="designer-banner-chip" data-banner-style="ornate">
+                <span class="banner-chip-icon">🛕</span>
+                <span class="banner-chip-label">${t('styleOrnate')}</span>
+              </button>
+              <button type="button" class="designer-banner-chip" data-banner-style="glass">
+                <span class="banner-chip-icon">🪟</span>
+                <span class="banner-chip-label">${t('styleGlass')}</span>
+              </button>
+              <button type="button" class="designer-banner-chip" data-banner-style="minimal">
+                <span class="banner-chip-icon">✨</span>
+                <span class="banner-chip-label">${t('styleMinimal')}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. Text Effects (5 effects) -->
+          <div class="form-group">
+            <label class="form-label">✨ ${t('textEffectTitle')}</label>
+            <div class="designer-effect-grid" id="designerEffectPicker">
+              <button type="button" class="designer-effect-chip active" data-effect="clean">
+                <span>🌟</span> <span>${t('effectClean')}</span>
+              </button>
+              <button type="button" class="designer-effect-chip" data-effect="goldGlow">
+                <span>👑</span> <span>${t('effectGoldGlow')}</span>
+              </button>
+              <button type="button" class="designer-effect-chip" data-effect="neonGlow">
+                <span>⚡</span> <span>${t('effectNeonGlow')}</span>
+              </button>
+              <button type="button" class="designer-effect-chip" data-effect="outline">
+                <span>✏️</span> <span>${t('effectOutline')}</span>
+              </button>
+              <button type="button" class="designer-effect-chip" data-effect="shadow3d">
+                <span>🏔️</span> <span>${t('effect3D')}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. Top Header Banner Controls -->
+          <div class="designer-banner-card">
+            <div class="designer-banner-card-header">
+              <label class="designer-switch-label">
+                <input type="checkbox" id="chkShowHeader" checked />
+                <span>🏷️ ${t('headerSettings')}</span>
+              </label>
+            </div>
+            <div id="headerControlsWrap" class="designer-sub-controls">
+              <input type="text" id="designerHeaderInput" class="form-input" value="CLASS OF 2026" placeholder="${t('badgePlaceholder')}" />
+              <div class="designer-slider-group">
+                <div class="designer-slider-header">
+                  <span>${t('fontSizeTitle')}</span>
+                  <span id="valHeaderFontSize" class="designer-slider-val">32px</span>
+                </div>
+                <input type="range" id="sliderHeaderFontSize" min="20" max="48" step="1" value="32" class="designer-range-input" />
+              </div>
+              <div class="designer-color-row">
+                <label class="designer-inline-color" title="${t('textColor')}">
+                  <span>${t('textColor')}</span>
+                  <input type="color" id="colorHeaderText" value="#fbbf24" />
+                </label>
+                <label class="designer-inline-color" title="${t('bgColor')}">
+                  <span>${t('bgColor')}</span>
+                  <input type="color" id="colorHeaderBg" value="#0f172a" />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Bottom Footer Banner Controls -->
+          <div class="designer-banner-card">
+            <div class="designer-banner-card-header">
+              <label class="designer-switch-label">
+                <input type="checkbox" id="chkShowFooter" checked />
+                <span>✨ ${t('footerSettings')}</span>
+              </label>
+            </div>
+            <div id="footerControlsWrap" class="designer-sub-controls">
+              <input type="text" id="designerFooterInput" class="form-input" value="CONGRATULATIONS!" placeholder="${t('subBadgePlaceholder')}" />
+              <div class="designer-slider-group">
+                <div class="designer-slider-header">
+                  <span>${t('fontSizeTitle')}</span>
+                  <span id="valFooterFontSize" class="designer-slider-val">28px</span>
+                </div>
+                <input type="range" id="sliderFooterFontSize" min="18" max="44" step="1" value="28" class="designer-range-input" />
+              </div>
+              <div class="designer-color-row">
+                <label class="designer-inline-color" title="${t('textColor')}">
+                  <span>${t('textColor')}</span>
+                  <input type="color" id="colorFooterText" value="#ffffff" />
+                </label>
+                <label class="designer-inline-color" title="${t('bgColor')}">
+                  <span>${t('bgColor')}</span>
+                  <input type="color" id="colorFooterBg" value="#0f172a" />
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2816,6 +2965,60 @@ class TwibbonApp {
       if (btnMockup) {
         btnMockup.classList.toggle('active', !!settings.previewPhoto);
       }
+
+      // Font Family
+      container.querySelectorAll('[data-font]').forEach(chip => {
+        chip.classList.toggle('active', chip.getAttribute('data-font') === (settings.fontFamily || 'kantumruy'));
+      });
+
+      // Banner Style
+      container.querySelectorAll('[data-banner-style]').forEach(chip => {
+        chip.classList.toggle('active', chip.getAttribute('data-banner-style') === (settings.bannerStyle || 'ribbon'));
+      });
+
+      // Text Effect
+      container.querySelectorAll('[data-effect]').forEach(chip => {
+        chip.classList.toggle('active', chip.getAttribute('data-effect') === (settings.textEffect || 'clean'));
+      });
+
+      // Header Visibility & Font Size
+      const chkHeader = document.getElementById('chkShowHeader');
+      const headerWrap = document.getElementById('headerControlsWrap');
+      if (chkHeader) {
+        chkHeader.checked = settings.showHeader !== false;
+        if (headerWrap) headerWrap.style.display = chkHeader.checked ? 'flex' : 'none';
+      }
+      const sliderHeaderSize = document.getElementById('sliderHeaderFontSize');
+      const valHeaderSize = document.getElementById('valHeaderFontSize');
+      if (sliderHeaderSize && settings.headerFontSize) {
+        sliderHeaderSize.value = settings.headerFontSize;
+        if (valHeaderSize) valHeaderSize.textContent = settings.headerFontSize + 'px';
+      }
+
+      // Footer Visibility & Font Size
+      const chkFooter = document.getElementById('chkShowFooter');
+      const footerWrap = document.getElementById('footerControlsWrap');
+      if (chkFooter) {
+        chkFooter.checked = settings.showFooter !== false;
+        if (footerWrap) footerWrap.style.display = chkFooter.checked ? 'flex' : 'none';
+      }
+      const sliderFooterSize = document.getElementById('sliderFooterFontSize');
+      const valFooterSize = document.getElementById('valFooterFontSize');
+      if (sliderFooterSize && settings.footerFontSize) {
+        sliderFooterSize.value = settings.footerFontSize;
+        if (valFooterSize) valFooterSize.textContent = settings.footerFontSize + 'px';
+      }
+
+      // Header & Footer Colors
+      const colorHeaderTxt = document.getElementById('colorHeaderText');
+      if (colorHeaderTxt && settings.headerColor) colorHeaderTxt.value = settings.headerColor;
+      const colorHeaderBg = document.getElementById('colorHeaderBg');
+      if (colorHeaderBg && settings.headerBg) colorHeaderBg.value = settings.headerBg;
+
+      const colorFooterTxt = document.getElementById('colorFooterText');
+      if (colorFooterTxt && settings.footerColor) colorFooterTxt.value = settings.footerColor;
+      const colorFooterBg = document.getElementById('colorFooterBg');
+      if (colorFooterBg && settings.footerBg) colorFooterBg.value = settings.footerBg;
     };
 
     // Initial sync
@@ -2967,12 +3170,123 @@ class TwibbonApp {
     }
 
     // Text Badge Inputs
-    document.getElementById('designerHeaderInput').addEventListener('input', (e) => {
-      this.activeDesigner.update({ headerText: e.target.value });
+    const headerInputEl = document.getElementById('designerHeaderInput');
+    if (headerInputEl) {
+      headerInputEl.addEventListener('input', (e) => {
+        this.activeDesigner.update({ headerText: e.target.value });
+      });
+    }
+
+    const footerInputEl = document.getElementById('designerFooterInput');
+    if (footerInputEl) {
+      footerInputEl.addEventListener('input', (e) => {
+        this.activeDesigner.update({ footerText: e.target.value });
+      });
+    }
+
+    // Font Family Selection
+    container.querySelectorAll('[data-font]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        container.querySelectorAll('[data-font]').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        const fontKey = chip.getAttribute('data-font');
+        this.activeDesigner.update({ fontFamily: fontKey });
+        this.activeDesigner.ensureFontLoaded(fontKey);
+      });
     });
-    document.getElementById('designerFooterInput').addEventListener('input', (e) => {
-      this.activeDesigner.update({ footerText: e.target.value });
+
+    // Banner Style Selection
+    container.querySelectorAll('[data-banner-style]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        container.querySelectorAll('[data-banner-style]').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        this.activeDesigner.update({ bannerStyle: chip.getAttribute('data-banner-style') });
+      });
     });
+
+    // Text Effect Selection
+    container.querySelectorAll('[data-effect]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        container.querySelectorAll('[data-effect]').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        this.activeDesigner.update({ textEffect: chip.getAttribute('data-effect') });
+      });
+    });
+
+    // Header Controls: Toggle, Size, Colors
+    const chkHeader = document.getElementById('chkShowHeader');
+    const headerWrap = document.getElementById('headerControlsWrap');
+    if (chkHeader) {
+      chkHeader.addEventListener('change', (e) => {
+        this.activeDesigner.update({ showHeader: e.target.checked });
+        if (headerWrap) headerWrap.style.display = e.target.checked ? 'flex' : 'none';
+      });
+    }
+
+    const sliderHeader = document.getElementById('sliderHeaderFontSize');
+    const valHeader = document.getElementById('valHeaderFontSize');
+    if (sliderHeader) {
+      sliderHeader.addEventListener('input', (e) => {
+        const sz = parseInt(e.target.value, 10);
+        if (valHeader) valHeader.textContent = sz + 'px';
+        this.activeDesigner.update({ headerFontSize: sz });
+      });
+    }
+
+    const colorHeaderTxt = document.getElementById('colorHeaderText');
+    if (colorHeaderTxt) {
+      colorHeaderTxt.addEventListener('input', (e) => {
+        this.activeDesigner.update({ headerColor: e.target.value });
+      });
+    }
+
+    const colorHeaderBg = document.getElementById('colorHeaderBg');
+    if (colorHeaderBg) {
+      colorHeaderBg.addEventListener('input', (e) => {
+        this.activeDesigner.update({ headerBg: e.target.value });
+      });
+    }
+
+    // Footer Controls: Toggle, Size, Colors
+    const chkFooter = document.getElementById('chkShowFooter');
+    const footerWrap = document.getElementById('footerControlsWrap');
+    if (chkFooter) {
+      chkFooter.addEventListener('change', (e) => {
+        this.activeDesigner.update({ showFooter: e.target.checked });
+        if (footerWrap) footerWrap.style.display = e.target.checked ? 'flex' : 'none';
+      });
+    }
+
+    const sliderFooter = document.getElementById('sliderFooterFontSize');
+    const valFooter = document.getElementById('valFooterFontSize');
+    if (sliderFooter) {
+      sliderFooter.addEventListener('input', (e) => {
+        const sz = parseInt(e.target.value, 10);
+        if (valFooter) valFooter.textContent = sz + 'px';
+        this.activeDesigner.update({ footerFontSize: sz });
+      });
+    }
+
+    const colorFooterTxt = document.getElementById('colorFooterText');
+    if (colorFooterTxt) {
+      colorFooterTxt.addEventListener('input', (e) => {
+        this.activeDesigner.update({ footerColor: e.target.value });
+      });
+    }
+
+    const colorFooterBg = document.getElementById('colorFooterBg');
+    if (colorFooterBg) {
+      colorFooterBg.addEventListener('input', (e) => {
+        this.activeDesigner.update({ footerBg: e.target.value });
+      });
+    }
+
+    // Auto-refresh when document fonts become ready
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        if (this.activeDesigner) this.activeDesigner.render();
+      });
+    }
 
     // Use As Campaign
     document.getElementById('btnUseAsCampaign').addEventListener('click', () => {
