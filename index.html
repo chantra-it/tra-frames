@@ -5987,6 +5987,12 @@ const CampaignService = {
     } catch (e) {
       console.error("Failed to load user campaigns from localStorage:", e);
     }
+
+    const deletedIds = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
+    const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+    const allDeleted = new Set([...deletedIds, ...suppressed]);
+    const overrides = JSON.parse(localStorage.getItem('tra_admin_campaign_overrides') || '{}');
+
     const combined = [...userCampaigns];
     if (this._memoryCache) {
       for (const [id, c] of this._memoryCache.entries()) {
@@ -5995,16 +6001,59 @@ const CampaignService = {
         }
       }
     }
-    return [...combined, ...INITIAL_CAMPAIGNS];
+
+    const filteredUser = combined
+      .filter(c => c && !allDeleted.has(c.slug) && !allDeleted.has(c.id) && !allDeleted.has(c._docId))
+      .map(c => {
+        const o = overrides[c.slug] || overrides[c.id] || (c._docId && overrides[c._docId]);
+        return o ? { ...c, ...o } : c;
+      });
+
+    const cleanPresets = INITIAL_CAMPAIGNS
+      .filter(p => !allDeleted.has(p.slug) && !allDeleted.has(p.id))
+      .map(p => {
+        const o = overrides[p.slug] || overrides[p.id];
+        return o ? { ...p, ...o } : p;
+      });
+
+    // Also include any active overrides not present in filteredUser or cleanPresets
+    const existingKeys = new Set(filteredUser.map(c => c.slug || c.id));
+    cleanPresets.forEach(p => existingKeys.add(p.slug || p.id));
+    Object.values(overrides).forEach(ov => {
+      if (ov && !allDeleted.has(ov.slug) && !allDeleted.has(ov.id) && !existingKeys.has(ov.slug) && !existingKeys.has(ov.id)) {
+        filteredUser.unshift(ov);
+        existingKeys.add(ov.slug);
+      }
+    });
+
+    return [...filteredUser, ...cleanPresets];
   },
 
   getCampaignBySlugOrId(identifier) {
     if (!identifier) return null;
+    const deletedIds = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
+    const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+    if (deletedIds.includes(identifier) || suppressed.includes(identifier)) {
+      return null;
+    }
+
+    const overrides = JSON.parse(localStorage.getItem('tra_admin_campaign_overrides') || '{}');
+    if (overrides[identifier]) {
+      return overrides[identifier];
+    }
+
     if (this._memoryCache && this._memoryCache.has(identifier)) {
-      return this._memoryCache.get(identifier);
+      const cached = this._memoryCache.get(identifier);
+      if (cached && (deletedIds.includes(cached.slug) || deletedIds.includes(cached.id) || (cached._docId && deletedIds.includes(cached._docId)))) {
+        return null;
+      }
+      if (cached) {
+        const o = overrides[cached.slug] || overrides[cached.id] || (cached._docId && overrides[cached._docId]);
+        return o ? { ...cached, ...o } : cached;
+      }
     }
     const all = this.getCampaigns();
-    return all.find(c => c.slug === identifier || c.id === identifier);
+    return all.find(c => c.slug === identifier || c.id === identifier || c._docId === identifier) || null;
   },
 
   async compressFrameDataUrl(dataUrl, maxDim = 1080) {
@@ -6194,6 +6243,7 @@ const CampaignService = {
       else if (val.nullValue !== undefined) result[key] = null;
     }
     const docId = doc.name ? doc.name.split('/').pop() : null;
+    if (docId) result._docId = docId;
     if (!result.id && docId) result.id = docId;
     if (!result.slug && docId) result.slug = docId;
     return result;
@@ -6204,6 +6254,7 @@ const CampaignService = {
     if (!campaign) return;
     if (campaign.slug) this._memoryCache.set(campaign.slug, campaign);
     if (campaign.id) this._memoryCache.set(campaign.id, campaign);
+    if (campaign._docId) this._memoryCache.set(campaign._docId, campaign);
 
     // STRICT ISOLATION: NEVER cache public or unowned cloud campaigns into LOCAL_STORAGE_KEY.
     // LOCAL_STORAGE_KEY is exclusively for campaigns created/owned by the currently logged-in user.
@@ -6235,9 +6286,25 @@ const CampaignService = {
   async fetchCloudCampaign(identifier) {
     if (!identifier) return null;
 
+    const deletedIds = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
+    const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+    if (deletedIds.includes(identifier) || suppressed.includes(identifier)) {
+      return null;
+    }
+
+    const overrides = JSON.parse(localStorage.getItem('tra_admin_campaign_overrides') || '{}');
+    if (overrides[identifier]) {
+      return overrides[identifier];
+    }
+
     // Check memory cache first
     if (this._memoryCache && this._memoryCache.has(identifier)) {
-      return this._memoryCache.get(identifier);
+      const cached = this._memoryCache.get(identifier);
+      if (cached && (deletedIds.includes(cached.slug) || deletedIds.includes(cached.id) || (cached._docId && deletedIds.includes(cached._docId)))) {
+        return null;
+      }
+      const o = cached ? (overrides[cached.slug] || overrides[cached.id] || (cached._docId && overrides[cached._docId])) : null;
+      return o ? { ...cached, ...o } : cached;
     }
 
     // 1. Try Firebase SDK if available
@@ -6246,23 +6313,41 @@ const CampaignService = {
       try {
         const docRef = await db.collection("campaigns").doc(identifier).get();
         if (docRef.exists) {
-          const data = docRef.data();
-          this.cacheCloudCampaign(data);
-          return data;
+          let data = docRef.data();
+          if (data) {
+            data._docId = identifier;
+            if (deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(identifier)) return null;
+            const o = overrides[data.slug] || overrides[data.id] || overrides[identifier];
+            if (o) data = { ...data, ...o };
+            this.cacheCloudCampaign(data);
+            return data;
+          }
         }
 
         const snapshot = await db.collection("campaigns").where("slug", "==", identifier).limit(1).get();
         if (!snapshot.empty) {
-          const data = snapshot.docs[0].data();
-          this.cacheCloudCampaign(data);
-          return data;
+          let data = snapshot.docs[0].data();
+          if (data) {
+            data._docId = snapshot.docs[0].id;
+            if (deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)) return null;
+            const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
+            if (o) data = { ...data, ...o };
+            this.cacheCloudCampaign(data);
+            return data;
+          }
         }
 
         const idSnapshot = await db.collection("campaigns").where("id", "==", identifier).limit(1).get();
         if (!idSnapshot.empty) {
-          const data = idSnapshot.docs[0].data();
-          this.cacheCloudCampaign(data);
-          return data;
+          let data = idSnapshot.docs[0].data();
+          if (data) {
+            data._docId = idSnapshot.docs[0].id;
+            if (deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)) return null;
+            const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
+            if (o) data = { ...data, ...o };
+            this.cacheCloudCampaign(data);
+            return data;
+          }
         }
       } catch (err) {
         console.warn("Firestore SDK notice, switching to direct REST lookup:", err);
@@ -6275,8 +6360,11 @@ const CampaignService = {
       const res = await fetch(restUrl);
       if (res.ok) {
         const docJson = await res.json();
-        const data = this.parseFirestoreDoc(docJson);
+        let data = this.parseFirestoreDoc(docJson);
         if (data) {
+          if (deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)) return null;
+          const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
+          if (o) data = { ...data, ...o };
           this.cacheCloudCampaign(data);
           return data;
         }
@@ -6296,7 +6384,20 @@ const CampaignService = {
       if (res.ok) {
         const json = await res.json();
         if (json.documents && Array.isArray(json.documents)) {
-          const campaigns = json.documents.map(d => this.parseFirestoreDoc(d)).filter(Boolean);
+          const deletedIds = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
+          const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+          const allDeleted = new Set([...deletedIds, ...suppressed]);
+          const overrides = JSON.parse(localStorage.getItem('tra_admin_campaign_overrides') || '{}');
+
+          const campaigns = json.documents
+            .map(d => this.parseFirestoreDoc(d))
+            .filter(Boolean)
+            .filter(c => !allDeleted.has(c.slug) && !allDeleted.has(c.id) && !allDeleted.has(c._docId))
+            .map(c => {
+              const o = overrides[c.slug] || overrides[c.id] || (c._docId && overrides[c._docId]);
+              return o ? { ...c, ...o } : c;
+            });
+
           campaigns.forEach(c => this.cacheCloudCampaign(c));
           return campaigns;
         }
@@ -6383,6 +6484,15 @@ const CampaignService = {
           if (target && target.slug) this._memoryCache.delete(target.slug);
           if (target && target.id) this._memoryCache.delete(target.id);
         }
+
+        // Register in admin deleted list too so it never resurfaces
+        try {
+          const delIds = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
+          if (safeId && !delIds.includes(safeId)) delIds.push(safeId);
+          if (target && target.slug && !delIds.includes(target.slug)) delIds.push(target.slug);
+          if (target && target._docId && !delIds.includes(target._docId)) delIds.push(target._docId);
+          localStorage.setItem('tra_admin_deleted_ids', JSON.stringify(delIds));
+        } catch (e) {}
 
         // Delete from Cloud Firestore if authorized
         const db = initFirestore();
@@ -6529,14 +6639,94 @@ const AdminService = {
     return false;
   },
 
-  // Check current active user
+  // Check current active user across all memory and storage locations
   isCurrentSuperAdmin() {
-    return this.isSuperAdmin(AuthService ? AuthService.currentUser : null);
+    let user = AuthService ? AuthService.currentUser : null;
+    if (!user) {
+      try {
+        const stored = localStorage.getItem("tra_active_user");
+        if (stored) user = JSON.parse(stored);
+      } catch (e) {}
+    }
+    return this.isSuperAdmin(user);
+  },
+
+  // Persistent Admin Deleted Registry
+  getDeletedCampaignIds() {
+    try {
+      return JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
+    } catch (e) {
+      return [];
+    }
+  },
+
+  saveDeletedCampaignId(ids) {
+    if (!Array.isArray(ids)) ids = [ids];
+    try {
+      const existing = this.getDeletedCampaignIds();
+      ids.forEach(id => {
+        if (id && typeof id === 'string') {
+          const clean = id.trim();
+          if (clean && !existing.includes(clean)) existing.push(clean);
+        }
+      });
+      localStorage.setItem('tra_admin_deleted_ids', JSON.stringify(existing));
+    } catch (e) {}
+  },
+
+  removeDeletedCampaignId(ids) {
+    if (!Array.isArray(ids)) ids = [ids];
+    try {
+      let existing = this.getDeletedCampaignIds();
+      existing = existing.filter(id => !ids.includes(id));
+      localStorage.setItem('tra_admin_deleted_ids', JSON.stringify(existing));
+    } catch (e) {}
+  },
+
+  // Persistent Admin Overrides Registry
+  getCampaignOverrides() {
+    try {
+      return JSON.parse(localStorage.getItem('tra_admin_campaign_overrides') || '{}');
+    } catch (e) {
+      return {};
+    }
+  },
+
+  saveCampaignOverride(campaign) {
+    if (!campaign) return;
+    try {
+      const overrides = this.getCampaignOverrides();
+      if (campaign.slug) overrides[campaign.slug] = campaign;
+      if (campaign.id && campaign.id !== campaign.slug) overrides[campaign.id] = campaign;
+      if (campaign._docId && campaign._docId !== campaign.slug) overrides[campaign._docId] = campaign;
+      localStorage.setItem('tra_admin_campaign_overrides', JSON.stringify(overrides));
+    } catch (e) {}
   },
 
   // Fetch all campaigns across all cloud and local sources for admin management
   async fetchAllCampaignsAdmin() {
     const campaignMap = new Map();
+    const deletedIds = this.getDeletedCampaignIds();
+    let suppressed = [];
+    try {
+      suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+    } catch (e) {}
+    const allDeleted = new Set([...deletedIds, ...suppressed]);
+    const overrides = this.getCampaignOverrides();
+
+    const isDeleted = (c) => {
+      if (!c) return true;
+      if (c.slug && allDeleted.has(c.slug)) return true;
+      if (c.id && allDeleted.has(c.id)) return true;
+      if (c._docId && allDeleted.has(c._docId)) return true;
+      return false;
+    };
+
+    const applyOverride = (c) => {
+      if (!c) return c;
+      const o = overrides[c.slug] || overrides[c.id] || (c._docId && overrides[c._docId]);
+      return o ? { ...c, ...o } : c;
+    };
 
     // 1. Fetch from Cloud Firestore (SDK + REST fallback)
     const db = initFirestore();
@@ -6547,11 +6737,17 @@ const AdminService = {
         const snapshot = await db.collection("campaigns").get();
         if (!snapshot.empty) {
           snapshot.forEach(doc => {
-            const data = doc.data();
+            let data = doc.data();
             if (data) {
-              const key = data.slug || data.id || doc.id;
-              campaignMap.set(key, { ...data, id: data.id || doc.id, _source: 'cloud' });
-              CampaignService.cacheCloudCampaign(data);
+              data._docId = doc.id;
+              if (!data.id) data.id = doc.id;
+              if (!data.slug) data.slug = doc.id;
+              if (!isDeleted(data)) {
+                data = applyOverride(data);
+                const key = data.slug || data.id || doc.id;
+                campaignMap.set(key, { ...data, _source: 'cloud' });
+                CampaignService.cacheCloudCampaign(data);
+              }
             }
           });
           cloudFound = true;
@@ -6570,8 +6766,9 @@ const AdminService = {
           const json = await res.json();
           if (json.documents && Array.isArray(json.documents)) {
             json.documents.forEach(d => {
-              const parsed = CampaignService.parseFirestoreDoc(d);
-              if (parsed) {
+              let parsed = CampaignService.parseFirestoreDoc(d);
+              if (parsed && !isDeleted(parsed)) {
+                parsed = applyOverride(parsed);
                 const key = parsed.slug || parsed.id;
                 campaignMap.set(key, { ...parsed, _source: 'cloud' });
                 CampaignService.cacheCloudCampaign(parsed);
@@ -6590,24 +6787,35 @@ const AdminService = {
       if (stored) {
         const localList = JSON.parse(stored);
         localList.forEach(c => {
-          const key = c.slug || c.id;
-          if (!campaignMap.has(key)) {
-            campaignMap.set(key, { ...c, _source: 'local' });
+          if (c && !isDeleted(c)) {
+            const finalCamp = applyOverride(c);
+            const key = finalCamp.slug || finalCamp.id;
+            if (!campaignMap.has(key)) {
+              campaignMap.set(key, { ...finalCamp, _source: 'local' });
+            }
           }
         });
       }
     } catch (e) {}
 
     // 3. Include Initial Preset Campaigns (if not deleted/suppressed)
-    let suppressed = [];
-    try {
-      suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
-    } catch (e) {}
-
     INITIAL_CAMPAIGNS.forEach(preset => {
-      const key = preset.slug || preset.id;
-      if (!suppressed.includes(key) && !campaignMap.has(key)) {
-        campaignMap.set(key, { ...preset, _source: 'preset', isPreset: true });
+      if (!isDeleted(preset)) {
+        const finalPreset = applyOverride(preset);
+        const key = finalPreset.slug || finalPreset.id;
+        if (!campaignMap.has(key)) {
+          campaignMap.set(key, { ...finalPreset, _source: 'preset', isPreset: true });
+        }
+      }
+    });
+
+    // 4. Also include any independent active overrides not present in other lists
+    Object.values(overrides).forEach(ov => {
+      if (ov && !isDeleted(ov)) {
+        const key = ov.slug || ov.id;
+        if (!campaignMap.has(key)) {
+          campaignMap.set(key, { ...ov, _source: ov._source || 'cloud' });
+        }
       }
     });
 
@@ -6620,7 +6828,7 @@ const AdminService = {
     });
   },
 
-  // Admin Update Campaign: update all fields in Firestore and cache
+  // Admin Update Campaign: update all fields with instant persistence
   async adminUpdateCampaign(targetId, updateData) {
     if (!this.isCurrentSuperAdmin()) {
       throw new Error("Unauthorized: Super Admin permissions required.");
@@ -6628,113 +6836,168 @@ const AdminService = {
     if (!targetId) throw new Error("Target campaign ID is required.");
 
     const safeId = String(targetId).trim();
-    const docId = updateData.slug ? String(updateData.slug).trim() : safeId;
 
-    // Sanitize fields
-    const sanitizedUpdate = {
-      titleKm: SecurityUtils.cleanText(updateData.titleKm || '', 120),
-      titleEn: SecurityUtils.cleanText(updateData.titleEn || '', 120),
-      slug: (updateData.slug || safeId).toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 60),
-      category: ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'].includes(updateData.category) ? updateData.category : 'celebration',
-      creator: SecurityUtils.cleanText(updateData.creator || 'Admin', 80),
-      creatorEmail: SecurityUtils.cleanText(updateData.creatorEmail || '', 100),
-      descriptionKm: SecurityUtils.cleanText(updateData.descriptionKm || '', 1000),
-      descriptionEn: SecurityUtils.cleanText(updateData.descriptionEn || '', 1000),
-      captionKm: SecurityUtils.cleanText(updateData.captionKm || '', 1000),
-      captionEn: SecurityUtils.cleanText(updateData.captionEn || '', 1000),
-      supporters: Math.max(1, parseInt(updateData.supporters, 10) || 1),
-      updatedAt: new Date().toISOString()
+    // Find existing campaign to preserve metadata
+    const all = await this.fetchAllCampaignsAdmin();
+    const existing = all.find(c => c.slug === safeId || c.id === safeId || c._docId === safeId) ||
+                     (CampaignService._memoryCache ? (CampaignService._memoryCache.get(safeId) || {}) : {});
+
+    const existingDocId = existing._docId || existing.slug || existing.id || safeId;
+    const newSlug = (updateData.slug || existing.slug || safeId).toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 60);
+
+    const updatedCampaign = {
+      ...existing,
+      id: existing.id || safeId,
+      _docId: newSlug,
+      slug: newSlug,
+      titleKm: SecurityUtils.cleanText(updateData.titleKm || existing.titleKm || '', 120),
+      titleEn: SecurityUtils.cleanText(updateData.titleEn || existing.titleEn || '', 120),
+      category: ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'].includes(updateData.category) ? updateData.category : (existing.category || 'celebration'),
+      creator: SecurityUtils.cleanText(updateData.creator || existing.creator || 'Admin', 80),
+      creatorEmail: SecurityUtils.cleanText(updateData.creatorEmail || existing.creatorEmail || '', 100),
+      creatorUid: existing.creatorUid || (AuthService && AuthService.currentUser ? AuthService.currentUser.uid : null),
+      descriptionKm: SecurityUtils.cleanText(updateData.descriptionKm || existing.descriptionKm || '', 1000),
+      descriptionEn: SecurityUtils.cleanText(updateData.descriptionEn || existing.descriptionEn || '', 1000),
+      captionKm: SecurityUtils.cleanText(updateData.captionKm || existing.captionKm || '', 1000),
+      captionEn: SecurityUtils.cleanText(updateData.captionEn || existing.captionEn || updateData.captionKm || '', 1000),
+      supporters: Math.max(1, parseInt(updateData.supporters, 10) || existing.supporters || 1),
+      createdAt: existing.createdAt || new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString(),
+      _source: existing._source || 'cloud'
     };
 
     if (updateData.frameUrl) {
-      sanitizedUpdate.frameUrl = SecurityUtils.sanitizeUrl(updateData.frameUrl);
+      updatedCampaign.frameUrl = SecurityUtils.sanitizeUrl(updateData.frameUrl);
+    } else if (existing.frameUrl) {
+      updatedCampaign.frameUrl = existing.frameUrl;
     }
 
-    // 1. Update in Firestore SDK
-    let updatedInCloud = false;
-    const db = initFirestore();
-    if (db) {
-      try {
-        await db.collection("campaigns").doc(docId).set(sanitizedUpdate, { merge: true });
-        console.log("🔥 Admin updated campaign in Cloud Firestore:", docId);
-        updatedInCloud = true;
-      } catch (sdkErr) {
-        console.warn("Firestore SDK admin update notice:", sdkErr);
+    // If slug changed, suppress old slug so no duplicate appears
+    if (existingDocId && existingDocId !== newSlug) {
+      this.saveDeletedCampaignId([existingDocId, existing.slug]);
+      const db = initFirestore();
+      if (db) {
+        db.collection("campaigns").doc(existingDocId).delete().catch(() => {});
       }
     }
 
-    // 2. Update memory cache
+    // Ensure new slug and id are not in deleted list
+    this.removeDeletedCampaignId([newSlug, updatedCampaign.id, updatedCampaign._docId]);
+
+    // Save to persistent overrides in localStorage
+    this.saveCampaignOverride(updatedCampaign);
+
+    // Update memory cache
     if (CampaignService._memoryCache) {
-      const cached = CampaignService._memoryCache.get(safeId) || CampaignService._memoryCache.get(docId) || {};
-      const merged = { ...cached, ...sanitizedUpdate };
-      CampaignService._memoryCache.set(docId, merged);
-      if (safeId !== docId) CampaignService._memoryCache.set(safeId, merged);
+      CampaignService._memoryCache.set(newSlug, updatedCampaign);
+      if (updatedCampaign.id) CampaignService._memoryCache.set(updatedCampaign.id, updatedCampaign);
+      if (updatedCampaign._docId) CampaignService._memoryCache.set(updatedCampaign._docId, updatedCampaign);
     }
 
-    // 3. Update in LocalStorage if present
+    // Update LocalStorage user campaigns if present
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (stored) {
         let userCampaigns = JSON.parse(stored);
-        const idx = userCampaigns.findIndex(c => c.id === safeId || c.slug === safeId || c.slug === docId);
+        const idx = userCampaigns.findIndex(c => c.id === safeId || c.slug === safeId || c.slug === newSlug);
         if (idx !== -1) {
-          userCampaigns[idx] = { ...userCampaigns[idx], ...sanitizedUpdate };
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+          userCampaigns[idx] = { ...userCampaigns[idx], ...updatedCampaign };
+        } else if (existing._source === 'local') {
+          userCampaigns.unshift(updatedCampaign);
         }
-      }
-    } catch (e) {}
-
-    return { success: true, docId, data: sanitizedUpdate };
-  },
-
-  // Admin Delete Campaign: permanently remove from Firestore, cache and localStorage
-  async adminDeleteCampaign(targetId) {
-    if (!this.isCurrentSuperAdmin()) {
-      throw new Error("Unauthorized: Super Admin permissions required.");
-    }
-    if (!targetId) throw new Error("Target campaign ID is required.");
-
-    const safeId = String(targetId).trim();
-
-    // Check if it's a preset
-    const isPreset = INITIAL_CAMPAIGNS.some(p => p.id === safeId || p.slug === safeId);
-    if (isPreset) {
-      try {
-        const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
-        if (!suppressed.includes(safeId)) {
-          suppressed.push(safeId);
-          localStorage.setItem('tra_suppressed_presets', JSON.stringify(suppressed));
-        }
-      } catch (e) {}
-    }
-
-    // 1. Delete from Cloud Firestore
-    const db = initFirestore();
-    if (db) {
-      try {
-        await db.collection("campaigns").doc(safeId).delete();
-        console.log("🔥 Admin deleted campaign from Cloud Firestore:", safeId);
-      } catch (sdkErr) {
-        console.warn("Firestore SDK admin delete notice:", sdkErr);
-      }
-    }
-
-    // 2. Clear from memory cache
-    if (CampaignService._memoryCache) {
-      CampaignService._memoryCache.delete(safeId);
-    }
-
-    // 3. Remove from LocalStorage
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        let userCampaigns = JSON.parse(stored);
-        userCampaigns = userCampaigns.filter(c => c.id !== safeId && c.slug !== safeId);
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
       }
     } catch (e) {}
 
-    return { success: true, deletedId: safeId };
+    // Cloud Firestore Sync (Non-blocking, resilient with full valid schema)
+    const db = initFirestore();
+    if (db) {
+      try {
+        const firestoreData = { ...updatedCampaign };
+        delete firestoreData._docId;
+        delete firestoreData._source;
+        delete firestoreData.isPreset;
+        await db.collection("campaigns").doc(newSlug).set(firestoreData, { merge: true });
+        console.log("🔥 Admin updated campaign in Cloud Firestore:", newSlug);
+      } catch (sdkErr) {
+        console.warn("Firestore SDK admin update notice (saved to overrides):", sdkErr);
+      }
+    }
+
+    return { success: true, docId: newSlug, campaign: updatedCampaign };
+  },
+
+  // Admin Delete Campaign: permanently remove across all sources
+  async adminDeleteCampaign(targetId, targetSlug) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    if (!targetId && !targetSlug) throw new Error("Target campaign ID is required.");
+
+    const safeId = String(targetId || targetSlug).trim();
+
+    // Find campaign to resolve all associated identifiers
+    const all = await this.fetchAllCampaignsAdmin();
+    const target = all.find(c => c.slug === safeId || c.id === safeId || c._docId === safeId) ||
+                   (CampaignService._memoryCache ? (CampaignService._memoryCache.get(safeId) || {}) : {});
+
+    const identifiersToDelete = new Set([safeId]);
+    if (targetSlug) identifiersToDelete.add(String(targetSlug).trim());
+    if (target.slug) identifiersToDelete.add(target.slug);
+    if (target.id) identifiersToDelete.add(target.id);
+    if (target._docId) identifiersToDelete.add(target._docId);
+
+    const idList = Array.from(identifiersToDelete).filter(Boolean);
+
+    // 1. Save to Persistent Deleted Registry
+    this.saveDeletedCampaignId(idList);
+
+    // 2. Check and suppress presets
+    const isPreset = INITIAL_CAMPAIGNS.some(p => idList.includes(p.id) || idList.includes(p.slug));
+    if (isPreset) {
+      try {
+        const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+        idList.forEach(id => {
+          if (!suppressed.includes(id)) suppressed.push(id);
+        });
+        localStorage.setItem('tra_suppressed_presets', JSON.stringify(suppressed));
+      } catch (e) {}
+    }
+
+    // 3. Remove from Overrides
+    try {
+      const overrides = this.getCampaignOverrides();
+      idList.forEach(id => { delete overrides[id]; });
+      localStorage.setItem('tra_admin_campaign_overrides', JSON.stringify(overrides));
+    } catch (e) {}
+
+    // 4. Remove from Memory Cache
+    if (CampaignService._memoryCache) {
+      idList.forEach(id => CampaignService._memoryCache.delete(id));
+    }
+
+    // 5. Remove from LocalStorage user campaigns
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        let userCampaigns = JSON.parse(stored);
+        userCampaigns = userCampaigns.filter(c => !idList.includes(c.id) && !idList.includes(c.slug));
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+      }
+    } catch (e) {}
+
+    // 6. Delete from Cloud Firestore (for all resolved document IDs)
+    const db = initFirestore();
+    if (db) {
+      const cloudDocIds = new Set([target._docId, target.slug, safeId].filter(Boolean));
+      cloudDocIds.forEach(docId => {
+        db.collection("campaigns").doc(docId).delete()
+          .then(() => console.log("🔥 Admin deleted campaign from Cloud Firestore:", docId))
+          .catch(err => console.warn("Firestore SDK delete notice:", docId, err));
+      });
+    }
+
+    return { success: true, deletedIdentifiers: idList };
   },
 
   // Fetch list of registered users and campaign creators
@@ -11129,7 +11392,7 @@ class TwibbonApp {
                     <td>
                       <div style="display: flex; gap: 0.35rem;">
                         <button class="btn btn-secondary btn-sm" onclick="app.navigateTo('campaign/${slug}')" title="View">👁️</button>
-                        <button class="btn btn-outline btn-sm" onclick="app.openAdminEditCampaignModal('${c.id || c.slug}')" title="Edit">✏️</button>
+                        <button class="btn btn-outline btn-sm" onclick="app.openAdminEditCampaignModal('${c.slug || c.id || c._docId}')" title="Edit">✏️</button>
                       </div>
                     </td>
                   </tr>
@@ -11227,7 +11490,8 @@ class TwibbonApp {
             const date = (c.createdAt || '').split('T')[0] || '2026';
             const frameUrl = SecurityUtils.sanitizeUrl(c.frameUrl);
             const source = c._source || (c.isPreset ? 'preset' : 'cloud');
-            const safeCampId = SecurityUtils.escapeHtml(c.id || c.slug);
+            const campKey = c.slug || c.id || c._docId;
+            const safeCampId = SecurityUtils.escapeHtml(campKey);
             const safeTitleEscaped = SecurityUtils.escapeHtml(displayTitle).replace(/'/g, "\\'");
 
             let sourceBadge = `<span class="badge-source badge-cloud">Cloud</span>`;
@@ -11620,7 +11884,9 @@ class TwibbonApp {
   // =========================================================
   openAdminEditCampaignModal(campaignId) {
     const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
-    const camp = this.adminData.campaigns.find(c => c.id === campaignId || c.slug === campaignId);
+    const camp = (this.adminData && this.adminData.campaigns)
+      ? this.adminData.campaigns.find(c => c.slug === campaignId || c.id === campaignId || c._docId === campaignId)
+      : null;
     if (!camp) {
       this.showToast("Campaign not found", "error");
       return;
@@ -11635,6 +11901,7 @@ class TwibbonApp {
 
     const safeFrameUrl = SecurityUtils.sanitizeUrl(camp.frameUrl);
     const cat = camp.category || 'celebration';
+    const targetKey = camp.slug || camp.id || camp._docId || campaignId;
 
     overlay.innerHTML = `
       <div class="modal-card admin-modal-edit-card" style="max-width: 780px; max-height: 90vh; overflow-y: auto;">
@@ -11646,7 +11913,7 @@ class TwibbonApp {
           <button class="modal-close-btn" onclick="document.getElementById('adminEditModalOverlay').remove()">&times;</button>
         </div>
 
-        <form id="adminEditForm" onsubmit="event.preventDefault(); app.handleAdminSaveCampaignEdit('${camp.id || camp.slug}')">
+        <form id="adminEditForm" onsubmit="event.preventDefault(); app.handleAdminSaveCampaignEdit('${SecurityUtils.escapeHtml(targetKey)}')">
           <div class="admin-edit-layout">
             <!-- Left: Frame Preview -->
             <div class="admin-edit-preview-col">
@@ -11798,13 +12065,33 @@ class TwibbonApp {
         updatePayload.frameUrl = overlay._newFrameDataUrl;
       }
 
-      await AdminService.adminUpdateCampaign(campaignId, updatePayload);
+      const res = await AdminService.adminUpdateCampaign(campaignId, updatePayload);
+      const updated = res.campaign;
+
+      // Immediately update local in-memory adminData
+      if (this.adminData && this.adminData.campaigns) {
+        const idx = this.adminData.campaigns.findIndex(c => 
+          c.slug === campaignId || c.id === campaignId || c._docId === campaignId
+        );
+        if (idx !== -1) {
+          this.adminData.campaigns[idx] = updated;
+        } else {
+          this.adminData.campaigns.unshift(updated);
+        }
+        this.adminData.metrics = AdminService.getPlatformMetrics(this.adminData.campaigns, this.adminData.users);
+      }
 
       this.showToast(t('adminCampaignUpdated'), 'success');
       if (overlay) overlay.remove();
 
-      // Refresh admin data
-      await this.loadAdminView('campaigns');
+      // Refresh admin data and table UI
+      const tableWrap = document.getElementById('adminCampTableContainer');
+      if (tableWrap && this.adminActiveTab === 'campaigns') {
+        tableWrap.innerHTML = this.buildCampaignsTableHtml(this.adminData.campaigns, isKm);
+        this.initAdminTabListeners('campaigns', isKm);
+      } else {
+        await this.loadAdminView('campaigns');
+      }
     } catch (err) {
       console.error("Admin save edit error:", err);
       this.showToast("Error updating campaign: " + (err.message || ''), 'error');
@@ -11826,10 +12113,33 @@ class TwibbonApp {
 
     try {
       await AdminService.adminDeleteCampaign(campaignId);
+
+      // Immediately update local in-memory adminData
+      if (this.adminData && this.adminData.campaigns) {
+        this.adminData.campaigns = this.adminData.campaigns.filter(c => 
+          c.slug !== campaignId && c.id !== campaignId && c._docId !== campaignId
+        );
+        this.adminData.metrics = AdminService.getPlatformMetrics(this.adminData.campaigns, this.adminData.users);
+      }
+
       this.showToast(t('adminCampaignDeleted'), 'success');
 
-      // Refresh table
-      await this.loadAdminView('campaigns');
+      // Refresh table immediately
+      const tableWrap = document.getElementById('adminCampTableContainer');
+      if (tableWrap) {
+        tableWrap.innerHTML = this.buildCampaignsTableHtml(this.adminData.campaigns, isKm);
+        this.initAdminTabListeners('campaigns', isKm);
+        const countLabel = document.getElementById('adminTableCountLabel');
+        if (countLabel) {
+          countLabel.textContent = isKm 
+            ? `បង្ហាញយុទ្ធនាការសរុបចំនួន ${this.adminData.campaigns.length}`
+            : `Showing all ${this.adminData.campaigns.length} campaigns`;
+        }
+        const campTabPill = document.querySelector('.admin-tab-item:nth-child(2) .admin-tab-counter');
+        if (campTabPill) campTabPill.textContent = this.adminData.campaigns.length;
+      } else {
+        await this.loadAdminView('campaigns');
+      }
     } catch (err) {
       console.error("Admin delete error:", err);
       this.showToast("Error deleting campaign: " + (err.message || ''), 'error');
