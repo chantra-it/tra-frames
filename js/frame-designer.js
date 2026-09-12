@@ -854,22 +854,97 @@ class FrameDesigner {
     this.drawCustomLogo(ctx, s);
   }
 
-  getTransparentPNGDataUrl() {
-    // When exporting, ensure previewPhoto is temporarily disabled so it's a true transparent PNG frame!
+  // Generate dedicated clean export canvas with 100% transparent center cutout (no background, no shadow bleed)
+  generateExportCanvas() {
+    const s = this.size;
+    const center = s / 2;
+    const radius = 370 * (this.settings.cutoutScale || 0.74) / 0.74;
+    const bWidth = this.settings.borderWidth || 14;
+
+    // 1. Temporarily disable previewPhoto and render freshly
     const wasPreview = this.settings.previewPhoto;
     if (wasPreview) {
       this.settings.previewPhoto = false;
       this.render();
     }
 
-    const dataUrl = this.canvas.toDataURL('image/png');
+    // 2. Create offscreen canvas for final clean PNG export
+    const expCanvas = document.createElement('canvas');
+    expCanvas.width = s;
+    expCanvas.height = s;
+    const expCtx = expCanvas.getContext('2d');
 
+    // 3. Draw rendered decorative frame
+    expCtx.drawImage(this.canvas, 0, 0);
+
+    // 4. Punch out center hole with destination-out to guarantee 100% pure alpha = 0!
+    // Using innerRadius = Math.max(radius - Math.floor(bWidth / 2) + 1, radius - 6)
+    // completely eliminates any shadow blur, interior artifacts, banners, or stickers inside the cutout.
+    const innerRadius = Math.max(radius - Math.floor(bWidth / 2) + 1, radius - 6);
+    expCtx.save();
+    expCtx.globalCompositeOperation = 'destination-out';
+    expCtx.fillStyle = '#000000';
+    this.buildCutoutPath(expCtx, center, innerRadius);
+    expCtx.fill();
+    expCtx.restore();
+
+    // 5. Re-stroke clean inner decorative frame border (source-over, no shadow blur)
+    // so the border edge facing the transparent hole is razor-sharp and vivid
+    const theme = this.themes[this.settings.theme] || this.themes.royalBlue;
+    const ringColor = this.settings.ringColor || theme.ring;
+    const bStyle = this.settings.borderStyle || 'solid';
+
+    expCtx.save();
+    expCtx.globalCompositeOperation = 'source-over';
+    expCtx.shadowColor = 'transparent';
+    expCtx.shadowBlur = 0;
+
+    if (bStyle === 'dashed') {
+      expCtx.strokeStyle = ringColor;
+      expCtx.lineWidth = bWidth;
+      expCtx.setLineDash([18, 12]);
+      this.buildCutoutPath(expCtx, center, radius);
+      expCtx.stroke();
+    } else if (bStyle === 'neon') {
+      expCtx.strokeStyle = ringColor;
+      expCtx.lineWidth = bWidth;
+      this.buildCutoutPath(expCtx, center, radius);
+      expCtx.stroke();
+    } else if (bStyle === 'double') {
+      expCtx.strokeStyle = ringColor;
+      expCtx.lineWidth = bWidth;
+      this.buildCutoutPath(expCtx, center, radius);
+      expCtx.stroke();
+    } else {
+      // solid, pearl, etc.
+      expCtx.strokeStyle = ringColor;
+      expCtx.lineWidth = bWidth;
+      this.buildCutoutPath(expCtx, center, radius);
+      expCtx.stroke();
+    }
+    expCtx.restore();
+
+    // 6. Restore original live preview state
     if (wasPreview) {
       this.settings.previewPhoto = true;
       this.render();
     }
 
-    return dataUrl;
+    return expCanvas;
+  }
+
+  getTransparentPNGDataUrl() {
+    const expCanvas = this.generateExportCanvas();
+    return expCanvas.toDataURL('image/png');
+  }
+
+  exportBlob() {
+    return new Promise((resolve) => {
+      const expCanvas = this.generateExportCanvas();
+      expCanvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/png');
+    });
   }
 
   // Ensure requested web font is fully loaded
