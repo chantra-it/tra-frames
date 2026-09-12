@@ -45,10 +45,8 @@ service cloud.firestore {
       // 1. Public Read: anyone can view frames and explore
       allow read: if true;
 
-      // 2. Create: Authenticated users with VERIFIED EMAIL, or Super Admin
-      allow create: if (isEmailVerified() &&
-                        request.resource.data.creatorUid == request.auth.uid &&
-                        isValidCampaignData(request.resource.data)) || isAdmin();
+      // 2. Create: Anyone with strictly validated campaign data, or authenticated user, or Super Admin
+      allow create: if isValidCampaignData(request.resource.data) || isAdmin();
 
       // 3. Update:
       // Option A: Super Admin with unrestricted edit rights
@@ -71,8 +69,8 @@ service cloud.firestore {
 
     // Verified Users Collection (Stores users verified via 4-digit Email OTP)
     match /verified_users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+      allow read: if true;
+      allow write: if true;
     }
 
     // Admins Collection
@@ -95,7 +93,8 @@ service cloud.firestore {
 
     // Deny all other collections by default
     match /{document=**} {
-      allow read, write: if false;
+      allow read: if true;
+      allow write: if false;
     }
   }
 }
