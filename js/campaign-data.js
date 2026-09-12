@@ -1548,10 +1548,16 @@ const CampaignService = {
     if (campaign.slug) this._memoryCache.set(campaign.slug, campaign);
     if (campaign.id) this._memoryCache.set(campaign.id, campaign);
 
-    // Only cache to local storage if it's explicitly user created or belongs to current user
+    // STRICT ISOLATION: NEVER cache public or unowned cloud campaigns into LOCAL_STORAGE_KEY.
+    // LOCAL_STORAGE_KEY is exclusively for campaigns created/owned by the currently logged-in user.
     const user = AuthService.currentUser;
-    const isOwner = (user && campaign.creatorUid && campaign.creatorUid === user.uid);
-    if (campaign.isUserCreated || isOwner) {
+    const cleanUserEmail = (user && user.email) ? user.email.toLowerCase().trim() : '';
+    const isOwner = user && (
+      (campaign.creatorUid && campaign.creatorUid === user.uid) ||
+      (cleanUserEmail && campaign.creatorEmail && campaign.creatorEmail.toLowerCase().trim() === cleanUserEmail)
+    );
+
+    if (isOwner) {
       try {
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         let userCampaigns = stored ? JSON.parse(stored) : [];
@@ -1689,13 +1695,25 @@ const CampaignService = {
     const safeId = id.trim();
     try {
       const user = AuthService.currentUser;
+      if (!user || !user.uid) {
+        console.warn("Unauthorized: Must be logged in to delete campaigns");
+        return false;
+      }
+      const cleanUserEmail = (user.email || '').toLowerCase().trim();
+
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (stored) {
         let userCampaigns = JSON.parse(stored);
         const target = userCampaigns.find(c => c.id === safeId || c.slug === safeId);
-        // IDOR Protection: Verify caller is owner of this campaign
-        if (target && target.creatorUid && user && target.creatorUid !== user.uid) {
-          console.warn("Unauthorized attempt to delete campaign:", safeId);
+
+        // Strict IDOR Protection: Verify caller is the authentic owner
+        const isOwner = target && (
+          (target.creatorUid && target.creatorUid === user.uid) ||
+          (cleanUserEmail && target.creatorEmail && target.creatorEmail.toLowerCase().trim() === cleanUserEmail)
+        );
+
+        if (target && !isOwner) {
+          console.warn("Unauthorized attempt to delete campaign not owned by current user:", safeId);
           return false;
         }
 
@@ -1727,16 +1745,67 @@ const CampaignService = {
 
   getUserCampaigns() {
     try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      const allUserCampaigns = stored ? JSON.parse(stored) : [];
       const user = AuthService.currentUser;
-      if (user) {
-        return allUserCampaigns.filter(c => c.creatorUid === user.uid || (c.isUserCreated && !c.creatorUid));
+      if (!user || !user.uid) return [];
+
+      const cleanUserEmail = (user.email || '').toLowerCase().trim();
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      let allUserCampaigns = stored ? JSON.parse(stored) : [];
+
+      // STRICT OWNERSHIP FILTER:
+      // A campaign belongs to this user ONLY if creatorUid matches user.uid,
+      // OR creatorEmail matches user's email.
+      const isMyCampaign = (c) => {
+        if (!c) return false;
+        if (c.creatorUid && c.creatorUid === user.uid) return true;
+        if (cleanUserEmail && c.creatorEmail && c.creatorEmail.toLowerCase().trim() === cleanUserEmail) return true;
+        return false;
+      };
+
+      // Sanitize localStorage: Purge any unowned campaigns so they never pollute personal dashboard
+      const myCampaigns = allUserCampaigns.filter(isMyCampaign);
+      if (myCampaigns.length !== allUserCampaigns.length) {
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(myCampaigns));
+        } catch (e) {}
       }
-      return allUserCampaigns.filter(c => c.isUserCreated);
+
+      // Also check memory cache for any cloud campaigns owned by current user
+      if (this._memoryCache) {
+        for (const [id, c] of this._memoryCache.entries()) {
+          if (isMyCampaign(c) && !myCampaigns.some(existing => existing.slug === c.slug || existing.id === c.id)) {
+            myCampaigns.unshift(c);
+          }
+        }
+      }
+
+      return myCampaigns;
     } catch (e) {
       return [];
     }
+  },
+
+  async fetchUserCampaignsFromCloud() {
+    const user = AuthService.currentUser;
+    if (!user || !user.uid) return [];
+    const db = initFirestore();
+    if (db) {
+      try {
+        const snapshot = await db.collection("campaigns").where("creatorUid", "==", user.uid).get();
+        const campaigns = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data) {
+            campaigns.push(data);
+            this.cacheCloudCampaign(data);
+          }
+        });
+        return campaigns;
+      } catch (err) {
+        console.warn("fetchUserCampaignsFromCloud notice:", err);
+      }
+    }
+    return [];
   },
 
   incrementSupporter(id) {
