@@ -331,7 +331,7 @@ class TwibbonApp {
         </div>
 
         <!-- Google Sign-In Button -->
-        <button class="btn-google-clean" id="btnAuthGoogle" type="button">
+        <button class="btn-google" id="btnAuthGoogle" type="button">
           ${Icons.google} <span>${t('signInWithGoogle')}</span>
         </button>
 
