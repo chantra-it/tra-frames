@@ -2343,6 +2343,185 @@ const AdminService = {
     return { success: true, deletedIdentifiers: idList };
   },
 
+  // Admin Batch Delete: permanently remove multiple campaigns across all sources
+  async adminBatchDeleteCampaigns(targetKeys) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    if (!Array.isArray(targetKeys) || targetKeys.length === 0) {
+      return { success: true, count: 0, deletedIdentifiers: [] };
+    }
+
+    const all = await this.fetchAllCampaignsAdmin();
+    const allIdentifiersToDelete = new Set();
+    const resolvedDocIds = new Set();
+
+    targetKeys.forEach(rawKey => {
+      const safeKey = String(rawKey).trim();
+      if (!safeKey) return;
+      allIdentifiersToDelete.add(safeKey);
+
+      const found = all.find(c => c.slug === safeKey || c.id === safeKey || c._docId === safeKey) ||
+                    (CampaignService._memoryCache ? (CampaignService._memoryCache.get(safeKey) || {}) : {});
+      if (found.slug) allIdentifiersToDelete.add(found.slug);
+      if (found.id) allIdentifiersToDelete.add(found.id);
+      if (found._docId) allIdentifiersToDelete.add(found._docId);
+
+      const docId = found._docId || found.slug || safeKey;
+      if (docId) resolvedDocIds.add(docId);
+    });
+
+    const idList = Array.from(allIdentifiersToDelete).filter(Boolean);
+
+    // 1. Save to Persistent Deleted Registry
+    this.saveDeletedCampaignId(idList);
+
+    // 2. Check and suppress presets
+    try {
+      const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+      let suppressedChanged = false;
+      idList.forEach(id => {
+        const isPreset = INITIAL_CAMPAIGNS.some(p => p.id === id || p.slug === id);
+        if (isPreset && !suppressed.includes(id)) {
+          suppressed.push(id);
+          suppressedChanged = true;
+        }
+      });
+      if (suppressedChanged) {
+        localStorage.setItem('tra_suppressed_presets', JSON.stringify(suppressed));
+      }
+    } catch (e) {}
+
+    // 3. Remove from Overrides
+    try {
+      const overrides = this.getCampaignOverrides();
+      idList.forEach(id => { delete overrides[id]; });
+      localStorage.setItem('tra_admin_campaign_overrides', JSON.stringify(overrides));
+    } catch (e) {}
+
+    // 4. Remove from Memory Cache
+    if (CampaignService._memoryCache) {
+      idList.forEach(id => CampaignService._memoryCache.delete(id));
+    }
+
+    // 5. Remove from LocalStorage user campaigns
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        let userCampaigns = JSON.parse(stored);
+        userCampaigns = userCampaigns.filter(c => !idList.includes(c.id) && !idList.includes(c.slug));
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+      }
+    } catch (e) {}
+
+    // 6. Batch Delete from Cloud Firestore
+    const db = initFirestore();
+    if (db) {
+      const promises = Array.from(resolvedDocIds).map(docId => {
+        return db.collection("campaigns").doc(docId).delete()
+          .then(() => console.log("🔥 Admin batch-deleted doc from Cloud Firestore:", docId))
+          .catch(err => console.warn("Firestore SDK batch-delete notice:", docId, err));
+      });
+      await Promise.allSettled(promises);
+    }
+
+    return { success: true, count: targetKeys.length, deletedIdentifiers: idList };
+  },
+
+  // Admin Batch Update Category: assign category to multiple campaigns
+  async adminBatchUpdateCategory(targetKeys, newCategory) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    const validCategories = ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'];
+    if (!validCategories.includes(newCategory)) {
+      throw new Error("Invalid category: " + newCategory);
+    }
+    if (!Array.isArray(targetKeys) || targetKeys.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    const all = await this.fetchAllCampaignsAdmin();
+    const updatedCampaigns = [];
+    const db = initFirestore();
+
+    for (const rawKey of targetKeys) {
+      const safeKey = String(rawKey).trim();
+      if (!safeKey) continue;
+      const found = all.find(c => c.slug === safeKey || c.id === safeKey || c._docId === safeKey);
+      if (!found) continue;
+
+      const updated = {
+        ...found,
+        category: newCategory,
+        updatedAt: new Date().toISOString()
+      };
+
+      this.saveCampaignOverride(updated);
+
+      if (CampaignService._memoryCache) {
+        if (updated.slug) CampaignService._memoryCache.set(updated.slug, updated);
+        if (updated.id) CampaignService._memoryCache.set(updated.id, updated);
+        if (updated._docId) CampaignService._memoryCache.set(updated._docId, updated);
+      }
+
+      // Update local storage user campaign if present
+      try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (stored) {
+          let userCampaigns = JSON.parse(stored);
+          const idx = userCampaigns.findIndex(c => c.id === safeKey || c.slug === safeKey);
+          if (idx !== -1) {
+            userCampaigns[idx] = { ...userCampaigns[idx], category: newCategory, updatedAt: new Date().toISOString() };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+          }
+        }
+      } catch (e) {}
+
+      const docId = updated._docId || updated.slug || updated.id;
+      if (db && docId) {
+        db.collection("campaigns").doc(docId).set({ category: newCategory, updatedAt: new Date().toISOString() }, { merge: true })
+          .catch(err => console.warn("Batch category cloud update notice:", docId, err));
+      }
+
+      updatedCampaigns.push(updated);
+    }
+
+    return { success: true, count: updatedCampaigns.length, category: newCategory };
+  },
+
+  // Export Selected Campaigns Backup as JSON file
+  async exportSelectedCampaignsBackup(targetKeys) {
+    const all = await this.fetchAllCampaignsAdmin();
+    const targetSet = new Set(targetKeys.map(k => String(k).trim()));
+    
+    const selectedCampaigns = all.filter(c => 
+      targetSet.has(c.slug) || targetSet.has(c.id) || (c._docId && targetSet.has(c._docId))
+    );
+
+    const exportData = {
+      appName: "Tra Frames",
+      type: "selected_campaigns_backup",
+      exportTimestamp: new Date().toISOString(),
+      exportDateFormatted: new Date().toLocaleString(),
+      count: selectedCampaigns.length,
+      campaigns: selectedCampaigns
+    };
+
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().split('T')[0];
+    a.href = url;
+    a.download = `tra-frames-selected-${selectedCampaigns.length}-items-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return exportData;
+  },
+
   // Fetch list of registered users and campaign creators
   async fetchUsersList() {
     const userMap = new Map();
