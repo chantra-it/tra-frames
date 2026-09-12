@@ -18,6 +18,13 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == creatorUid;
     }
 
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email in ['haschitra@gmail.com', 'ctpro007@gmail.com'] ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
     function isValidCampaignData(data) {
       return data.titleKm is string && data.titleKm.size() <= 120 &&
              data.titleEn is string && data.titleEn.size() <= 120 &&
@@ -38,15 +45,16 @@ service cloud.firestore {
       // 1. Public Read: anyone can view frames and explore
       allow read: if true;
 
-      // 2. Create: Only authenticated users with VERIFIED EMAIL, must own the document, strict schema validation
-      allow create: if isEmailVerified() &&
-                       request.resource.data.creatorUid == request.auth.uid &&
-                       isValidCampaignData(request.resource.data);
+      // 2. Create: Authenticated users with VERIFIED EMAIL, or Super Admin
+      allow create: if (isEmailVerified() &&
+                        request.resource.data.creatorUid == request.auth.uid &&
+                        isValidCampaignData(request.resource.data)) || isAdmin();
 
       // 3. Update:
-      // Option A: Owner updating their campaign (cannot change creatorUid or createdAt)
-      // Option B: Anyone incrementing the supporter count by exactly 1
-      allow update: if (
+      // Option A: Super Admin with unrestricted edit rights
+      // Option B: Owner updating their campaign (cannot change creatorUid or createdAt)
+      // Option C: Anyone incrementing the supporter count by exactly 1
+      allow update: if isAdmin() || (
         // Creator updating metadata
         (isOwner(resource.data.creatorUid) &&
          request.resource.data.creatorUid == resource.data.creatorUid &&
@@ -57,14 +65,26 @@ service cloud.firestore {
          request.resource.data.supporters == resource.data.supporters + 1)
       );
 
-      // 4. Delete: Strictly owner only (Anti-IDOR / Anti-Tampering)
-      allow delete: if isOwner(resource.data.creatorUid);
+      // 4. Delete: Strictly owner or Super Admin
+      allow delete: if isOwner(resource.data.creatorUid) || isAdmin();
     }
 
     // Verified Users Collection (Stores users verified via 4-digit Email OTP)
     match /verified_users/{userId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+    }
+
+    // Admins Collection
+    match /admins/{adminId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // System Settings Collection (Global Announcement, Maintenance Mode)
+    match /system_settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Mail Collection (For Firebase Trigger Email extension)
