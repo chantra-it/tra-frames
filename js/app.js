@@ -2527,6 +2527,7 @@ class TwibbonApp {
               <button type="button" class="color-swatch-btn" data-theme-name="midnightGold" style="background: linear-gradient(135deg, #0f172a, #eab308);" title="Midnight Gold"></button>
               <button type="button" class="color-swatch-btn" data-theme-name="cyberNeon" style="background: linear-gradient(135deg, #581c87, #06b6d4);" title="Cyber Neon"></button>
               <button type="button" class="color-swatch-btn" data-theme-name="rosePink" style="background: linear-gradient(135deg, #9d174d, #ec4899);" title="Rose Pink"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="transparent" style="background: repeating-conic-gradient(#cbd5e1 0% 25%, #ffffff 0% 50%) 50% / 8px 8px;" title="${isKm ? 'គ្មានផ្ទៃពណ៌ (ថ្លាសុទ្ធ/Overlay)' : 'Transparent (Overlay Only)'}"></button>
             </div>
           </div>
 
