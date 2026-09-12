@@ -124,7 +124,7 @@ class TwibbonApp {
   hasUnsavedWork() {
     // 1. Check Canvas Studio
     const studio = this.activeStudio || this.studio;
-    if (this.currentView === 'campaign' && studio && typeof studio.hasUnsavedWork === 'function') {
+    if ((this.currentView === 'campaign' || this.currentView === 'studio') && studio && typeof studio.hasUnsavedWork === 'function') {
       if (studio.hasUnsavedWork()) return true;
     }
 
@@ -1298,7 +1298,7 @@ class TwibbonApp {
         <div class="card-preview-wrapper" onclick="window.location.hash='#campaign/${slug}'">
           <img src="${SAMPLE_AVATARS[0]}" class="card-sample-backdrop" alt="Preview backdrop" loading="lazy" />
           <img src="${frameUrl}" alt="${title}" class="card-preview-frame" loading="lazy" />
-          <div class="card-badge-category">${t('cat' + (campaign.category.charAt(0).toUpperCase() + campaign.category.slice(1)))}</div>
+          <div class="card-badge-category">${t('cat' + (campaign.category ? (campaign.category.charAt(0).toUpperCase() + campaign.category.slice(1)) : 'Celebration'))}</div>
           <div class="card-badge-supporters">${Icons.users} <span>${supporterCount}</span></div>
         </div>
         <div class="card-content">
