@@ -286,7 +286,7 @@ class TwibbonApp {
           <button class="modal-close-btn" onclick="if (typeof app !== 'undefined') app.isAuthPendingOtp = false; document.getElementById('authModalOverlay').remove()">&times;</button>
         </div>
 
-        <div style="background: var(--accent-soft); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 0.75rem 1rem; font-size: 0.84rem; color: var(--accent-primary); line-height: 1.5;">
+        <div style="background: var(--accent-soft); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: var(--radius-md); padding: 0.75rem 1rem; font-size: 0.84rem; color: var(--accent-primary); line-height: 1.5;">
           💡 <strong>${t('supporterNoLoginTip')}</strong>
         </div>
 
