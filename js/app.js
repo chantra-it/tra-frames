@@ -2553,7 +2553,7 @@ class TwibbonApp {
                 <span class="designer-tmpl-label">${t('tmplGraduation')}</span>
               </div>
               <div class="designer-tmpl-card" data-template="khmerNewYear">
-                <span class="designer-tmpl-emoji">🇰🇭</span>
+                <span class="designer-tmpl-emoji">🏛️</span>
                 <span class="designer-tmpl-label">${t('tmplKhmerNewYear')}</span>
               </div>
               <div class="designer-tmpl-card" data-template="birthday">
