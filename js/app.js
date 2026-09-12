@@ -308,105 +308,157 @@ class TwibbonApp {
     overlay.className = 'modal-overlay';
     overlay.id = 'authModalOverlay';
     overlay.innerHTML = `
-      <div class="modal-card" style="max-width: 440px;">
-        <div class="modal-header">
-          <h3>${Icons.avatar} <span>${t('signIn')} / ${t('signUp')}</span></h3>
-          <button class="modal-close-btn" onclick="if (typeof app !== 'undefined') app.isAuthPendingOtp = false; document.getElementById('authModalOverlay').remove()">&times;</button>
-        </div>
-
-        <div style="background: var(--accent-soft); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: var(--radius-md); padding: 0.75rem 1rem; font-size: 0.84rem; color: var(--accent-primary); line-height: 1.5;">
-          💡 <strong>${t('supporterNoLoginTip')}</strong>
-        </div>
-
-        <!-- Google Sign-In Primary Button -->
-        <button class="btn-google" id="btnAuthGoogle">
-          ${Icons.google} <span>${t('signInWithGoogle')}</span>
-        </button>
-
-        <div class="auth-divider">
-          <span>${t('orDivider')}</span>
-        </div>
-
-        <!-- Auth Tabs (Sign In / Sign Up) -->
-        <div class="auth-tabs">
-          <button class="auth-tab active" id="tabSignIn">${t('signIn')}</button>
-          <button class="auth-tab" id="tabSignUp">${t('createAccount')}</button>
-        </div>
-
-        <form id="authEmailForm" style="display: flex; flex-direction: column; gap: 0.85rem;">
-          <!-- Display Name (Sign Up only) -->
-          <div class="form-group" id="groupDisplayName" style="display: none;">
-            <label class="form-label">${t('fullName')}</label>
-            <input type="text" id="authDisplayNameInput" class="form-input" placeholder="e.g. Sok Chantra" />
-          </div>
-
-          <!-- Email with Send OTP action -->
-          <div class="form-group">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-              <label class="form-label" style="margin-bottom: 0;">${t('email')} *</label>
-              <button type="button" id="btnRequestOtp" class="btn-get-otp" style="display: none;">
-                📩 ${isKm ? 'ផ្ញើលេខកូដ OTP' : 'Send OTP Code'}
-              </button>
-            </div>
-            <input type="email" id="authEmailInput" class="form-input" placeholder="name@example.com" required />
-          </div>
-
-          <!-- OTP Dispatched Status Banner -->
-          <div id="signUpOtpBanner" class="otp-status-banner" style="display: none;">
-            <div class="otp-status-header">
-              <span>📩 ${isKm ? 'បានផ្ញើលេខកូដ OTP រួចរាល់' : 'OTP Code Dispatched'}</span>
-              <span class="badge-sent">Sent</span>
-            </div>
-            <p class="otp-status-text">
-              ${isKm ? 'លេខកូដសម្ងាត់ ៤ ខ្ទង់ត្រូវបានផ្ញើទៅកាន់អ៊ីមែល៖' : 'A 4-digit verification code has been sent to:'}<br>
-              <strong id="authSentEmailDisplay" style="color: var(--accent-primary); word-break: break-all;"></strong>
-            </p>
-
-            <!-- Quick OTP Code Box & 1-Click Auto Fill -->
-            <div class="otp-quick-box" style="background: var(--accent-soft); border: 1.5px dashed var(--accent-primary); border-radius: var(--radius-md); padding: 0.65rem 0.85rem; margin: 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
-              <div>
-                <span style="font-size: 0.76rem; color: var(--text-secondary); display: block; font-weight: 600;">🔑 ${isKm ? 'លេខកូដសម្ងាត់ OTP របស់អ្នក៖' : 'Your 4-Digit OTP Code:'}</span>
-                <strong id="authOtpCodeDisplay" style="font-size: 1.45rem; letter-spacing: 5px; color: var(--accent-primary); font-family: monospace; font-weight: 800;">----</strong>
+      <div class="modal-card modal-auth-card">
+        <!-- Desktop Left Branding & Benefits Sidebar -->
+        <div class="auth-sidebar">
+          <div>
+            <div class="auth-sidebar-brand">
+              <div class="auth-sidebar-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
               </div>
-              <button type="button" id="btnAutoFillSignUpOtp" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.82rem; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 0.3rem;">
-                ⚡ <span>${isKm ? 'បំពេញស្វ័យប្រវត្តិ' : 'Auto Fill'}</span>
+              <div>
+                <div class="auth-sidebar-title">Tra Frames</div>
+                <div class="auth-sidebar-subtitle">Next-Gen Profile Platform</div>
+              </div>
+            </div>
+
+            <div class="auth-sidebar-headline">
+              <h4>${isKm ? 'ចូលរួមជាមួយសហគមន៍ Tra Frames' : 'Join the Tra Frames Community'}</h4>
+              <p>${isKm ? 'បង្កើត កែសម្រួល និងចែករំលែកស៊ុមរូបភាពកម្រិតខ្ពស់ដោយឥតគិតថ្លៃ និងសុវត្ថិភាពខ្ពស់។' : 'Design, customize, and share premium profile frames with ease, speed, and rock-solid security.'}</p>
+            </div>
+
+            <div class="auth-sidebar-features">
+              <div class="auth-sidebar-feat-item">
+                <div class="auth-sidebar-feat-icon">🎨</div>
+                <div class="auth-sidebar-feat-text">
+                  <strong>${isKm ? 'រចនាស៊ុមដោយសេរី' : 'Custom Frame Creator'}</strong>
+                  <span>${isKm ? 'ឧបករណ៍ Canvas Studio ដ៏ទំនើប' : 'Powerful visual canvas studio'}</span>
+                </div>
+              </div>
+              <div class="auth-sidebar-feat-item">
+                <div class="auth-sidebar-feat-icon">⚡</div>
+                <div class="auth-sidebar-feat-text">
+                  <strong>${isKm ? 'ទាញយករហ័ស HD/4K' : 'Ultra Fast HD Export'}</strong>
+                  <span>${isKm ? 'កម្រិតច្បាស់ខ្ពស់ គ្មានផ្ទៃខាងក្រោយ' : 'Crisp transparent PNG export'}</span>
+                </div>
+              </div>
+              <div class="auth-sidebar-feat-item">
+                <div class="auth-sidebar-feat-icon">🔒</div>
+                <div class="auth-sidebar-feat-text">
+                  <strong>${isKm ? 'សុវត្ថិភាព ផ្ទៀងផ្ទាត់ OTP' : 'Verified & Secure'}</strong>
+                  <span>${isKm ? 'ការពារគណនីរបស់អ្នកជានិច្ច' : 'Fast email OTP verification'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="auth-sidebar-footer">
+            💡 <strong>${t('supporterNoLoginTip')}</strong>
+          </div>
+        </div>
+
+        <!-- Right Form Panel -->
+        <div class="auth-form-panel">
+          <div class="auth-form-header">
+            <h3 id="authModalTitle">${Icons.avatar} <span id="authModalTitleText">${t('signIn')}</span></h3>
+            <button class="modal-close-btn" onclick="if (typeof app !== 'undefined') app.isAuthPendingOtp = false; document.getElementById('authModalOverlay').remove()">&times;</button>
+          </div>
+
+          <!-- Segmented Pill Tabs -->
+          <div class="auth-tabs-pill">
+            <button type="button" class="auth-tab-pill active" id="tabSignIn">${t('signIn')}</button>
+            <button type="button" class="auth-tab-pill" id="tabSignUp">${t('createAccount')}</button>
+          </div>
+
+          <!-- Google Sign-In Primary Button -->
+          <button class="btn-google" id="btnAuthGoogle" type="button" style="margin-bottom: 0.75rem;">
+            ${Icons.google} <span>${t('signInWithGoogle')}</span>
+          </button>
+
+          <div class="auth-divider" style="margin: 0.35rem 0 0.85rem;">
+            <span>${t('orDivider')}</span>
+          </div>
+
+          <form id="authEmailForm" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Display Name (Sign Up only) -->
+            <div class="form-group" id="groupDisplayName" style="display: none;">
+              <label class="form-label">${t('fullName')}</label>
+              <input type="text" id="authDisplayNameInput" class="form-input" placeholder="e.g. Sok Chantra" />
+            </div>
+
+            <!-- Email with Send OTP action -->
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <label class="form-label" style="margin-bottom: 0;">${t('email')} *</label>
+                <button type="button" id="btnRequestOtp" class="btn-get-otp" style="display: none;">
+                  📩 ${isKm ? 'ផ្ញើលេខកូដ OTP' : 'Send OTP Code'}
+                </button>
+              </div>
+              <input type="email" id="authEmailInput" class="form-input" placeholder="name@example.com" required />
+            </div>
+
+            <!-- Sleek Compact OTP Dispatched Status Banner -->
+            <div id="signUpOtpBanner" class="otp-compact-banner" style="display: none;">
+              <div class="otp-banner-top">
+                <div class="otp-badge-tag">
+                  <span style="font-weight: 700; color: var(--text-primary);">📩 ${isKm ? 'បានផ្ញើកូដទៅ៖' : 'Code sent to:'}</span>
+                  <span class="badge-sent" style="padding: 0.15rem 0.45rem; font-size: 0.7rem;">SENT</span>
+                </div>
+                <strong id="authSentEmailDisplay" style="color: var(--accent-primary); font-size: 0.78rem; word-break: break-all;"></strong>
+              </div>
+
+              <!-- Quick OTP Code Pill & 1-Click Auto Fill -->
+              <div class="otp-quick-row">
+                <div class="otp-code-pill">
+                  <span class="otp-code-label">🔑 OTP:</span>
+                  <span id="authOtpCodeDisplay" class="otp-code-val">----</span>
+                </div>
+                <button type="button" id="btnAutoFillSignUpOtp" class="btn-otp-fill-compact">
+                  ⚡ <span>${isKm ? 'បំពេញស្វ័យប្រវត្តិ' : 'Auto Fill'}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 4-Digit Segmented OTP Grid (Sign Up only) -->
+            <div class="form-group" id="groupSignUpOtpInputs" style="display: none;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                <label class="form-label" style="margin-bottom: 0;">
+                  🔑 ${isKm ? 'លេខកូដផ្ទៀងផ្ទាត់ OTP (៤ ខ្ទង់) *' : '4-Digit OTP Code *'}
+                </label>
+                <span id="authOtpTimerBadge" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-primary); display: none;">
+                  ⏱️ <span id="authOtpCountdown">10:00</span>
+                </span>
+              </div>
+              <div class="otp-inputs-grid" id="authSignUpOtpGrid" style="margin: 0.15rem 0 0.25rem;">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="0">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="1">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="2">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="3">
+              </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+              <label class="form-label">${t('password')} * <span id="pwdHint" style="font-size: 0.78rem; color: var(--text-muted); font-weight: normal; display: none;">(យ៉ាងតិច ៦ ខ្ទង់)</span></label>
+              <input type="password" id="authPasswordInput" class="form-input" placeholder="••••••••" required minlength="6" />
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="padding: 0.8rem; font-size: 0.98rem; margin-top: 0.25rem;">
+              <span>${t('signIn')}</span>
+            </button>
+
+            <!-- Bottom Mode Switcher Note -->
+            <div style="text-align: center; margin-top: 0.35rem; font-size: 0.82rem; color: var(--text-secondary);">
+              <span id="authBottomPrompt">${isKm ? 'មិនទាន់មានគណនីមែនទេ?' : "Don't have an account?"}</span>
+              <button type="button" id="btnAuthToggleMode" style="background: none; border: none; color: var(--accent-primary); font-weight: 700; cursor: pointer; text-decoration: underline; margin-left: 0.25rem; font-family: inherit; font-size: 0.82rem;">
+                ${t('createAccount')}
               </button>
             </div>
-
-            <div class="otp-status-hint">
-              💡 ${isKm ? 'លោកអ្នកអាចយកលេខកូដ ៤ ខ្ទង់ខាងលើ ឬចុច <strong>"បំពេញស្វ័យប្រវត្តិ"</strong> ដើម្បីចុះឈ្មោះបានភ្លាមៗ!' : 'You can copy the 4-digit code above or click <strong>"Auto Fill"</strong> to sign up instantly!'}
-            </div>
-          </div>
-
-          <!-- 4-Digit Segmented OTP Grid (Sign Up only) -->
-          <div class="form-group" id="groupSignUpOtpInputs" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-              <label class="form-label" style="margin-bottom: 0;">
-                🔑 ${isKm ? 'លេខកូដផ្ទៀងផ្ទាត់ OTP (៤ ខ្ទង់) *' : '4-Digit OTP Code *'}
-              </label>
-              <span id="authOtpTimerBadge" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-primary); display: none;">
-                ⏱️ <span id="authOtpCountdown">10:00</span>
-              </span>
-            </div>
-            <div class="otp-inputs-grid" id="authSignUpOtpGrid" style="margin: 0.25rem 0 0.4rem;">
-              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="0">
-              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="1">
-              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="2">
-              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="3">
-            </div>
-          </div>
-
-          <!-- Password -->
-          <div class="form-group">
-            <label class="form-label">${t('password')} * <span id="pwdHint" style="font-size: 0.78rem; color: var(--text-muted); font-weight: normal; display: none;">(យ៉ាងតិច ៦ ខ្ទង់)</span></label>
-            <input type="password" id="authPasswordInput" class="form-input" placeholder="••••••••" required minlength="6" />
-          </div>
-
-          <!-- Submit Button -->
-          <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="padding: 0.85rem; font-size: 1rem; margin-top: 0.25rem;">
-            <span>${t('signIn')}</span>
-          </button>
-        </form>
+          </form>
+        </div>
       </div>
     `;
 
@@ -416,6 +468,9 @@ class TwibbonApp {
     let authOtpInterval = null;
     const tabSignIn = overlay.querySelector('#tabSignIn');
     const tabSignUp = overlay.querySelector('#tabSignUp');
+    const authModalTitleText = overlay.querySelector('#authModalTitleText');
+    const authBottomPrompt = overlay.querySelector('#authBottomPrompt');
+    const btnAuthToggleMode = overlay.querySelector('#btnAuthToggleMode');
     const groupName = overlay.querySelector('#groupDisplayName');
     const btnRequestOtp = overlay.querySelector('#btnRequestOtp');
     const signUpOtpBanner = overlay.querySelector('#signUpOtpBanner');
@@ -436,6 +491,9 @@ class TwibbonApp {
       isSignUp = false;
       tabSignIn.classList.add('active');
       tabSignUp.classList.remove('active');
+      if (authModalTitleText) authModalTitleText.textContent = t('signIn');
+      if (authBottomPrompt) authBottomPrompt.textContent = isKm ? 'មិនទាន់មានគណនីមែនទេ?' : "Don't have an account?";
+      if (btnAuthToggleMode) btnAuthToggleMode.textContent = t('createAccount');
       groupName.style.display = 'none';
       btnRequestOtp.style.display = 'none';
       signUpOtpBanner.style.display = 'none';
@@ -449,6 +507,9 @@ class TwibbonApp {
       isSignUp = true;
       tabSignUp.classList.add('active');
       tabSignIn.classList.remove('active');
+      if (authModalTitleText) authModalTitleText.textContent = t('createAccount');
+      if (authBottomPrompt) authBottomPrompt.textContent = isKm ? 'មានគណនីរួចហើយ?' : "Already have an account?";
+      if (btnAuthToggleMode) btnAuthToggleMode.textContent = t('signIn');
       groupName.style.display = 'flex';
       btnRequestOtp.style.display = 'inline-block';
       groupSignUpOtpInputs.style.display = 'flex';
@@ -465,6 +526,16 @@ class TwibbonApp {
         signUpOtpBanner.style.display = 'block';
       }
     });
+
+    if (btnAuthToggleMode) {
+      btnAuthToggleMode.addEventListener('click', () => {
+        if (isSignUp) {
+          tabSignIn.click();
+        } else {
+          tabSignUp.click();
+        }
+      });
+    }
 
     const fillSignUpOtp = (code) => {
       if (!code || code.length !== 4) return;
