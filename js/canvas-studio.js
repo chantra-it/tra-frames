@@ -221,7 +221,7 @@ class CanvasStudio {
       if (!this.userImage) return;
       this.isDragging = true;
       const rect = el.getBoundingClientRect();
-      const scaleCoord = this.canvas.width / rect.width;
+      const scaleCoord = (rect.width > 0) ? (this.canvas.width / rect.width) : 1;
       this.dragStartX = e.clientX * scaleCoord - this.state.x;
       this.dragStartY = e.clientY * scaleCoord - this.state.y;
       el.style.cursor = 'grabbing';
@@ -230,7 +230,7 @@ class CanvasStudio {
     window.addEventListener('mousemove', (e) => {
       if (!this.isDragging || !this.userImage) return;
       const rect = el.getBoundingClientRect();
-      const scaleCoord = this.canvas.width / rect.width;
+      const scaleCoord = (rect.width > 0) ? (this.canvas.width / rect.width) : 1;
       this.state.x = e.clientX * scaleCoord - this.dragStartX;
       this.state.y = e.clientY * scaleCoord - this.dragStartY;
       this.render();
@@ -259,7 +259,7 @@ class CanvasStudio {
       if (e.touches.length === 1) {
         this.isDragging = true;
         const rect = el.getBoundingClientRect();
-        const scaleCoord = this.canvas.width / rect.width;
+        const scaleCoord = (rect.width > 0) ? (this.canvas.width / rect.width) : 1;
         this.dragStartX = e.touches[0].clientX * scaleCoord - this.state.x;
         this.dragStartY = e.touches[0].clientY * scaleCoord - this.state.y;
       } else if (e.touches.length === 2) {
@@ -276,7 +276,7 @@ class CanvasStudio {
       e.preventDefault();
       if (e.touches.length === 1 && this.isDragging) {
         const rect = el.getBoundingClientRect();
-        const scaleCoord = this.canvas.width / rect.width;
+        const scaleCoord = (rect.width > 0) ? (this.canvas.width / rect.width) : 1;
         this.state.x = e.touches[0].clientX * scaleCoord - this.dragStartX;
         this.state.y = e.touches[0].clientY * scaleCoord - this.dragStartY;
         this.render();
@@ -299,7 +299,7 @@ class CanvasStudio {
       if (e.touches.length === 1 && this.userImage) {
         this.isDragging = true;
         const rect = el.getBoundingClientRect();
-        const scaleCoord = this.canvas.width / rect.width;
+        const scaleCoord = (rect.width > 0) ? (this.canvas.width / rect.width) : 1;
         this.dragStartX = e.touches[0].clientX * scaleCoord - this.state.x;
         this.dragStartY = e.touches[0].clientY * scaleCoord - this.state.y;
       } else if (e.touches.length === 0) {
@@ -387,10 +387,21 @@ class CanvasStudio {
 
       this.renderToContext(expCtx, this.outputResolution, this.outputResolution, true);
 
-      exportCanvas.toBlob((blob) => {
+      if (exportCanvas.toBlob) {
+        exportCanvas.toBlob((blob) => {
+          this.clearDirty();
+          if (blob) {
+            resolve(blob);
+          } else {
+            const dataUrl = exportCanvas.toDataURL('image/png', 1.0);
+            fetch(dataUrl).then(res => res.blob()).then(resolve).catch(() => resolve(null));
+          }
+        }, 'image/png', 1.0);
+      } else {
         this.clearDirty();
-        resolve(blob);
-      }, 'image/png', 1.0);
+        const dataUrl = exportCanvas.toDataURL('image/png', 1.0);
+        fetch(dataUrl).then(res => res.blob()).then(resolve).catch(() => resolve(null));
+      }
     });
   }
 }
