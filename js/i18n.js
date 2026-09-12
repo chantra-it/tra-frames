@@ -213,7 +213,17 @@ const translations = {
     adminRecentCampaigns: "យុទ្ធនាការដែលទើបបង្កើតថ្មីៗ",
     adminCategoryDistribution: "ការបែងចែកយុទ្ធនាការតាមប្រភេទ",
     adminRestoreConfirm: "តើអ្នកពិតជាចង់បញ្ចូលទិន្នន័យពី File Backup នេះមែនទេ? ទិន្នន័យដែលមានស្រាប់នឹងត្រូវ Update។",
-    adminRestoreSuccess: "ទិន្នន័យត្រូវបានស្ដារជោគជ័យ!"
+    adminRestoreSuccess: "ទិន្នន័យត្រូវបានស្ដារជោគជ័យ!",
+    adminSelectAll: "ជ្រើសរើសទាំងអស់",
+    adminSelectedCount: "បានជ្រើសរើស {count} យុទ្ធនាការ",
+    adminBatchDelete: "លុបដែលបានជ្រើស",
+    adminBatchDeleteConfirm: "⚠️ តើអ្នកពិតជាចង់លុប {count} យុទ្ធនាការដែលបានជ្រើសរើសនេះមែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់ក្រោយវិញបានឡើយ!",
+    adminBatchDeletedSuccess: "បានលុបយុទ្ធនាការចំនួន {count} ដោយជោគជ័យ!",
+    adminBatchExport: "ទាញយក Backup (JSON)",
+    adminBatchChangeCategory: "ប្តូរប្រភេទ Category",
+    adminBatchCategoryPrompt: "សូមជ្រើសរើស Category ថ្មីសម្រាប់យុទ្ធនាការទាំង {count}៖",
+    adminBatchCategoryUpdated: "បានប្តូរប្រភេទយុទ្ធនាការចំនួន {count} ដោយជោគជ័យ!",
+    adminDeselectAll: "ដកការជ្រើសរើស"
   },
   en: {
     appName: "Tra Frames",
@@ -428,7 +438,17 @@ const translations = {
     adminRecentCampaigns: "Recently Created Campaigns",
     adminCategoryDistribution: "Campaigns by Category",
     adminRestoreConfirm: "Are you sure you want to restore data from this backup file? Existing documents will be merged and updated.",
-    adminRestoreSuccess: "Database restored successfully from backup!"
+    adminRestoreSuccess: "Database restored successfully from backup!",
+    adminSelectAll: "Select All",
+    adminSelectedCount: "{count} campaigns selected",
+    adminBatchDelete: "Delete Selected",
+    adminBatchDeleteConfirm: "⚠️ Are you sure you want to permanently delete {count} selected campaigns? This action cannot be undone!",
+    adminBatchDeletedSuccess: "Successfully deleted {count} campaigns!",
+    adminBatchExport: "Export Selected (JSON)",
+    adminBatchChangeCategory: "Change Category",
+    adminBatchCategoryPrompt: "Choose a new category for the {count} selected campaigns:",
+    adminBatchCategoryUpdated: "Successfully updated category for {count} campaigns!",
+    adminDeselectAll: "Deselect"
   }
 };
 
