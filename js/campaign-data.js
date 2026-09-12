@@ -922,11 +922,17 @@ const AuthService = {
           localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser));
         } catch (e) {}
       } else {
-        if (this.currentUser && !this.currentUser.isLocal) {
+        // When Firebase Auth has no user or during cold start / custom domain,
+        // preserve the locally persisted active user if present!
+        try {
+          const activeStored = localStorage.getItem("tra_active_user");
+          if (activeStored) {
+            this.currentUser = JSON.parse(activeStored);
+          } else {
+            this.currentUser = null;
+          }
+        } catch (e) {
           this.currentUser = null;
-          try {
-            localStorage.removeItem("tra_active_user");
-          } catch (e) {}
         }
       }
 
@@ -947,10 +953,26 @@ const AuthService = {
   },
 
   isAuthenticated() {
-    return !!this.currentUser;
+    if (this.currentUser) return true;
+    try {
+      const activeStored = localStorage.getItem("tra_active_user");
+      if (activeStored) {
+        this.currentUser = JSON.parse(activeStored);
+        return !!this.currentUser;
+      }
+    } catch (e) {}
+    return false;
   },
 
   isEmailVerified() {
+    if (!this.currentUser) {
+      try {
+        const activeStored = localStorage.getItem("tra_active_user");
+        if (activeStored) {
+          this.currentUser = JSON.parse(activeStored);
+        }
+      } catch (e) {}
+    }
     if (!this.currentUser) return false;
     if (this.currentUser.emailVerified === true) return true;
     try {
