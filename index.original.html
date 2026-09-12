@@ -104,6 +104,16 @@
 
   <!-- EmailJS Delivery SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script>
+    window.EMAILJS_CONFIG = {
+      serviceId: "service_u9birxn",
+      templateId: "template_5aw8xer",
+      publicKey: "lKysw7jpIZvN46ncp"
+    };
+    if (typeof emailjs !== 'undefined') {
+      try { emailjs.init("lKysw7jpIZvN46ncp"); } catch(e) {}
+    }
+  </script>
 
   <!-- Scripts -->
   <script src="js/icons.js"></script>
