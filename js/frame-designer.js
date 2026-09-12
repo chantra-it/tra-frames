@@ -286,11 +286,12 @@ class FrameDesigner {
     // 6. Header Badge Pill
     if (this.settings.headerText.trim()) {
       ctx.save();
+      ctx.font = "900 32px 'Segoe UI', 'Kantumruy Pro', sans-serif";
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
       ctx.shadowBlur = 16;
       ctx.shadowOffsetY = 6;
 
-      const badgeWidth = Math.min(Math.max(ctx.measureText(this.settings.headerText).width + 120, 480), 760);
+      const badgeWidth = Math.min(Math.max(ctx.measureText(this.settings.headerText.toUpperCase()).width + 120, 480), 760);
       const badgeHeight = 78;
       const bx = center - badgeWidth / 2;
       const by = 48;
@@ -308,7 +309,6 @@ class FrameDesigner {
 
       // Text
       ctx.fillStyle = this.settings.headerColor || theme.ring;
-      ctx.font = "900 32px 'Segoe UI', 'Kantumruy Pro', sans-serif";
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(this.settings.headerText.toUpperCase(), center, by + badgeHeight / 2);
@@ -318,11 +318,12 @@ class FrameDesigner {
     // 7. Footer Badge / Ribbon
     if (this.settings.footerText.trim()) {
       ctx.save();
+      ctx.font = "800 30px 'Segoe UI', 'Kantumruy Pro', sans-serif";
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
       ctx.shadowBlur = 16;
       ctx.shadowOffsetY = 6;
 
-      const footerWidth = Math.min(Math.max(ctx.measureText(this.settings.footerText).width + 120, 460), 780);
+      const footerWidth = Math.min(Math.max(ctx.measureText(this.settings.footerText.toUpperCase()).width + 120, 460), 780);
       const footerHeight = 78;
       const fx = center - footerWidth / 2;
       const fy = s - 128;
@@ -337,7 +338,6 @@ class FrameDesigner {
       ctx.stroke();
 
       ctx.fillStyle = this.settings.footerColor || '#ffffff';
-      ctx.font = "800 30px 'Segoe UI', 'Kantumruy Pro', sans-serif";
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(this.settings.footerText.toUpperCase(), center, fy + footerHeight / 2);
