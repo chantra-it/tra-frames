@@ -436,110 +436,24 @@ const SAMPLE_AVATARS = [
   `)}`
 ];
 
-const INITIAL_CAMPAIGNS = [
-  {
-    id: "grad-2026",
-    slug: "class-of-2026-graduation",
-    titleKm: "អបអរសាទរពិធីចែកសញ្ញាបត្រ ជំនាន់ឆ្នាំ ២០២៦",
-    titleEn: "Class of 2026 Graduation Celebration",
-    descriptionKm: "អបអរសាទរជោគជ័យ និងការបញ្ចប់ការសិក្សាសម្រាប់និស្សិតគ្រប់រូបក្នុងឆ្នាំ ២០២៦! រួបរួមគ្នាពាក់ស៊ុមរូបថតនេះដើម្បីអបអរសាទរដំណើរថ្មីទាំងអស់គ្នា។",
-    descriptionEn: "Celebrate the momentous graduation milestone of the Class of 2026! Wear this prestigious frame to celebrate hard work, dedication, and a bright future.",
-    creator: "National University Alumni",
-    category: "education",
-    supporters: 14250,
-    frameUrl: PRESET_FRAMES.graduation,
-    captionKm: "ខ្ញុំពិតជាមានមោទនភាពដែលបានបញ្ចប់ការសិក្សាថ្នាក់បរិញ្ញាបត្រឆ្នាំ ២០២៦! 🎓 សូមជូនពរមិត្តៗទាំងអស់ជួបតែសំណាងល្អ។ #ClassOf2026 #Graduation #AlumniPride",
-    captionEn: "Proud to officially graduate as the Class of 2026! 🎓 The journey was incredible and the best is yet to come. #ClassOf2026 #GraduationDay #ProudGraduate",
-    createdAt: "2026-03-01",
-    featured: true,
-    shape: "circle"
-  },
-  {
-    id: "khmer-new-year-2026",
-    slug: "khmer-new-year-2026",
-    titleKm: "រីករាយពិធីបុណ្យចូលឆ្នាំថ្មីប្រពៃណីជាតិខ្មែរ ២០២៦",
-    titleEn: "Happy Khmer Traditional New Year 2026",
-    descriptionKm: "ចូលរួមអបអរសាទរទេវតាឆ្នាំថ្មី និងលើកស្ទួយវប្បធម៌ប្រពៃណីខ្មែរដ៏ល្អផូរផង់ ជាមួយស៊ុមរូបថតដ៏ប្រណិតនេះ!",
-    descriptionEn: "Celebrate the auspicious Khmer Traditional New Year 2026! Join families and communities nationwide with this festive celebratory frame.",
-    creator: "Khmer Culture Association",
-    category: "culture",
-    supporters: 28930,
-    frameUrl: PRESET_FRAMES.khmerNewYear,
-    captionKm: "សួស្ដីឆ្នាំថ្មីប្រពៃណីជាតិខ្មែរ ២០២៦! សូមទេវតាឆ្នាំថ្មីប្រទានពរជ័យ សិរីសួស្ដី វិបុលសុខ និងសុខភាពល្អដល់បងប្អូនទាំងអស់គ្នា។ 🇰🇭✨ #KhmerNewYear2026 #HappyNewYear",
-    captionEn: "Wishing everyone a joyful, prosperous, and peaceful Khmer New Year 2026! 🇰🇭✨ #KhmerNewYear #Cambodia #Celebration",
-    createdAt: "2026-04-01",
-    featured: true,
-    shape: "circle"
-  },
-  {
-    id: "earth-hour-2026",
-    slug: "protect-our-planet-earth-day",
-    titleKm: "យុទ្ធនាការការពារភពផែនដី និងបរិស្ថានបៃតង",
-    titleEn: "Go Green • Protect Our Planet Campaign",
-    descriptionKm: "រួមគ្នាកាត់បន្ថយការប្រើប្រាស់ប្លាស្ទិក ដាំដើមឈើ និងថែរក្សាភពផែនដីដើម្បីអនាគតកូនចៅជំនាន់ក្រោយ។",
-    descriptionEn: "Stand with millions worldwide taking direct action to safeguard our biodiversity, plant trees, and create sustainable communities.",
-    creator: "Eco Champions Network",
-    category: "charity",
-    supporters: 8430,
-    frameUrl: PRESET_FRAMES.earthDay,
-    captionKm: "ខ្ញុំគាំទ្រយុទ្ធនាការបរិស្ថានបៃតង និងការពារភពផែនដី! មួយដៃមួយជើងដើម្បីពិភពលោកស្រស់បំព្រង។ 🌱🌍 #GoGreen #ProtectOurEarth #EcoWarrior",
-    captionEn: "I proudly stand for clean energy, zero waste, and protecting our precious earth! 🌱🌍 #ProtectOurPlanet #ClimateAction #GoGreen",
-    createdAt: "2026-04-20",
-    featured: true,
-    shape: "rounded"
-  },
-  {
-    id: "tech-summit-2026",
-    slug: "ai-future-tech-summit-2026",
-    titleKm: "សន្និសីទបច្ចេកវិទ្យាបញ្ញាសិប្បនិម្មិត AI & Tech Summit 2026",
-    titleEn: "AI & Future Tech Summit 2026",
-    descriptionKm: "ព្រឹត្តិការណ៍បច្ចេកវិទ្យាធំជាងគេប្រចាំឆ្នាំ ជួបជុំអ្នកបង្កើតថ្មី វិស្វករ AI និងសហគ្រិនឌីជីថលល្បីៗ។",
-    descriptionEn: "Join the premier annual gathering of software creators, AI innovators, and tech visionaries building the next frontier.",
-    creator: "Tech Innovators Hub",
-    category: "tech",
-    supporters: 11200,
-    frameUrl: PRESET_FRAMES.techSummit,
-    captionKm: "ខ្ញុំត្រៀមខ្លួនរួចរាល់សម្រាប់ AI & Tech Summit 2026! 🚀 រួមគ្នាស្វែងយល់ពីបច្ចេកវិទ្យាអនាគត។ #TechSummit2026 #AIRevolution #Developers",
-    captionEn: "Ready to explore the next generation of artificial intelligence at AI & Tech Summit 2026! ⚡🚀 #TechSummit2026 #Innovation #FutureTech",
-    createdAt: "2026-05-15",
-    featured: true,
-    shape: "circle"
-  },
-  {
-    id: "proud-volunteer-2026",
-    slug: "proud-community-volunteer",
-    titleKm: "យុទ្ធនាការអ្នកស្ម័គ្រចិត្តដើម្បីសង្គម",
-    titleEn: "Proud Community Volunteer 2026",
-    descriptionKm: "អរគុណបេះដូងសប្បុរសធម៌របស់អ្នកស្ម័គ្រចិត្តទាំងអស់ ដែលតែងតែលះបង់កម្លាំងកាយចិត្តដើម្បីជួយដល់សហគមន៍។",
-    descriptionEn: "Honoring the selfless volunteers who dedicate their time, energy, and hearts to making every neighborhood stronger and kinder.",
-    creator: "Hope & Care Foundation",
-    category: "charity",
-    supporters: 6510,
-    frameUrl: PRESET_FRAMES.volunteer,
-    captionKm: "មោទនភាពដែលបានក្លាយជាអ្នកស្ម័គ្រចិត្តបម្រើសង្គម! ការចែករំលែកនាំមកនូវស្នាមញញឹម។ ❤️ #ProudVolunteer #CareForCommunity #YouthAction",
-    captionEn: "Volunteering isn't just what we do—it's who we are. Proud to serve our community! ❤️ #VolunteerLife #CommunityHero #GiveBack",
-    createdAt: "2026-06-01",
-    featured: false,
-    shape: "circle"
-  },
-  {
-    id: "birthday-vip-2026",
-    slug: "happy-birthday-vip-celebration",
-    titleKm: "ស៊ុមខួបកំណើត VIP អបអរសាទរទិវាពិសេស",
-    titleEn: "Happy Birthday VIP Celebration Frame",
-    descriptionKm: "ស៊ុមរូបថតរចនាប័ទ្មខ្មៅមាសដ៏ប្រណិត សម្រាប់ដាក់តាំងក្នុងថ្ងៃខួបកំណើតរបស់អ្នក ឬមនុស្សជាទីស្រឡាញ់!",
-    descriptionEn: "A luxurious gold & black frame designed to make your birthday photos look spectacular and memorable across social media.",
-    creator: "Celebration Studio",
-    category: "celebration",
-    supporters: 9140,
-    frameUrl: PRESET_FRAMES.birthdayVIP,
-    captionKm: "រីករាយថ្ងៃខួបកំណើតរបស់ខ្ញុំ! ✨ អរគុណចំពោះពាក្យជូនពរ និងក្ដីស្រឡាញ់ពីអ្នកទាំងអស់គ្នា។ #HappyBirthdayToMe #VIPCelebration #Blessed",
-    captionEn: "Another year older, bolder, and more grateful! ✨ Thanks for all the wonderful birthday wishes! #HappyBirthday #VIP #Celebration",
-    createdAt: "2026-07-07",
-    featured: false,
-    shape: "circle"
-  }
+// Global deleted campaign registry (applied platform-wide for all visitors, devices, and incognito sessions)
+const GLOBAL_DELETED_CAMPAIGN_IDS = [
+  'ai-future-tech-summit-2026',
+  'tech-summit-2026',
+  'class-of-2026-graduation',
+  'grad-2026',
+  'khmer-new-year-2026',
+  'proud-community-volunteer',
+  'proud-volunteer-2026',
+  'jsframe',
+  'protect-our-planet-earth-day',
+  'earth-hour-2026',
+  'happy-birthday-vip-celebration',
+  'birthday-vip-2026'
 ];
+
+// Presets are kept empty so deleted demo presets do not pollute the live feed or duplicate cloud campaigns
+const INITIAL_CAMPAIGNS = [];
 
 const LOCAL_STORAGE_KEY = "twibbon_user_campaigns";
 
@@ -1333,50 +1247,85 @@ const CampaignService = {
 
     const deletedIds = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
     const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
-    const allDeleted = new Set([...deletedIds, ...suppressed]);
+    const allDeleted = new Set([...GLOBAL_DELETED_CAMPAIGN_IDS, ...deletedIds, ...suppressed]);
     const overrides = JSON.parse(localStorage.getItem('tra_admin_campaign_overrides') || '{}');
 
     const combined = [...userCampaigns];
     if (this._memoryCache) {
       for (const [id, c] of this._memoryCache.entries()) {
-        if (!combined.some(existing => existing.slug === c.slug || existing.id === c.id)) {
+        if (!combined.some(existing => existing.slug === c.slug || existing.id === c.id || (c._docId && existing._docId === c._docId))) {
           combined.unshift(c);
         }
       }
     }
 
+    const isDeleted = (c) => {
+      if (!c) return true;
+      if (c.slug && allDeleted.has(c.slug)) return true;
+      if (c.id && allDeleted.has(c.id)) return true;
+      if (c._docId && allDeleted.has(c._docId)) return true;
+      return false;
+    };
+
     const filteredUser = combined
-      .filter(c => c && !allDeleted.has(c.slug) && !allDeleted.has(c.id) && !allDeleted.has(c._docId))
+      .filter(c => !isDeleted(c))
       .map(c => {
         const o = overrides[c.slug] || overrides[c.id] || (c._docId && overrides[c._docId]);
         return o ? { ...c, ...o } : c;
       });
 
     const cleanPresets = INITIAL_CAMPAIGNS
-      .filter(p => !allDeleted.has(p.slug) && !allDeleted.has(p.id))
+      .filter(p => !isDeleted(p))
       .map(p => {
         const o = overrides[p.slug] || overrides[p.id];
         return o ? { ...p, ...o } : p;
       });
 
-    // Also include any active overrides not present in filteredUser or cleanPresets
-    const existingKeys = new Set(filteredUser.map(c => c.slug || c.id));
-    cleanPresets.forEach(p => existingKeys.add(p.slug || p.id));
+    // Deduplicate strictly so any campaign or preset never appears twice
+    const seenKeys = new Set();
+    const finalCampaigns = [];
+
+    for (const c of filteredUser) {
+      const key = c.slug || c.id || c._docId;
+      if (key && !seenKeys.has(key)) {
+        seenKeys.add(key);
+        if (c.slug) seenKeys.add(c.slug);
+        if (c.id) seenKeys.add(c.id);
+        if (c._docId) seenKeys.add(c._docId);
+        finalCampaigns.push(c);
+      }
+    }
+
+    for (const p of cleanPresets) {
+      const key = p.slug || p.id;
+      if (key && !seenKeys.has(key) && !seenKeys.has(p.slug) && !seenKeys.has(p.id)) {
+        seenKeys.add(key);
+        if (p.slug) seenKeys.add(p.slug);
+        if (p.id) seenKeys.add(p.id);
+        finalCampaigns.push(p);
+      }
+    }
+
     Object.values(overrides).forEach(ov => {
-      if (ov && !allDeleted.has(ov.slug) && !allDeleted.has(ov.id) && !existingKeys.has(ov.slug) && !existingKeys.has(ov.id)) {
-        filteredUser.unshift(ov);
-        existingKeys.add(ov.slug);
+      if (ov && !isDeleted(ov)) {
+        const key = ov.slug || ov.id || ov._docId;
+        if (key && !seenKeys.has(key)) {
+          seenKeys.add(key);
+          if (ov.slug) seenKeys.add(ov.slug);
+          if (ov.id) seenKeys.add(ov.id);
+          finalCampaigns.unshift(ov);
+        }
       }
     });
 
-    return [...filteredUser, ...cleanPresets];
+    return finalCampaigns;
   },
 
   getCampaignBySlugOrId(identifier) {
     if (!identifier) return null;
     const deletedIds = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
     const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
-    if (deletedIds.includes(identifier) || suppressed.includes(identifier)) {
+    if (GLOBAL_DELETED_CAMPAIGN_IDS.includes(identifier) || deletedIds.includes(identifier) || suppressed.includes(identifier)) {
       return null;
     }
 
@@ -1387,7 +1336,10 @@ const CampaignService = {
 
     if (this._memoryCache && this._memoryCache.has(identifier)) {
       const cached = this._memoryCache.get(identifier);
-      if (cached && (deletedIds.includes(cached.slug) || deletedIds.includes(cached.id) || (cached._docId && deletedIds.includes(cached._docId)))) {
+      if (cached && (
+        GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached.id) || (cached._docId && GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached._docId)) ||
+        deletedIds.includes(cached.slug) || deletedIds.includes(cached.id) || (cached._docId && deletedIds.includes(cached._docId))
+      )) {
         return null;
       }
       if (cached) {
@@ -1631,7 +1583,7 @@ const CampaignService = {
 
     const deletedIds = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
     const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
-    if (deletedIds.includes(identifier) || suppressed.includes(identifier)) {
+    if (GLOBAL_DELETED_CAMPAIGN_IDS.includes(identifier) || deletedIds.includes(identifier) || suppressed.includes(identifier)) {
       return null;
     }
 
@@ -1643,7 +1595,10 @@ const CampaignService = {
     // Check memory cache first
     if (this._memoryCache && this._memoryCache.has(identifier)) {
       const cached = this._memoryCache.get(identifier);
-      if (cached && (deletedIds.includes(cached.slug) || deletedIds.includes(cached.id) || (cached._docId && deletedIds.includes(cached._docId)))) {
+      if (cached && (
+        GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached.id) || (cached._docId && GLOBAL_DELETED_CAMPAIGN_IDS.includes(cached._docId)) ||
+        deletedIds.includes(cached.slug) || deletedIds.includes(cached.id) || (cached._docId && deletedIds.includes(cached._docId))
+      )) {
         return null;
       }
       const o = cached ? (overrides[cached.slug] || overrides[cached.id] || (cached._docId && overrides[cached._docId])) : null;
@@ -1659,7 +1614,10 @@ const CampaignService = {
           let data = docRef.data();
           if (data) {
             data._docId = identifier;
-            if (deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(identifier)) return null;
+            if (
+              GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(identifier) ||
+              deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(identifier)
+            ) return null;
             const o = overrides[data.slug] || overrides[data.id] || overrides[identifier];
             if (o) data = { ...data, ...o };
             this.cacheCloudCampaign(data);
@@ -1672,7 +1630,10 @@ const CampaignService = {
           let data = snapshot.docs[0].data();
           if (data) {
             data._docId = snapshot.docs[0].id;
-            if (deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)) return null;
+            if (
+              GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data._docId) ||
+              deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)
+            ) return null;
             const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
             if (o) data = { ...data, ...o };
             this.cacheCloudCampaign(data);
@@ -1685,7 +1646,10 @@ const CampaignService = {
           let data = idSnapshot.docs[0].data();
           if (data) {
             data._docId = idSnapshot.docs[0].id;
-            if (deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)) return null;
+            if (
+              GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data._docId) ||
+              deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)
+            ) return null;
             const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
             if (o) data = { ...data, ...o };
             this.cacheCloudCampaign(data);
@@ -1705,7 +1669,10 @@ const CampaignService = {
         const docJson = await res.json();
         let data = this.parseFirestoreDoc(docJson);
         if (data) {
-          if (deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)) return null;
+          if (
+            GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.slug) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data.id) || GLOBAL_DELETED_CAMPAIGN_IDS.includes(data._docId) ||
+            deletedIds.includes(data.slug) || deletedIds.includes(data.id) || deletedIds.includes(data._docId)
+          ) return null;
           const o = overrides[data.slug] || overrides[data.id] || overrides[data._docId];
           if (o) data = { ...data, ...o };
           this.cacheCloudCampaign(data);
@@ -1729,13 +1696,21 @@ const CampaignService = {
         if (json.documents && Array.isArray(json.documents)) {
           const deletedIds = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
           const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
-          const allDeleted = new Set([...deletedIds, ...suppressed]);
+          const allDeleted = new Set([...GLOBAL_DELETED_CAMPAIGN_IDS, ...deletedIds, ...suppressed]);
           const overrides = JSON.parse(localStorage.getItem('tra_admin_campaign_overrides') || '{}');
+
+          const isDeleted = (c) => {
+            if (!c) return true;
+            if (c.slug && allDeleted.has(c.slug)) return true;
+            if (c.id && allDeleted.has(c.id)) return true;
+            if (c._docId && allDeleted.has(c._docId)) return true;
+            return false;
+          };
 
           const campaigns = json.documents
             .map(d => this.parseFirestoreDoc(d))
             .filter(Boolean)
-            .filter(c => !allDeleted.has(c.slug) && !allDeleted.has(c.id) && !allDeleted.has(c._docId))
+            .filter(c => !isDeleted(c))
             .map(c => {
               const o = overrides[c.slug] || overrides[c.id] || (c._docId && overrides[c._docId]);
               return o ? { ...c, ...o } : c;
@@ -1994,12 +1969,14 @@ const AdminService = {
     return this.isSuperAdmin(user);
   },
 
-  // Persistent Admin Deleted Registry
+  // Persistent Admin Deleted Registry (merging built-in global list with local edits)
   getDeletedCampaignIds() {
     try {
-      return JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
+      const stored = JSON.parse(localStorage.getItem('tra_admin_deleted_ids') || '[]');
+      const combined = new Set([...GLOBAL_DELETED_CAMPAIGN_IDS, ...stored]);
+      return Array.from(combined);
     } catch (e) {
-      return [];
+      return [...GLOBAL_DELETED_CAMPAIGN_IDS];
     }
   },
 
@@ -2011,6 +1988,7 @@ const AdminService = {
         if (id && typeof id === 'string') {
           const clean = id.trim();
           if (clean && !existing.includes(clean)) existing.push(clean);
+          if (clean && !GLOBAL_DELETED_CAMPAIGN_IDS.includes(clean)) GLOBAL_DELETED_CAMPAIGN_IDS.push(clean);
         }
       });
       localStorage.setItem('tra_admin_deleted_ids', JSON.stringify(existing));
