@@ -333,8 +333,20 @@ class TwibbonApp {
               ${isKm ? 'លេខកូដសម្ងាត់ ៤ ខ្ទង់ត្រូវបានផ្ញើទៅកាន់អ៊ីមែល៖' : 'A 4-digit verification code has been sent to:'}<br>
               <strong id="authSentEmailDisplay" style="color: var(--accent-primary); word-break: break-all;"></strong>
             </p>
+
+            <!-- Quick OTP Code Box & 1-Click Auto Fill -->
+            <div class="otp-quick-box" style="background: var(--accent-soft); border: 1.5px dashed var(--accent-primary); border-radius: var(--radius-md); padding: 0.65rem 0.85rem; margin: 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <span style="font-size: 0.76rem; color: var(--text-secondary); display: block; font-weight: 600;">🔑 ${isKm ? 'លេខកូដសម្ងាត់ OTP របស់អ្នក៖' : 'Your 4-Digit OTP Code:'}</span>
+                <strong id="authOtpCodeDisplay" style="font-size: 1.45rem; letter-spacing: 5px; color: var(--accent-primary); font-family: monospace; font-weight: 800;">----</strong>
+              </div>
+              <button type="button" id="btnAutoFillSignUpOtp" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.82rem; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 0.3rem;">
+                ⚡ <span>${isKm ? 'បំពេញស្វ័យប្រវត្តិ' : 'Auto Fill'}</span>
+              </button>
+            </div>
+
             <div class="otp-status-hint">
-              💡 ${isKm ? 'សូមបើកប្រអប់សំបុត្រ <strong>Email (Inbox ឬ Spam)</strong> របស់អ្នក រួចចម្លងលេខកូដ ៤ ខ្ទង់មកបំពេញក្នុងប្រអប់ខាងក្រោម។' : 'Please check your <strong>Email (Inbox or Spam)</strong> and enter the 4-digit code below.'}
+              💡 ${isKm ? 'លោកអ្នកអាចយកលេខកូដ ៤ ខ្ទង់ខាងលើ ឬចុច <strong>"បំពេញស្វ័យប្រវត្តិ"</strong> ដើម្បីចុះឈ្មោះបានភ្លាមៗ!' : 'You can copy the 4-digit code above or click <strong>"Auto Fill"</strong> to sign up instantly!'}
             </div>
           </div>
 
@@ -419,9 +431,32 @@ class TwibbonApp {
       const currentEmail = authEmailInput.value.trim();
       if (currentEmail && OtpService.hasActiveOtp(currentEmail)) {
         if (authSentEmailDisplay) authSentEmailDisplay.textContent = currentEmail;
+        const activeCode = OtpService.getActiveOtpCode(currentEmail);
+        const codeDisplay = overlay.querySelector('#authOtpCodeDisplay');
+        if (codeDisplay && activeCode) codeDisplay.textContent = activeCode;
         signUpOtpBanner.style.display = 'block';
       }
     });
+
+    const fillSignUpOtp = (code) => {
+      if (!code || code.length !== 4) return;
+      for (let i = 0; i < 4; i++) {
+        authOtpDigits[i].value = code[i];
+        authOtpDigits[i].classList.add('filled');
+      }
+      authOtpDigits[3].focus();
+    };
+
+    const btnAutoFillSignUpOtp = overlay.querySelector('#btnAutoFillSignUpOtp');
+    if (btnAutoFillSignUpOtp) {
+      btnAutoFillSignUpOtp.addEventListener('click', () => {
+        const activeCode = OtpService.getActiveOtpCode(authEmailInput.value.trim());
+        if (activeCode) {
+          fillSignUpOtp(activeCode);
+          this.showToast(isKm ? '⚡ បានបំពេញលេខកូដស្វ័យប្រវត្តិ!' : '⚡ OTP filled automatically!', 'success');
+        }
+      });
+    }
 
     // 4-Digit OTP Segmented Inputs Event Listeners
     const getEnteredSignUpOtp = () => Array.from(authOtpDigits).map(d => d.value).join('');
@@ -475,6 +510,19 @@ class TwibbonApp {
       });
     });
 
+    // Sync active OTP if email is already active in session
+    authEmailInput.addEventListener('input', () => {
+      if (!isSignUp) return;
+      const em = authEmailInput.value.trim().toLowerCase();
+      const activeCode = OtpService.getActiveOtpCode(em);
+      if (activeCode) {
+        if (authSentEmailDisplay) authSentEmailDisplay.textContent = em;
+        const codeDisplay = overlay.querySelector('#authOtpCodeDisplay');
+        if (codeDisplay) codeDisplay.textContent = activeCode;
+        signUpOtpBanner.style.display = 'block';
+      }
+    });
+
     // Start 10-minute countdown for Sign Up OTP
     const startAuthOtpCountdown = () => {
       if (authOtpInterval) clearInterval(authOtpInterval);
@@ -518,9 +566,11 @@ class TwibbonApp {
         if (res && res.otpCode) {
           this.isAuthPendingOtp = true;
           if (authSentEmailDisplay) authSentEmailDisplay.textContent = email;
+          const authOtpCodeDisplay = overlay.querySelector('#authOtpCodeDisplay');
+          if (authOtpCodeDisplay) authOtpCodeDisplay.textContent = res.otpCode;
           signUpOtpBanner.style.display = 'block';
           startAuthOtpCountdown();
-          this.showToast(isKm ? "📩 បានផ្ញើលេខកូដ OTP ទៅកាន់អ៊ីមែលរបស់អ្នករួចរាល់! សូមពិនិត្យមើល Inbox ឬ Spam" : "📩 OTP Code sent to your email! Please check Inbox or Spam.", 'success', 8000);
+          this.showToast(isKm ? `🔑 លេខកូដ OTP ៤ ខ្ទង់របស់អ្នកគឺ៖ ${res.otpCode}` : `🔑 Your 4-digit OTP is: ${res.otpCode}`, 'success', 12000);
 
           // 60s cooldown on request button
           let left = 60;
@@ -697,6 +747,17 @@ class TwibbonApp {
           <strong style="color: var(--accent-primary); word-break: break-all;">${cleanEmail}</strong>
         </p>
 
+        <!-- Quick OTP Code Box & 1-Click Auto Fill -->
+        <div id="otpModalQuickBox" style="background: var(--accent-soft); border: 1.5px dashed var(--accent-primary); border-radius: var(--radius-md); padding: 0.65rem 0.85rem; margin: 0.6rem 0 1rem; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <span style="font-size: 0.76rem; color: var(--text-secondary); display: block; font-weight: 600;">🔑 ${isKm ? 'លេខកូដសម្ងាត់ OTP របស់អ្នក៖' : 'Your 4-Digit OTP Code:'}</span>
+            <strong id="modalOtpCodeDisplay" style="font-size: 1.45rem; letter-spacing: 5px; color: var(--accent-primary); font-family: monospace; font-weight: 800;">----</strong>
+          </div>
+          <button type="button" id="btnAutoFillModalOtp" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.82rem; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 0.3rem;">
+            ⚡ <span>${isKm ? 'បំពេញស្វ័យប្រវត្តិ' : 'Auto Fill'}</span>
+          </button>
+        </div>
+
         <!-- 4-Digit Segmented Inputs -->
         <div class="otp-inputs-grid" id="otpInputsGrid">
           <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="0" autofocus>
@@ -731,6 +792,28 @@ class TwibbonApp {
     const submitBtn = overlay.querySelector('#btnOtpSubmit');
     const resendBtn = overlay.querySelector('#btnOtpResend');
     const countdownEl = overlay.querySelector('#otpCountdown');
+    const modalOtpCodeDisplay = overlay.querySelector('#modalOtpCodeDisplay');
+
+    const activeCode = OtpService.getActiveOtpCode(targetEmail);
+    if (activeCode && modalOtpCodeDisplay) {
+      modalOtpCodeDisplay.textContent = activeCode;
+    }
+
+    const btnAutoFillModalOtp = overlay.querySelector('#btnAutoFillModalOtp');
+    if (btnAutoFillModalOtp) {
+      btnAutoFillModalOtp.addEventListener('click', () => {
+        const code = OtpService.getActiveOtpCode(targetEmail);
+        if (code && code.length === 4) {
+          for (let i = 0; i < 4; i++) {
+            digits[i].value = code[i];
+            digits[i].classList.add('filled');
+          }
+          digits[3].focus();
+          checkFull();
+          this.showToast(isKm ? '⚡ បានបំពេញលេខកូដស្វ័យប្រវត្តិ!' : '⚡ OTP filled automatically!', 'success');
+        }
+      });
+    }
 
     // Focus first input box
     setTimeout(() => {
@@ -884,8 +967,11 @@ class TwibbonApp {
     resendBtn.addEventListener('click', async () => {
       resendBtn.disabled = true;
       try {
-        await OtpService.generateOtp(targetEmail);
-        this.showToast(t('verificationEmailSent'), 'success');
+        const res = await OtpService.generateOtp(targetEmail);
+        if (modalOtpCodeDisplay && res && res.otpCode) {
+          modalOtpCodeDisplay.textContent = res.otpCode;
+        }
+        this.showToast(isKm ? `🔑 លេខកូដ OTP ៤ ខ្ទង់របស់អ្នកគឺ៖ ${res.otpCode}` : `🔑 Your 4-digit OTP is: ${res.otpCode}`, 'success', 12000);
         startResendCooldown();
         digits.forEach(d => { d.value = ''; d.classList.remove('filled'); });
         digits[0].focus();
