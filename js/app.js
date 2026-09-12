@@ -323,26 +323,26 @@ class TwibbonApp {
             <input type="email" id="authEmailInput" class="form-input" placeholder="name@example.com" required />
           </div>
 
-          <!-- OTP Dispatched Status Banner (Never reveals secret code on screen) -->
+          <!-- OTP Dispatched Status Banner -->
           <div id="signUpOtpBanner" class="otp-status-banner" style="display: none;">
             <div class="otp-status-header">
               <span>📩 ${isKm ? 'បានផ្ញើលេខកូដ OTP រួចរាល់' : 'OTP Code Dispatched'}</span>
               <span class="badge-sent">Sent</span>
             </div>
             <p class="otp-status-text">
-              ${isKm ? 'លេខកូដសម្ងាត់ ៦ ខ្ទង់ត្រូវបានផ្ញើទៅកាន់អ៊ីមែល៖' : 'A 6-digit verification code has been sent to:'}<br>
+              ${isKm ? 'លេខកូដសម្ងាត់ ៤ ខ្ទង់ត្រូវបានផ្ញើទៅកាន់អ៊ីមែល៖' : 'A 4-digit verification code has been sent to:'}<br>
               <strong id="authSentEmailDisplay" style="color: var(--accent-primary); word-break: break-all;"></strong>
             </p>
             <div class="otp-status-hint">
-              💡 ${isKm ? 'សូមបើកប្រអប់សំបុត្រ <strong>Email (Inbox ឬ Spam)</strong> របស់អ្នក រួចចម្លងលេខកូដ ៦ ខ្ទង់មកបំពេញក្នុងប្រអប់ខាងក្រោម។' : 'Please check your <strong>Email (Inbox or Spam)</strong> and enter the 6-digit code below.'}
+              💡 ${isKm ? 'សូមបើកប្រអប់សំបុត្រ <strong>Email (Inbox ឬ Spam)</strong> របស់អ្នក រួចចម្លងលេខកូដ ៤ ខ្ទង់មកបំពេញក្នុងប្រអប់ខាងក្រោម។' : 'Please check your <strong>Email (Inbox or Spam)</strong> and enter the 4-digit code below.'}
             </div>
           </div>
 
-          <!-- 6-Digit Segmented OTP Grid (Sign Up only) -->
+          <!-- 4-Digit Segmented OTP Grid (Sign Up only) -->
           <div class="form-group" id="groupSignUpOtpInputs" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
               <label class="form-label" style="margin-bottom: 0;">
-                🔑 ${isKm ? 'លេខកូដផ្ទៀងផ្ទាត់ OTP (៦ ខ្ទង់) *' : '6-Digit OTP Code *'}
+                🔑 ${isKm ? 'លេខកូដផ្ទៀងផ្ទាត់ OTP (៤ ខ្ទង់) *' : '4-Digit OTP Code *'}
               </label>
               <span id="authOtpTimerBadge" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-primary); display: none;">
                 ⏱️ <span id="authOtpCountdown">10:00</span>
@@ -353,8 +353,6 @@ class TwibbonApp {
               <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="1">
               <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="2">
               <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="3">
-              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="4">
-              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit auth-otp-digit" data-idx="5">
             </div>
           </div>
 
@@ -425,7 +423,7 @@ class TwibbonApp {
       }
     });
 
-    // 6-Digit OTP Segmented Inputs Event Listeners
+    // 4-Digit OTP Segmented Inputs Event Listeners
     const getEnteredSignUpOtp = () => Array.from(authOtpDigits).map(d => d.value).join('');
 
     authOtpDigits.forEach((input, idx) => {
@@ -434,7 +432,7 @@ class TwibbonApp {
         e.target.value = val ? val[val.length - 1] : '';
         if (e.target.value) {
           e.target.classList.add('filled');
-          if (idx < 5) authOtpDigits[idx + 1].focus();
+          if (idx < 3) authOtpDigits[idx + 1].focus();
         } else {
           e.target.classList.remove('filled');
         }
@@ -452,7 +450,7 @@ class TwibbonApp {
           }
         } else if (e.key === 'ArrowLeft' && idx > 0) {
           authOtpDigits[idx - 1].focus();
-        } else if (e.key === 'ArrowRight' && idx < 5) {
+        } else if (e.key === 'ArrowRight' && idx < 3) {
           authOtpDigits[idx + 1].focus();
         }
       });
@@ -460,9 +458,9 @@ class TwibbonApp {
       input.addEventListener('paste', (e) => {
         e.preventDefault();
         const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
-        const numOnly = pasteData.replace(/\D/g, '').slice(0, 6);
+        const numOnly = pasteData.replace(/\D/g, '').slice(0, 4);
         if (numOnly) {
-          for (let i = 0; i < 6; i++) {
+          for (let i = 0; i < 4; i++) {
             if (i < numOnly.length) {
               authOtpDigits[i].value = numOnly[i];
               authOtpDigits[i].classList.add('filled');
@@ -471,7 +469,7 @@ class TwibbonApp {
               authOtpDigits[i].classList.remove('filled');
             }
           }
-          const nextIdx = Math.min(5, numOnly.length);
+          const nextIdx = Math.min(3, numOnly.length);
           authOtpDigits[nextIdx].focus();
         }
       });
@@ -584,15 +582,15 @@ class TwibbonApp {
           }
 
           let enteredOtp = getEnteredSignUpOtp();
-          // If user hasn't entered OTP yet, check session or send to email!
-          if (enteredOtp.length !== 6) {
+          // If user hasn't entered OTP yet, send to email and prompt them!
+          if (enteredOtp.length !== 4) {
             const hasOtp = OtpService.hasActiveOtp(email);
             if (!hasOtp) {
               await handleRequestOtp();
-              this.showToast(isKm ? "💡 បានផ្ញើលេខកូដ OTP ទៅ Email រួចរាល់! សូមពិនិត្យ Email រួចយកលេខកូដមកបំពេញ" : "OTP sent to your email! Please check your inbox and enter the code here.", 'info', 8000);
+              this.showToast(isKm ? "💡 បានផ្ញើលេខកូដ OTP (៤ ខ្ទង់) ទៅ Email រួចរាល់! សូមពិនិត្យ Email រួចយកលេខកូដមកបំពេញ" : "4-digit OTP sent to your email! Please enter it below.", 'info', 8000);
               return;
             } else {
-              this.showToast(isKm ? "សូមបើក Email របស់អ្នក រួចយកលេខកូដ OTP ៦ ខ្ទង់មកបំពេញក្នុងប្រអប់" : "Please check your email and enter the 6-digit OTP code below", 'error');
+              this.showToast(isKm ? "សូមបើក Email របស់អ្នក រួចយកលេខកូដ OTP ៤ ខ្ទង់មកបំពេញក្នុងប្រអប់" : "Please check your email and enter the 4-digit OTP code below", 'error');
               authOtpDigits[0].focus();
               return;
             }
@@ -617,6 +615,7 @@ class TwibbonApp {
           btnSubmit.parentElement.disabled = true;
           btnSubmit.innerHTML = `<span>⏳ ${isKm ? 'កំពុងបង្កើតគណនី...' : 'Creating account...'}</span>`;
           const user = await AuthService.signUpWithEmail(email, password, name, true);
+          await OtpService.markEmailVerified(email, user ? user.uid : null);
           if (authOtpInterval) clearInterval(authOtpInterval);
           this.isAuthPendingOtp = false;
           overlay.remove();
@@ -698,14 +697,12 @@ class TwibbonApp {
           <strong style="color: var(--accent-primary); word-break: break-all;">${cleanEmail}</strong>
         </p>
 
-        <!-- 6-Digit Segmented Inputs -->
+        <!-- 4-Digit Segmented Inputs -->
         <div class="otp-inputs-grid" id="otpInputsGrid">
           <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="0" autofocus>
           <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="1">
           <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="2">
           <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="3">
-          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="4">
-          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="5">
         </div>
 
         <div class="otp-timer-badge" id="otpTimerBadge">
@@ -723,7 +720,7 @@ class TwibbonApp {
         </div>
 
         <div style="margin-top: 1.25rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; background: var(--bg-secondary); padding: 0.65rem 0.85rem; border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
-          💡 ${isKm ? 'សូមបើកប្រអប់សំបុត្រ <strong>Email (Inbox ឬ Spam)</strong> របស់អ្នក រួចយកលេខកូដ ៦ ខ្ទង់មកបំពេញទីនេះ' : 'Please check your <strong>Email (Inbox or Spam)</strong> and enter the 6-digit code here'}
+          💡 ${isKm ? 'សូមបើកប្រអប់សំបុត្រ <strong>Email (Inbox ឬ Spam)</strong> របស់អ្នក រួចយកលេខកូដ ៤ ខ្ទង់មកបំពេញទីនេះ' : 'Please check your <strong>Email (Inbox or Spam)</strong> and enter the 4-digit code here'}
         </div>
       </div>
     `;
@@ -744,7 +741,7 @@ class TwibbonApp {
 
     const checkFull = () => {
       const val = getEnteredOtp();
-      const isComplete = val.length === 6 && /^\d{6}$/.test(val);
+      const isComplete = val.length === 4 && /^\d{4}$/.test(val);
       submitBtn.disabled = !isComplete;
       if (isComplete) {
         doVerify();
@@ -758,7 +755,7 @@ class TwibbonApp {
         e.target.value = val ? val[val.length - 1] : '';
         if (e.target.value) {
           e.target.classList.add('filled');
-          if (idx < 5) digits[idx + 1].focus();
+          if (idx < 3) digits[idx + 1].focus();
         } else {
           e.target.classList.remove('filled');
         }
@@ -778,7 +775,7 @@ class TwibbonApp {
           checkFull();
         } else if (e.key === 'ArrowLeft' && idx > 0) {
           digits[idx - 1].focus();
-        } else if (e.key === 'ArrowRight' && idx < 5) {
+        } else if (e.key === 'ArrowRight' && idx < 3) {
           digits[idx + 1].focus();
         }
       });
@@ -786,9 +783,9 @@ class TwibbonApp {
       input.addEventListener('paste', (e) => {
         e.preventDefault();
         const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
-        const numOnly = pasteData.replace(/\D/g, '').slice(0, 6);
+        const numOnly = pasteData.replace(/\D/g, '').slice(0, 4);
         if (numOnly) {
-          for (let i = 0; i < 6; i++) {
+          for (let i = 0; i < 4; i++) {
             if (i < numOnly.length) {
               digits[i].value = numOnly[i];
               digits[i].classList.add('filled');
@@ -797,7 +794,7 @@ class TwibbonApp {
               digits[i].classList.remove('filled');
             }
           }
-          const nextIdx = Math.min(5, numOnly.length);
+          const nextIdx = Math.min(3, numOnly.length);
           digits[nextIdx].focus();
           checkFull();
         }
@@ -843,7 +840,7 @@ class TwibbonApp {
     const doVerify = async () => {
       if (isVerifying) return;
       const code = getEnteredOtp();
-      if (code.length !== 6) return;
+      if (code.length !== 4) return;
 
       isVerifying = true;
       submitBtn.disabled = true;
