@@ -1936,6 +1936,7 @@ class TwibbonApp {
     const btnCopyStudioLink = document.getElementById('btnCopyStudioLink');
     if (btnCopyStudioLink) {
       btnCopyStudioLink.addEventListener('click', async () => {
+        CampaignService.syncSingleCampaignToCloud(campaign);
         await this.copyToClipboard(shareableUrl);
         this.showToast(t('linkCopied'), 'success');
         const span = btnCopyStudioLink.querySelector('span');
@@ -1951,6 +1952,7 @@ class TwibbonApp {
     const btnCopyLink = document.getElementById('btnCopyLink');
     if (btnCopyLink) {
       btnCopyLink.addEventListener('click', async () => {
+        CampaignService.syncSingleCampaignToCloud(campaign);
         await this.copyToClipboard(shareableUrl);
         this.showToast(t('linkCopied'), 'success');
       });
@@ -1958,6 +1960,7 @@ class TwibbonApp {
 
     // 1-Tap Native Web Share API (Mobile Telegram, Messenger, etc.)
     const handleNativeShare = async () => {
+      CampaignService.syncSingleCampaignToCloud(campaign);
       if (navigator.share) {
         try {
           await navigator.share({
