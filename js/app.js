@@ -47,11 +47,29 @@ class TwibbonApp {
       AuthService.init();
       AuthService.onAuthStateChanged((user) => {
         this.updateNavAuth(user);
-        if (this.currentView === 'create' || this.currentView === 'my-campaigns') {
+        const activeHash = window.location.hash || '';
+        if (this.currentView === 'create' || this.currentView === 'my-campaigns' || activeHash.startsWith('#create') || activeHash.startsWith('#my-campaigns')) {
           this.renderCurrentView();
         }
       });
     }
+
+    // 2.1 Multi-Tab Authentication Synchronization
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'tra_active_user' || e.key === 'tra_verified_emails') {
+        if (typeof AuthService !== 'undefined') {
+          try {
+            const activeStored = localStorage.getItem('tra_active_user');
+            AuthService.currentUser = activeStored ? JSON.parse(activeStored) : null;
+            this.updateNavAuth(AuthService.currentUser);
+            const activeHash = window.location.hash || '';
+            if (this.currentView === 'create' || this.currentView === 'my-campaigns' || activeHash.startsWith('#create') || activeHash.startsWith('#my-campaigns')) {
+              this.renderCurrentView();
+            }
+          } catch (err) {}
+        }
+      }
+    });
 
     // 3. Track scroll position per route for refresh/reload restoration
     window.addEventListener('scroll', () => {
@@ -228,10 +246,10 @@ class TwibbonApp {
             <div style="padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.78rem; color: var(--text-muted); word-break: break-all;">
               ${SecurityUtils.escapeHtml(user.email)}
             </div>
-            <button class="user-dropdown-item" onclick="window.location.hash='#my-campaigns'">
+            <button class="user-dropdown-item" onclick="app.navigateTo('my-campaigns')">
               ${Icons.avatar} <span>${t('myCampaigns')}</span>
             </button>
-            <button class="user-dropdown-item" onclick="window.location.hash='#create'">
+            <button class="user-dropdown-item" onclick="app.navigateTo('create')">
               ${Icons.plus} <span>${t('createCampaign')}</span>
             </button>
             <button class="user-dropdown-item danger" onclick="app.handleSignOut()">
@@ -605,7 +623,11 @@ class TwibbonApp {
         if (authOtpInterval) clearInterval(authOtpInterval);
         overlay.remove();
         this.showToast(t('loginSuccess'), 'success');
-        if (onSuccessCallback) onSuccessCallback();
+        if (onSuccessCallback) {
+          onSuccessCallback();
+        } else {
+          this.renderCurrentView();
+        }
       } catch (err) {
         console.error(err);
         if (err.code === 'auth/unauthorized-domain') {
@@ -670,7 +692,11 @@ class TwibbonApp {
           this.isAuthPendingOtp = false;
           overlay.remove();
           this.showToast(isKm ? "🎉 ចុះឈ្មោះ និងផ្ទៀងផ្ទាត់ OTP ជោគជ័យ!" : "🎉 Account registered & verified successfully!", 'success');
-          if (onSuccessCallback) onSuccessCallback();
+          if (onSuccessCallback) {
+            onSuccessCallback();
+          } else {
+            this.renderCurrentView();
+          }
           return;
         } else {
           // Sign In
@@ -679,7 +705,11 @@ class TwibbonApp {
           this.isAuthPendingOtp = false;
           this.showToast(t('loginSuccess'), 'success');
           overlay.remove();
-          if (onSuccessCallback) onSuccessCallback();
+          if (onSuccessCallback) {
+            onSuccessCallback();
+          } else {
+            this.renderCurrentView();
+          }
         }
       } catch (err) {
         console.error(err);
@@ -1191,6 +1221,15 @@ class TwibbonApp {
 
   renderCurrentView() {
     this.handleRoute();
+  }
+
+  navigateTo(route) {
+    const targetHash = '#' + route;
+    if (window.location.hash === targetHash) {
+      this.handleRoute();
+    } else {
+      window.location.hash = targetHash;
+    }
   }
 
   // ==========================================
@@ -1914,6 +1953,14 @@ class TwibbonApp {
     this.currentView = 'create';
     const container = document.getElementById('appContent');
 
+    // Ensure AuthService has restored current active user from storage
+    if (typeof AuthService !== 'undefined' && !AuthService.currentUser) {
+      try {
+        const stored = localStorage.getItem("tra_active_user");
+        if (stored) AuthService.currentUser = JSON.parse(stored);
+      } catch (e) {}
+    }
+
     // Route Guard: Require Login to Create or Upload Campaigns
     if (typeof AuthService !== 'undefined' && !AuthService.isAuthenticated()) {
       container.innerHTML = `
@@ -2583,6 +2630,14 @@ class TwibbonApp {
   loadMyCampaignsView() {
     this.currentView = 'my-campaigns';
     const container = document.getElementById('appContent');
+
+    // Ensure AuthService has restored current active user from storage
+    if (typeof AuthService !== 'undefined' && !AuthService.currentUser) {
+      try {
+        const stored = localStorage.getItem("tra_active_user");
+        if (stored) AuthService.currentUser = JSON.parse(stored);
+      } catch (e) {}
+    }
 
     // Route Guard: Require login to view user campaigns
     if (typeof AuthService !== 'undefined' && !AuthService.isAuthenticated()) {
