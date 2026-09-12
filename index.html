@@ -8209,6 +8209,7 @@ class TwibbonApp {
   loadCreateView(presetFrameId) {
     this.currentView = 'create';
     const container = document.getElementById('appContent');
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
 
     // Ensure AuthService has restored current active user from storage
     if (typeof AuthService !== 'undefined' && !AuthService.currentUser) {
