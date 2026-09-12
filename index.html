@@ -3202,6 +3202,16 @@ button, input, textarea, select {
 
   <!-- EmailJS Delivery SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script>
+    window.EMAILJS_CONFIG = {
+      serviceId: "service_u9birxn",
+      templateId: "template_5aw8xer",
+      publicKey: "lKysw7jpIZvN46ncp"
+    };
+    if (typeof emailjs !== 'undefined') {
+      try { emailjs.init("lKysw7jpIZvN46ncp"); } catch(e) {}
+    }
+  </script>
 
   <!-- Scripts -->
   <script>
@@ -4269,18 +4279,25 @@ const OtpService = {
     const cleanEmail = email.trim().toLowerCase();
     const name = displayName || cleanEmail.split('@')[0];
 
-    // Channel 1: EmailJS (if configured)
-    if (typeof emailjs !== 'undefined' && window.EMAILJS_CONFIG && window.EMAILJS_CONFIG.publicKey) {
+    // Channel 1: EmailJS (Live configured)
+    const emailConfig = window.EMAILJS_CONFIG || {
+      serviceId: "service_u9birxn",
+      templateId: "template_5aw8xer",
+      publicKey: "lKysw7jpIZvN46ncp"
+    };
+
+    if (typeof emailjs !== 'undefined' && emailConfig.publicKey) {
       try {
         await emailjs.send(
-          window.EMAILJS_CONFIG.serviceId,
-          window.EMAILJS_CONFIG.templateId,
+          emailConfig.serviceId,
+          emailConfig.templateId,
           {
             to_email: cleanEmail,
-            otp_code: otpCode,
-            user_name: name
+            email: cleanEmail,
+            user_name: name,
+            otp_code: otpCode
           },
-          window.EMAILJS_CONFIG.publicKey
+          emailConfig.publicKey
         );
         console.log("📩 [EmailJS] 4-digit OTP sent successfully to", cleanEmail);
       } catch (e) {
