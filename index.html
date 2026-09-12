@@ -6025,6 +6025,12 @@ class FrameDesigner {
         gradient: ['#881337', '#e11d48', '#fb7185'],
         ring: '#ffffff',
         accent: '#fbcfe8'
+      },
+      transparent: {
+        gradient: null,
+        ring: '#fbbf24',
+        accent: '#f59e0b',
+        isTransparent: true
       }
     };
 
@@ -6079,63 +6085,66 @@ class FrameDesigner {
     // Clear canvas
     ctx.clearRect(0, 0, s, s);
 
-    // Create offscreen canvas for cutout masking
-    const maskCanvas = document.createElement('canvas');
-    maskCanvas.width = s;
-    maskCanvas.height = s;
-    const mCtx = maskCanvas.getContext('2d');
-
-    // 1. Draw solid outer frame background on maskCanvas
     const theme = this.themes[this.settings.theme] || this.themes.royalBlue;
-    const grad = mCtx.createLinearGradient(0, 0, s, s);
-    grad.addColorStop(0, theme.gradient[0]);
-    grad.addColorStop(0.5, theme.gradient[1]);
-    grad.addColorStop(1, theme.gradient[2]);
-    mCtx.fillStyle = grad;
-    mCtx.fillRect(0, 0, s, s);
 
-    // 2. Cut out the transparent hole using 'destination-out'
-    mCtx.globalCompositeOperation = 'destination-out';
-    mCtx.fillStyle = '#000000';
-    mCtx.beginPath();
+    if (!theme.isTransparent && theme.gradient) {
+      // Create offscreen canvas for cutout masking
+      const maskCanvas = document.createElement('canvas');
+      maskCanvas.width = s;
+      maskCanvas.height = s;
+      const mCtx = maskCanvas.getContext('2d');
 
-    if (this.settings.shape === 'circle') {
-      mCtx.arc(center, center, radius, 0, Math.PI * 2);
-    } else if (this.settings.shape === 'rounded') {
-      const rw = 720;
-      const rh = 720;
-      mCtx.roundRect(center - rw / 2, center - rh / 2, rw, rh, 70);
-    } else if (this.settings.shape === 'square') {
-      const sq = 720;
-      mCtx.rect(center - sq / 2, center - sq / 2, sq, sq);
-    } else if (this.settings.shape === 'arch') {
-      const aw = 680;
-      const ah = 720;
-      const ax = center - aw / 2;
-      const ay = center - ah / 2;
-      mCtx.moveTo(ax, ay + ah);
-      mCtx.lineTo(ax, ay + aw / 2);
-      mCtx.arc(center, ay + aw / 2, aw / 2, Math.PI, 0);
-      mCtx.lineTo(ax + aw, ay + ah);
-      mCtx.closePath();
-    } else if (this.settings.shape === 'octagon') {
-      const r = 380;
-      for (let i = 0; i < 8; i++) {
-        const angle = (i * Math.PI) / 4 - Math.PI / 8;
-        const x = center + r * Math.cos(angle);
-        const y = center + r * Math.sin(angle);
-        if (i === 0) mCtx.moveTo(x, y);
-        else mCtx.lineTo(x, y);
+      // 1. Draw solid outer frame background on maskCanvas
+      const grad = mCtx.createLinearGradient(0, 0, s, s);
+      grad.addColorStop(0, theme.gradient[0]);
+      grad.addColorStop(0.5, theme.gradient[1]);
+      grad.addColorStop(1, theme.gradient[2]);
+      mCtx.fillStyle = grad;
+      mCtx.fillRect(0, 0, s, s);
+
+      // 2. Cut out the transparent hole using 'destination-out'
+      mCtx.globalCompositeOperation = 'destination-out';
+      mCtx.fillStyle = '#000000';
+      mCtx.beginPath();
+
+      if (this.settings.shape === 'circle') {
+        mCtx.arc(center, center, radius, 0, Math.PI * 2);
+      } else if (this.settings.shape === 'rounded') {
+        const rw = 720;
+        const rh = 720;
+        mCtx.roundRect(center - rw / 2, center - rh / 2, rw, rh, 70);
+      } else if (this.settings.shape === 'square') {
+        const sq = 720;
+        mCtx.rect(center - sq / 2, center - sq / 2, sq, sq);
+      } else if (this.settings.shape === 'arch') {
+        const aw = 680;
+        const ah = 720;
+        const ax = center - aw / 2;
+        const ay = center - ah / 2;
+        mCtx.moveTo(ax, ay + ah);
+        mCtx.lineTo(ax, ay + aw / 2);
+        mCtx.arc(center, ay + aw / 2, aw / 2, Math.PI, 0);
+        mCtx.lineTo(ax + aw, ay + ah);
+        mCtx.closePath();
+      } else if (this.settings.shape === 'octagon') {
+        const r = 380;
+        for (let i = 0; i < 8; i++) {
+          const angle = (i * Math.PI) / 4 - Math.PI / 8;
+          const x = center + r * Math.cos(angle);
+          const y = center + r * Math.sin(angle);
+          if (i === 0) mCtx.moveTo(x, y);
+          else mCtx.lineTo(x, y);
+        }
+        mCtx.closePath();
       }
-      mCtx.closePath();
+      mCtx.fill();
+
+      // Reset composite operation
+      mCtx.globalCompositeOperation = 'source-over';
+
+      // 3. Draw masked frame to main canvas
+      ctx.drawImage(maskCanvas, 0, 0);
     }
-    mCtx.fill();
-
-    // Reset composite operation
-    mCtx.globalCompositeOperation = 'source-over';
-
-    // 3. Draw masked frame to main canvas
-    ctx.drawImage(maskCanvas, 0, 0);
 
     // 4. Draw Inner Ring / Border Accents
     ctx.save();
@@ -8833,6 +8842,7 @@ class TwibbonApp {
               <button type="button" class="color-swatch-btn" data-theme-name="midnightGold" style="background: linear-gradient(135deg, #0f172a, #eab308);" title="Midnight Gold"></button>
               <button type="button" class="color-swatch-btn" data-theme-name="cyberNeon" style="background: linear-gradient(135deg, #581c87, #06b6d4);" title="Cyber Neon"></button>
               <button type="button" class="color-swatch-btn" data-theme-name="rosePink" style="background: linear-gradient(135deg, #9d174d, #ec4899);" title="Rose Pink"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="transparent" style="background: repeating-conic-gradient(#cbd5e1 0% 25%, #ffffff 0% 50%) 50% / 8px 8px;" title="${isKm ? 'គ្មានផ្ទៃពណ៌ (ថ្លាសុទ្ធ/Overlay)' : 'Transparent (Overlay Only)'}"></button>
             </div>
           </div>
 
