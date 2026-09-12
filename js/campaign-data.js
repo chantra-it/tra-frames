@@ -15,12 +15,16 @@ const SecurityUtils = {
   sanitizeSvg(svgContent) {
     if (!svgContent || typeof svgContent !== 'string') return '';
     // Strip dangerous elements, foreign objects, and execution vectors
+    const scriptRegex = new RegExp('<script\\b[^<]*(?:(?!<\\/script[>])<[^<]*)*<\\/script[>]', 'gi');
+    const foreignObjectRegex = new RegExp('<foreignObject\\b[^<]*(?:(?!<\\/foreignObject[>])<[^<]*)*<\\/foreignObject[>]', 'gi');
+    const iframeRegex = new RegExp('<iframe\\b[^<]*(?:(?!<\\/iframe[>])<[^<]*)*<\\/iframe[>]', 'gi');
+    const objectRegex = new RegExp('<object\\b[^<]*(?:(?!<\\/object[>])<[^<]*)*<\\/object[>]', 'gi');
     return svgContent
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/<foreignObject\b[^<]*(?:(?!<\/foreignObject>)<[^<]*)*<\/foreignObject>/gi, '')
+      .replace(scriptRegex, '')
+      .replace(foreignObjectRegex, '')
       .replace(/<use\b[^>]*>/gi, '')
-      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
-      .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+      .replace(iframeRegex, '')
+      .replace(objectRegex, '')
       .replace(/<embed\b[^>]*>/gi, '')
       .replace(/on\w+\s*=\s*(["'][^"']*["']|[^\s>]+)/gi, '')
       .replace(/href\s*=\s*["']\s*javascript:[^"']*["']/gi, '')
