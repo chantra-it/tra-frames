@@ -1239,11 +1239,12 @@ html, body {
 }
 
 [data-theme="dark"] .canvas-container {
+  background-color: #111827;
   background-image:
-    linear-gradient(45deg, #1a2840 25%, transparent 25%),
-    linear-gradient(-45deg, #1a2840 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #1a2840 75%),
-    linear-gradient(-45deg, transparent 75%, #1a2840 75%);
+    linear-gradient(45deg, rgba(255, 255, 255, 0.07) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.07) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.07) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.07) 75%);
 }
 
 #studioCanvas, #designerCanvas {
