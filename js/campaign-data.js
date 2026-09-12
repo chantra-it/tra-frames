@@ -1856,3 +1856,557 @@ const CampaignService = {
     return 1;
   }
 };
+
+// =========================================================
+// SUPER ADMIN SERVICE (Master Platform Management)
+// =========================================================
+const AdminService = {
+  SUPER_ADMIN_EMAILS: ['haschitra@gmail.com', 'ctpro007@gmail.com'],
+
+  // Verify if given user has Super Admin authority
+  isSuperAdmin(user) {
+    if (!user) return false;
+    const cleanEmail = (user.email || '').toLowerCase().trim();
+    if (this.SUPER_ADMIN_EMAILS.includes(cleanEmail)) return true;
+    if (user.role === 'admin' || user.isSuperAdmin === true) return true;
+    return false;
+  },
+
+  // Check current active user
+  isCurrentSuperAdmin() {
+    return this.isSuperAdmin(AuthService ? AuthService.currentUser : null);
+  },
+
+  // Fetch all campaigns across all cloud and local sources for admin management
+  async fetchAllCampaignsAdmin() {
+    const campaignMap = new Map();
+
+    // 1. Fetch from Cloud Firestore (SDK + REST fallback)
+    const db = initFirestore();
+    let cloudFound = false;
+
+    if (db) {
+      try {
+        const snapshot = await db.collection("campaigns").get();
+        if (!snapshot.empty) {
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data) {
+              const key = data.slug || data.id || doc.id;
+              campaignMap.set(key, { ...data, id: data.id || doc.id, _source: 'cloud' });
+              CampaignService.cacheCloudCampaign(data);
+            }
+          });
+          cloudFound = true;
+        }
+      } catch (sdkErr) {
+        console.warn("Admin fetch SDK notice, trying REST:", sdkErr);
+      }
+    }
+
+    // Direct REST fetch if SDK didn't return or for comprehensive coverage
+    if (!cloudFound) {
+      try {
+        const restUrl = `https://firestore.googleapis.com/v1/projects/tra-frames/databases/(default)/documents/campaigns`;
+        const res = await fetch(restUrl);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.documents && Array.isArray(json.documents)) {
+            json.documents.forEach(d => {
+              const parsed = CampaignService.parseFirestoreDoc(d);
+              if (parsed) {
+                const key = parsed.slug || parsed.id;
+                campaignMap.set(key, { ...parsed, _source: 'cloud' });
+                CampaignService.cacheCloudCampaign(parsed);
+              }
+            });
+          }
+        }
+      } catch (restErr) {
+        console.warn("Admin fetch REST notice:", restErr);
+      }
+    }
+
+    // 2. Fetch from Local Storage user campaigns
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        const localList = JSON.parse(stored);
+        localList.forEach(c => {
+          const key = c.slug || c.id;
+          if (!campaignMap.has(key)) {
+            campaignMap.set(key, { ...c, _source: 'local' });
+          }
+        });
+      }
+    } catch (e) {}
+
+    // 3. Include Initial Preset Campaigns (if not deleted/suppressed)
+    let suppressed = [];
+    try {
+      suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+    } catch (e) {}
+
+    INITIAL_CAMPAIGNS.forEach(preset => {
+      const key = preset.slug || preset.id;
+      if (!suppressed.includes(key) && !campaignMap.has(key)) {
+        campaignMap.set(key, { ...preset, _source: 'preset', isPreset: true });
+      }
+    });
+
+    const result = Array.from(campaignMap.values());
+    // Sort newest first
+    return result.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
+  },
+
+  // Admin Update Campaign: update all fields in Firestore and cache
+  async adminUpdateCampaign(targetId, updateData) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    if (!targetId) throw new Error("Target campaign ID is required.");
+
+    const safeId = String(targetId).trim();
+    const docId = updateData.slug ? String(updateData.slug).trim() : safeId;
+
+    // Sanitize fields
+    const sanitizedUpdate = {
+      titleKm: SecurityUtils.cleanText(updateData.titleKm || '', 120),
+      titleEn: SecurityUtils.cleanText(updateData.titleEn || '', 120),
+      slug: (updateData.slug || safeId).toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 60),
+      category: ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'].includes(updateData.category) ? updateData.category : 'celebration',
+      creator: SecurityUtils.cleanText(updateData.creator || 'Admin', 80),
+      creatorEmail: SecurityUtils.cleanText(updateData.creatorEmail || '', 100),
+      descriptionKm: SecurityUtils.cleanText(updateData.descriptionKm || '', 1000),
+      descriptionEn: SecurityUtils.cleanText(updateData.descriptionEn || '', 1000),
+      captionKm: SecurityUtils.cleanText(updateData.captionKm || '', 1000),
+      captionEn: SecurityUtils.cleanText(updateData.captionEn || '', 1000),
+      supporters: Math.max(1, parseInt(updateData.supporters, 10) || 1),
+      updatedAt: new Date().toISOString()
+    };
+
+    if (updateData.frameUrl) {
+      sanitizedUpdate.frameUrl = SecurityUtils.sanitizeUrl(updateData.frameUrl);
+    }
+
+    // 1. Update in Firestore SDK
+    let updatedInCloud = false;
+    const db = initFirestore();
+    if (db) {
+      try {
+        await db.collection("campaigns").doc(docId).set(sanitizedUpdate, { merge: true });
+        console.log("🔥 Admin updated campaign in Cloud Firestore:", docId);
+        updatedInCloud = true;
+      } catch (sdkErr) {
+        console.warn("Firestore SDK admin update notice:", sdkErr);
+      }
+    }
+
+    // 2. Update memory cache
+    if (CampaignService._memoryCache) {
+      const cached = CampaignService._memoryCache.get(safeId) || CampaignService._memoryCache.get(docId) || {};
+      const merged = { ...cached, ...sanitizedUpdate };
+      CampaignService._memoryCache.set(docId, merged);
+      if (safeId !== docId) CampaignService._memoryCache.set(safeId, merged);
+    }
+
+    // 3. Update in LocalStorage if present
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        let userCampaigns = JSON.parse(stored);
+        const idx = userCampaigns.findIndex(c => c.id === safeId || c.slug === safeId || c.slug === docId);
+        if (idx !== -1) {
+          userCampaigns[idx] = { ...userCampaigns[idx], ...sanitizedUpdate };
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+        }
+      }
+    } catch (e) {}
+
+    return { success: true, docId, data: sanitizedUpdate };
+  },
+
+  // Admin Delete Campaign: permanently remove from Firestore, cache and localStorage
+  async adminDeleteCampaign(targetId) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    if (!targetId) throw new Error("Target campaign ID is required.");
+
+    const safeId = String(targetId).trim();
+
+    // Check if it's a preset
+    const isPreset = INITIAL_CAMPAIGNS.some(p => p.id === safeId || p.slug === safeId);
+    if (isPreset) {
+      try {
+        const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+        if (!suppressed.includes(safeId)) {
+          suppressed.push(safeId);
+          localStorage.setItem('tra_suppressed_presets', JSON.stringify(suppressed));
+        }
+      } catch (e) {}
+    }
+
+    // 1. Delete from Cloud Firestore
+    const db = initFirestore();
+    if (db) {
+      try {
+        await db.collection("campaigns").doc(safeId).delete();
+        console.log("🔥 Admin deleted campaign from Cloud Firestore:", safeId);
+      } catch (sdkErr) {
+        console.warn("Firestore SDK admin delete notice:", sdkErr);
+      }
+    }
+
+    // 2. Clear from memory cache
+    if (CampaignService._memoryCache) {
+      CampaignService._memoryCache.delete(safeId);
+    }
+
+    // 3. Remove from LocalStorage
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        let userCampaigns = JSON.parse(stored);
+        userCampaigns = userCampaigns.filter(c => c.id !== safeId && c.slug !== safeId);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+      }
+    } catch (e) {}
+
+    return { success: true, deletedId: safeId };
+  },
+
+  // Fetch list of registered users and campaign creators
+  async fetchUsersList() {
+    const userMap = new Map();
+
+    // 1. Add Super Admins
+    this.SUPER_ADMIN_EMAILS.forEach(email => {
+      userMap.set(email.toLowerCase(), {
+        uid: 'admin_' + email.split('@')[0],
+        email: email,
+        displayName: email.split('@')[0],
+        verified: true,
+        isSuperAdmin: true,
+        campaignCount: 0,
+        createdAt: '2026-01-01'
+      });
+    });
+
+    // 2. Fetch Verified Users from Firestore
+    const db = initFirestore();
+    if (db) {
+      try {
+        const snapshot = await db.collection("verified_users").get();
+        if (!snapshot.empty) {
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const email = (data.email || '').toLowerCase().trim();
+            if (email) {
+              const existing = userMap.get(email) || {};
+              userMap.set(email, {
+                ...existing,
+                uid: doc.id || data.uid || existing.uid || ('usr_' + Math.random().toString(36).slice(2, 8)),
+                email: email,
+                displayName: data.displayName || existing.displayName || email.split('@')[0],
+                verified: true,
+                isSuperAdmin: existing.isSuperAdmin || this.SUPER_ADMIN_EMAILS.includes(email),
+                campaignCount: existing.campaignCount || 0,
+                createdAt: data.verifiedAt || data.createdAt || existing.createdAt || new Date().toISOString().split('T')[0]
+              });
+            }
+          });
+        }
+      } catch (err) {
+        console.warn("fetchUsersList SDK notice:", err);
+      }
+    }
+
+    // 3. Fetch from Local Accounts
+    try {
+      const stored = localStorage.getItem("tra_local_accounts");
+      if (stored) {
+        const accounts = JSON.parse(stored);
+        accounts.forEach(acc => {
+          const email = (acc.email || '').toLowerCase().trim();
+          if (email) {
+            const existing = userMap.get(email) || {};
+            userMap.set(email, {
+              ...existing,
+              uid: acc.uid || existing.uid,
+              email: email,
+              displayName: acc.displayName || existing.displayName || email.split('@')[0],
+              verified: acc.emailVerified !== false || existing.verified,
+              isSuperAdmin: existing.isSuperAdmin || this.SUPER_ADMIN_EMAILS.includes(email),
+              campaignCount: existing.campaignCount || 0,
+              createdAt: acc.createdAt || existing.createdAt || new Date().toISOString().split('T')[0]
+            });
+          }
+        });
+      }
+    } catch (e) {}
+
+    // 4. Extract creators from all campaigns to compute campaignCount
+    try {
+      const allCampaigns = await this.fetchAllCampaignsAdmin();
+      allCampaigns.forEach(c => {
+        const email = (c.creatorEmail || '').toLowerCase().trim();
+        const uid = c.creatorUid;
+        if (email) {
+          const existing = userMap.get(email) || {
+            uid: uid || ('usr_' + Math.random().toString(36).slice(2, 8)),
+            email: email,
+            displayName: c.creator || email.split('@')[0],
+            verified: true,
+            isSuperAdmin: this.SUPER_ADMIN_EMAILS.includes(email),
+            campaignCount: 0,
+            createdAt: c.createdAt ? c.createdAt.split('T')[0] : '2026-03-01'
+          };
+          existing.campaignCount = (existing.campaignCount || 0) + 1;
+          userMap.set(email, existing);
+        }
+      });
+    } catch (e) {}
+
+    return Array.from(userMap.values());
+  },
+
+  // Toggle user verification status
+  async updateUserStatus(email, isVerified) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    const cleanEmail = String(email).toLowerCase().trim();
+    if (!cleanEmail) return false;
+
+    // 1. Update verified_emails in LocalStorage
+    try {
+      const list = JSON.parse(localStorage.getItem('tra_verified_emails') || '[]');
+      if (isVerified && !list.includes(cleanEmail)) {
+        list.push(cleanEmail);
+      } else if (!isVerified) {
+        const idx = list.indexOf(cleanEmail);
+        if (idx !== -1) list.splice(idx, 1);
+      }
+      localStorage.setItem('tra_verified_emails', JSON.stringify(list));
+    } catch (e) {}
+
+    // 2. Update local accounts
+    try {
+      const accounts = JSON.parse(localStorage.getItem('tra_local_accounts') || '[]');
+      const acc = accounts.find(a => a.email && a.email.toLowerCase() === cleanEmail);
+      if (acc) {
+        acc.emailVerified = !!isVerified;
+        localStorage.setItem('tra_local_accounts', JSON.stringify(accounts));
+      }
+    } catch (e) {}
+
+    // 3. Update Cloud Firestore verified_users
+    const db = initFirestore();
+    if (db) {
+      try {
+        const snapshot = await db.collection("verified_users").where("email", "==", cleanEmail).get();
+        if (!snapshot.empty) {
+          snapshot.forEach(doc => {
+            if (isVerified) {
+              doc.ref.set({ verified: true, updatedAt: new Date().toISOString() }, { merge: true });
+            } else {
+              doc.ref.delete();
+            }
+          });
+        } else if (isVerified) {
+          await db.collection("verified_users").add({
+            email: cleanEmail,
+            verified: true,
+            createdAt: new Date().toISOString()
+          });
+        }
+      } catch (err) {
+        console.warn("updateUserStatus cloud notice:", err);
+      }
+    }
+
+    return true;
+  },
+
+  // Compute Platform Metrics & Analytics
+  getPlatformMetrics(campaigns = [], users = []) {
+    const totalCampaigns = campaigns.length;
+    const totalSupporters = campaigns.reduce((sum, c) => sum + (parseInt(c.supporters, 10) || 0), 0);
+    const totalUsers = users.length;
+
+    // Category breakdown
+    const categoryCounts = {
+      education: 0,
+      culture: 0,
+      charity: 0,
+      sports: 0,
+      tech: 0,
+      celebration: 0
+    };
+
+    campaigns.forEach(c => {
+      const cat = c.category || 'celebration';
+      if (categoryCounts.hasOwnProperty(cat)) {
+        categoryCounts[cat]++;
+      } else {
+        categoryCounts.celebration++;
+      }
+    });
+
+    // Top Category
+    let topCategory = 'celebration';
+    let maxCatCount = -1;
+    for (const [cat, count] of Object.entries(categoryCounts)) {
+      if (count > maxCatCount) {
+        maxCatCount = count;
+        topCategory = cat;
+      }
+    }
+
+    // Top 5 Most Supported Campaigns
+    const topCampaigns = [...campaigns]
+      .sort((a, b) => (parseInt(b.supporters, 10) || 0) - (parseInt(a.supporters, 10) || 0))
+      .slice(0, 5);
+
+    // Recent 5 Campaigns
+    const recentCampaigns = [...campaigns]
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      .slice(0, 5);
+
+    return {
+      totalCampaigns,
+      totalSupporters,
+      totalUsers,
+      categoryCounts,
+      topCategory,
+      topCampaigns,
+      recentCampaigns
+    };
+  },
+
+  // Export Full Platform Database as JSON Backup file
+  async exportDatabaseBackup() {
+    const campaigns = await this.fetchAllCampaignsAdmin();
+    const users = await this.fetchUsersList();
+    const settings = this.getSystemSettings();
+
+    const backupData = {
+      appName: "Tra Frames",
+      platform: "Tra Frames 2026",
+      exportTimestamp: new Date().toISOString(),
+      exportDateFormatted: new Date().toLocaleString(),
+      metrics: {
+        totalCampaigns: campaigns.length,
+        totalSupporters: campaigns.reduce((sum, c) => sum + (parseInt(c.supporters, 10) || 0), 0),
+        totalUsers: users.length
+      },
+      settings: settings,
+      campaigns: campaigns,
+      users: users
+    };
+
+    const jsonStr = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().split('T')[0];
+    a.href = url;
+    a.download = `tra-frames-backup-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return backupData;
+  },
+
+  // Restore Database from JSON Backup File
+  async importDatabaseBackup(jsonData) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    if (!jsonData || typeof jsonData !== 'object') {
+      throw new Error("Invalid backup file: Not valid JSON.");
+    }
+
+    let restoredCount = 0;
+    if (Array.isArray(jsonData.campaigns)) {
+      const db = initFirestore();
+      for (const camp of jsonData.campaigns) {
+        if (camp && (camp.slug || camp.id)) {
+          const docId = camp.slug || camp.id;
+          // Cache locally
+          CampaignService.cacheCloudCampaign(camp);
+          // Restore to Firestore if DB available
+          if (db) {
+            try {
+              await db.collection("campaigns").doc(docId).set(camp, { merge: true });
+            } catch (err) {}
+          }
+          restoredCount++;
+        }
+      }
+    }
+
+    if (jsonData.settings) {
+      await this.saveSystemSettings(jsonData.settings);
+    }
+
+    return { success: true, restoredCampaigns: restoredCount };
+  },
+
+  // System Settings Management
+  getSystemSettings() {
+    const defaults = {
+      announcementEnabled: false,
+      announcementTextKm: "🎉 សូមស្វាគមន៍មកកាន់ Tra Frames 2026 — វេទិកាស៊ុមរូបថតដ៏ទាក់ទាញបំផុត!",
+      announcementTextEn: "🎉 Welcome to Tra Frames 2026 — The premier photo frame platform!",
+      announcementLink: "#explore",
+      announcementType: "info", // 'info' | 'success' | 'warning'
+      maintenanceMode: false
+    };
+
+    try {
+      const stored = localStorage.getItem("tra_system_settings");
+      if (stored) {
+        return { ...defaults, ...JSON.parse(stored) };
+      }
+    } catch (e) {}
+
+    return defaults;
+  },
+
+  async saveSystemSettings(settings) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    const current = this.getSystemSettings();
+    const updated = { ...current, ...settings, updatedAt: new Date().toISOString() };
+
+    // Save to LocalStorage
+    try {
+      localStorage.setItem("tra_system_settings", JSON.stringify(updated));
+    } catch (e) {}
+
+    // Save to Cloud Firestore
+    const db = initFirestore();
+    if (db) {
+      try {
+        await db.collection("system_settings").doc("global").set(updated, { merge: true });
+      } catch (err) {
+        console.warn("saveSystemSettings cloud notice:", err);
+      }
+    }
+
+    // Trigger settings changed event
+    try {
+      window.dispatchEvent(new CustomEvent('traSettingsChanged', { detail: updated }));
+    } catch (e) {}
+
+    return updated;
+  }
+};
