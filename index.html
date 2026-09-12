@@ -2580,6 +2580,373 @@ button, input, textarea, select {
 }
 
 /* =========================================================
+   FRAME DESIGNER STUDIO - ADVANCED TOOLBAR & CONTROLS
+   ========================================================= */
+.designer-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.designer-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-spring);
+  user-select: none;
+}
+
+.designer-pill-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.designer-pill-btn.active {
+  background: var(--accent-gradient);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+
+.designer-surprise-btn {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15));
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #f59e0b;
+}
+
+.designer-surprise-btn:hover {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+}
+
+/* 1-Click Templates Carousel */
+.designer-templates-scroll {
+  display: flex;
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding: 0.3rem 0.1rem 0.65rem 0.1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.designer-templates-scroll::-webkit-scrollbar {
+  height: 5px;
+}
+
+.designer-templates-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.designer-tmpl-card {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.65rem 0.85rem;
+  min-width: 96px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-spring);
+  user-select: none;
+  text-align: center;
+}
+
+.designer-tmpl-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-primary);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.designer-tmpl-card.active {
+  border-color: var(--accent-primary);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+.designer-tmpl-emoji {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.designer-tmpl-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* Pattern Picker Grid */
+.pattern-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 0.5rem;
+}
+
+.pattern-picker-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-smooth);
+  user-select: none;
+  justify-content: center;
+}
+
+.pattern-picker-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  background: var(--accent-soft);
+}
+
+.pattern-picker-btn.active {
+  border-color: var(--accent-primary);
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+}
+
+/* Sliders */
+.designer-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.designer-slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.designer-slider-val {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+  background: var(--accent-soft);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+.designer-range-input {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border-color);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.designer-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform var(--dur-fast);
+}
+
+.designer-range-input::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Select Row (Border Style & Corner Style) */
+.designer-select-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.designer-custom-select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--dur-fast);
+}
+
+.designer-custom-select:focus {
+  border-color: var(--accent-primary);
+}
+
+/* Stickers Picker */
+.stickers-picker-wrap {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.sticker-chip {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-card);
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-spring);
+  user-select: none;
+}
+
+.sticker-chip:hover {
+  transform: scale(1.15);
+  border-color: var(--accent-primary);
+}
+
+.sticker-chip.active {
+  border-color: var(--accent-primary);
+  background: var(--accent-soft);
+  transform: scale(1.18);
+  box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+/* Custom Logo Upload Box */
+.designer-logo-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1.5px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  transition: border-color var(--dur-fast);
+}
+
+.designer-logo-box:hover {
+  border-color: var(--accent-primary);
+}
+
+.designer-logo-preview {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.designer-logo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.designer-logo-btn {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--dur-fast);
+}
+
+.designer-logo-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.designer-logo-remove {
+  font-size: 0.74rem;
+  color: var(--accent-danger, #ef4444);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.2rem 0.4rem;
+}
+
+.designer-logo-remove:hover {
+  text-decoration: underline;
+}
+
+/* Custom Color Input */
+.custom-color-input-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px dashed var(--border-color);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--dur-fast);
+}
+
+.custom-color-input-btn:hover {
+  transform: scale(1.15);
+  border-color: var(--accent-primary);
+}
+
+.custom-color-input-btn input[type="color"] {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 60px;
+  height: 60px;
+  opacity: 0;
+  cursor: pointer;
+}
+
+
+/* =========================================================
    CREATOR PROFILE & STATS
    ========================================================= */
 .creator-profile-card {
@@ -4748,9 +5115,48 @@ const translations = {
     shapeCircle: "រង្វង់មូល (Circle)",
     shapeRounded: "ការ៉េគែមកោង (Rounded)",
     shapeSquare: "ការ៉េ (Square)",
+    shapeHeart: "បេះដូង (Heart)",
     shapeArch: "រាងក្លោងទ្វារ (Arch)",
+    shapeHexagon: "ប្រាំមួយជ្រុង (Hexagon)",
     shapeOctagon: "ប្រាំបីជ្រុង (Octagon)",
+    shapeStar: "ផ្កាយ (Star)",
+    shapeOval: "ពងក្រពើ (Oval)",
     frameTheme: "ពណ៌ និងរចនាប័ទ្មស៊ុម",
+    customColor: "ជ្រើសរើសពណ៌ផ្ទាល់ខ្លួន",
+    patternsTitle: "លំនាំផ្ទៃ (Background Patterns)",
+    patternNone: "គ្មាន (Clean)",
+    patternSparkles: "ផ្កាយពណ្ណរាយ (Sparkles)",
+    patternConfetti: "ផ្កាភ្លើងអបអរ (Confetti)",
+    patternDots: "ចំណុចទំនើប (Dots)",
+    patternTechGrid: "បច្ចេកវិទ្យា (Cyber Grid)",
+    patternSunburst: "ពន្លឺរស្មី (Sunburst)",
+    borderStyleTitle: "រចនាប័ទ្មគែមស៊ុម (Border Style)",
+    borderSolid: "បន្ទាត់រលោង (Solid)",
+    borderDouble: "បន្ទាត់ភ្លោះ (Double)",
+    borderNeon: "ពន្លឺណេអុង (Neon Glow)",
+    borderDashed: "បន្ទាត់ដាច់ៗ (Dashed)",
+    borderPearl: "គ្រាប់គុជ (Pearl)",
+    cornersTitle: "គ្រឿងលម្អតាមជ្រុង (Corner Ornaments)",
+    cornerGeometric: "ជ្រុងធរណីមាត្រ (Geometric)",
+    cornerRibbon: "ខ្សែបូអបអរ (Ribbons)",
+    cornerStars: "ផ្កាយភ្លឺ (Stars)",
+    cornerFloral: "ក្បាច់ស្លឹក (Floral)",
+    cornerNone: "គ្មាន (None)",
+    templatesTitle: "គំរូស៊ុមរចនាស្រាប់ៗ (Instant Templates)",
+    tmplGraduation: "🎓 សញ្ញាបត្រ",
+    tmplKhmerNewYear: "🇰🇭 ចូលឆ្នាំខ្មែរ",
+    tmplBirthday: "🎂 ខួបកំណើត",
+    tmplWedding: "💖 អាពាហ៍ពិពាហ៍",
+    tmplTechSummit: "🚀 Tech & AI",
+    tmplSports: "🏆 កីឡាជ័យជម្នះ",
+    tmplVip: "👑 VIP Luxury",
+    tmplTransparent: "🎨 ថ្លា Minimal",
+    stickersTitle: "Stickers & ត្រាលើស៊ុម",
+    customLogoUpload: "បង្ហោះ Logo / ត្រាផ្ទាល់ខ្លួន (PNG)",
+    livePhotoPreview: "សាកល្បងដាក់រូបមុខមនុស្ស (Live Mockup)",
+    surpriseMe: "🎲 Surprise Me (ចៃដន្យ)",
+    cutoutScale: "ទំហំចន្លោះរូប",
+    borderThickness: "កម្រាស់គែមស៊ុម",
     badgeText: "អក្សរ Badge លើស៊ុម",
     badgePlaceholder: "CLASS OF 2026",
     subBadgeText: "អក្សរខាងក្រោម",
@@ -4970,12 +5376,51 @@ const translations = {
     designerTitle: "In-App Twibbon Frame Designer",
     designerSubtitle: "Design custom photo frames in seconds without Photoshop or Canva",
     cutoutShape: "Cutout Shape",
-    shapeCircle: "Circle Cutout",
+    shapeCircle: "Circle",
     shapeRounded: "Rounded Square",
     shapeSquare: "Square",
-    shapeArch: "Arch / Cathedral",
+    shapeHeart: "Heart",
+    shapeArch: "Arch / Portal",
+    shapeHexagon: "Hexagon",
     shapeOctagon: "Octagon",
+    shapeStar: "Star",
+    shapeOval: "Oval / Pill",
     frameTheme: "Frame Theme & Gradients",
+    customColor: "Custom Color",
+    patternsTitle: "Background Patterns & Textures",
+    patternNone: "Solid / Clean",
+    patternSparkles: "Sparkles & Stars",
+    patternConfetti: "Celebration Confetti",
+    patternDots: "Polka Dots",
+    patternTechGrid: "Cyber Tech Grid",
+    patternSunburst: "Sunburst Rays",
+    borderStyleTitle: "Border Style",
+    borderSolid: "Solid Line",
+    borderDouble: "Double Ring",
+    borderNeon: "Neon Glow",
+    borderDashed: "Dashed Line",
+    borderPearl: "Dotted Pearls",
+    cornersTitle: "Corner Ornaments",
+    cornerGeometric: "Geometric Brackets",
+    cornerRibbon: "Festive Ribbons",
+    cornerStars: "Sparkle Stars",
+    cornerFloral: "Floral Leaves",
+    cornerNone: "None / Clean",
+    templatesTitle: "Instant Templates",
+    tmplGraduation: "🎓 Graduation",
+    tmplKhmerNewYear: "🇰🇭 Khmer New Year",
+    tmplBirthday: "🎂 Birthday",
+    tmplWedding: "💖 Wedding & Love",
+    tmplTechSummit: "🚀 Tech & AI",
+    tmplSports: "🏆 Sports Champion",
+    tmplVip: "👑 VIP Luxury",
+    tmplTransparent: "🎨 Minimal Overlay",
+    stickersTitle: "Stickers & Stamps",
+    customLogoUpload: "Upload Custom Logo / Stamp (PNG)",
+    livePhotoPreview: "Live Model / Face Preview",
+    surpriseMe: "🎲 Surprise Me",
+    cutoutScale: "Cutout Size",
+    borderThickness: "Border Thickness",
     badgeText: "Header Badge Text",
     badgePlaceholder: "CLASS OF 2026",
     subBadgeText: "Footer Text",
@@ -8437,8 +8882,131 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
   };
 }
 
-// Built-in Twibbon Frame Designer Studio
+// Built-in Twibbon Frame Designer Studio Engine
 class FrameDesigner {
+  static TEMPLATES = {
+    graduation: {
+      shape: 'arch',
+      theme: 'royalBlue',
+      pattern: 'sparkles',
+      borderStyle: 'double',
+      cornerStyle: 'ribbon',
+      ringColor: '#fbbf24',
+      headerText: 'CLASS OF 2026',
+      headerColor: '#fbbf24',
+      headerBg: '#0f172a',
+      footerText: 'CONGRATULATIONS!',
+      footerColor: '#ffffff',
+      footerBg: '#0f172a',
+      sticker: 'graduation'
+    },
+    khmerNewYear: {
+      shape: 'circle',
+      theme: 'crimson',
+      pattern: 'sunburst',
+      borderStyle: 'double',
+      cornerStyle: 'stars',
+      ringColor: '#fbbf24',
+      headerText: 'សួស្តីឆ្នាំថ្មី ២០២៦',
+      headerColor: '#fbbf24',
+      headerBg: '#450a0a',
+      footerText: 'HAPPY KHMER NEW YEAR',
+      footerColor: '#ffffff',
+      footerBg: '#450a0a',
+      sticker: 'khmer'
+    },
+    birthday: {
+      shape: 'heart',
+      theme: 'sunset',
+      pattern: 'confetti',
+      borderStyle: 'neon',
+      cornerStyle: 'stars',
+      ringColor: '#fef08a',
+      headerText: 'HAPPY BIRTHDAY',
+      headerColor: '#ffffff',
+      headerBg: '#9a3412',
+      footerText: 'WISHING YOU ALL THE BEST!',
+      footerColor: '#fef08a',
+      footerBg: '#9a3412',
+      sticker: 'party'
+    },
+    wedding: {
+      shape: 'heart',
+      theme: 'rosePink',
+      pattern: 'sparkles',
+      borderStyle: 'pearl',
+      cornerStyle: 'floral',
+      ringColor: '#ffffff',
+      headerText: 'HAPPY WEDDING',
+      headerColor: '#ffffff',
+      headerBg: '#4c0519',
+      footerText: 'FOREVER & ALWAYS',
+      footerColor: '#fed7aa',
+      footerBg: '#4c0519',
+      sticker: 'heart'
+    },
+    techSummit: {
+      shape: 'hexagon',
+      theme: 'cyberNeon',
+      pattern: 'techGrid',
+      borderStyle: 'neon',
+      cornerStyle: 'geometric',
+      ringColor: '#06b6d4',
+      headerText: 'AI & TECH SUMMIT 2026',
+      headerColor: '#06b6d4',
+      headerBg: '#020617',
+      footerText: 'INNOVATE THE FUTURE',
+      footerColor: '#ec4899',
+      footerBg: '#020617',
+      sticker: 'rocket'
+    },
+    sports: {
+      shape: 'octagon',
+      theme: 'emerald',
+      pattern: 'sunburst',
+      borderStyle: 'double',
+      cornerStyle: 'ribbon',
+      ringColor: '#fde047',
+      headerText: 'CHAMPIONSHIP 2026',
+      headerColor: '#fde047',
+      headerBg: '#022c22',
+      footerText: 'VICTORY & PRIDE',
+      footerColor: '#ffffff',
+      footerBg: '#022c22',
+      sticker: 'trophy'
+    },
+    vip: {
+      shape: 'rounded',
+      theme: 'midnightGold',
+      pattern: 'dots',
+      borderStyle: 'double',
+      cornerStyle: 'geometric',
+      ringColor: '#eab308',
+      headerText: 'VIP SPECIAL GUEST',
+      headerColor: '#fef08a',
+      headerBg: '#09090b',
+      footerText: 'HONORARY RECOGNITION',
+      footerColor: '#fde047',
+      footerBg: '#09090b',
+      sticker: 'crown'
+    },
+    transparent: {
+      shape: 'circle',
+      theme: 'transparent',
+      pattern: 'none',
+      borderStyle: 'double',
+      cornerStyle: 'stars',
+      ringColor: '#2563eb',
+      headerText: 'SUMMER FESTIVAL',
+      headerColor: '#2563eb',
+      headerBg: '#ffffff',
+      footerText: 'JOIN THE COMMUNITY',
+      footerColor: '#1e293b',
+      footerBg: '#ffffff',
+      sticker: 'star'
+    }
+  };
+
   constructor(canvasElement, options = {}) {
     this.canvas = canvasElement;
     this.ctx = canvasElement.getContext('2d');
@@ -8447,62 +9015,56 @@ class FrameDesigner {
     this.canvas.height = this.size;
 
     this.settings = {
-      shape: 'circle', // circle, rounded, square, arch, octagon
-      theme: 'royalBlue', // royalBlue, emerald, crimson, sunset, midnightGold, cyberNeon, rosePink
-      borderWidth: 50,
+      shape: 'circle', // circle, rounded, square, heart, arch, hexagon, octagon, star, oval
+      theme: 'royalBlue',
+      customColor: '',
+      pattern: 'none', // none, sparkles, confetti, dots, techGrid, sunburst
+      borderStyle: 'solid', // solid, double, neon, dashed, pearl
+      borderWidth: 14,
+      cutoutScale: 0.74,
       ringColor: '#fbbf24',
+      cornerStyle: 'geometric', // geometric, ribbon, stars, floral, none
       headerText: 'CLASS OF 2026',
       headerColor: '#fbbf24',
       headerBg: '#0f172a',
+      showHeader: true,
       footerText: 'CONGRATULATIONS!',
       footerColor: '#ffffff',
       footerBg: '#0f172a',
-      showCornerAccents: true,
-      showSparkles: true
+      showFooter: true,
+      sticker: 'none', // none, graduation, khmer, trophy, heart, crown, party, rocket, lotus, star, fire
+      stickerPos: 'top-right',
+      customLogo: null, // HTMLImageElement or dataUrl
+      customLogoPos: 'top-left',
+      previewPhoto: false
     };
 
     this.themes = {
-      royalBlue: {
-        gradient: ['#1e3a8a', '#2563eb', '#1d4ed8'],
-        ring: '#fbbf24',
-        accent: '#f59e0b'
-      },
-      emerald: {
-        gradient: ['#064e3b', '#059669', '#10b981'],
-        ring: '#a7f3d0',
-        accent: '#34d399'
-      },
-      crimson: {
-        gradient: ['#7f1d1d', '#b91c1c', '#dc2626'],
-        ring: '#fef08a',
-        accent: '#eab308'
-      },
-      sunset: {
-        gradient: ['#c2410c', '#ea580c', '#f97316'],
-        ring: '#fef08a',
-        accent: '#fde047'
-      },
-      midnightGold: {
-        gradient: ['#09090b', '#18181b', '#27272a'],
-        ring: '#eab308',
-        accent: '#fde047'
-      },
-      cyberNeon: {
-        gradient: ['#1e1b4b', '#3730a3', '#4f46e5'],
-        ring: '#06b6d4',
-        accent: '#ec4899'
-      },
-      rosePink: {
-        gradient: ['#881337', '#e11d48', '#fb7185'],
-        ring: '#ffffff',
-        accent: '#fbcfe8'
-      },
-      transparent: {
-        gradient: null,
-        ring: '#fbbf24',
-        accent: '#f59e0b',
-        isTransparent: true
-      }
+      royalBlue: { gradient: ['#1e3a8a', '#2563eb', '#1d4ed8'], ring: '#fbbf24', accent: '#f59e0b' },
+      emerald: { gradient: ['#064e3b', '#059669', '#10b981'], ring: '#a7f3d0', accent: '#34d399' },
+      crimson: { gradient: ['#7f1d1d', '#b91c1c', '#dc2626'], ring: '#fef08a', accent: '#eab308' },
+      sunset: { gradient: ['#c2410c', '#ea580c', '#f97316'], ring: '#fef08a', accent: '#fde047' },
+      midnightGold: { gradient: ['#09090b', '#18181b', '#27272a'], ring: '#eab308', accent: '#fde047' },
+      cyberNeon: { gradient: ['#1e1b4b', '#3730a3', '#4f46e5'], ring: '#06b6d4', accent: '#ec4899' },
+      rosePink: { gradient: ['#881337', '#e11d48', '#fb7185'], ring: '#ffffff', accent: '#fbcfe8' },
+      violetMagic: { gradient: ['#3b0764', '#7c3aed', '#a855f7'], ring: '#fde047', accent: '#c084fc' },
+      goldMetallic: { gradient: ['#78350f', '#b45309', '#d97706'], ring: '#fef08a', accent: '#fde68a' },
+      coralPeach: { gradient: ['#9f1239', '#e11d48', '#fb923c'], ring: '#ffffff', accent: '#fed7aa' },
+      oceanTeal: { gradient: ['#042f2e', '#0d9488', '#14b8a6'], ring: '#67e8f9', accent: '#5eead4' },
+      transparent: { gradient: null, ring: '#fbbf24', accent: '#f59e0b', isTransparent: true }
+    };
+
+    this.stickers = {
+      graduation: '🎓',
+      khmer: '🇰🇭',
+      trophy: '🏆',
+      heart: '💖',
+      crown: '👑',
+      party: '🎉',
+      rocket: '🚀',
+      lotus: '🌸',
+      star: '⭐',
+      fire: '🔥'
     };
 
     // Dirty & Unsaved Work State
@@ -8523,7 +9085,11 @@ class FrameDesigner {
 
   saveDraft() {
     try {
-      sessionStorage.setItem('tra_designer_draft', JSON.stringify(this.settings));
+      const copy = { ...this.settings };
+      if (copy.customLogo instanceof HTMLImageElement) {
+        copy.customLogo = copy.customLogo.src;
+      }
+      sessionStorage.setItem('tra_designer_draft', JSON.stringify(copy));
     } catch (e) {}
   }
 
@@ -8547,18 +9113,440 @@ class FrameDesigner {
     this.render();
   }
 
+  applyTemplate(templateKey) {
+    const tmpl = FrameDesigner.TEMPLATES[templateKey];
+    if (!tmpl) return;
+    this.update({ ...tmpl });
+  }
+
+  randomize() {
+    const shapes = ['circle', 'rounded', 'square', 'heart', 'arch', 'hexagon', 'octagon', 'star', 'oval'];
+    const themes = Object.keys(this.themes).filter(t => t !== 'transparent');
+    const patterns = ['none', 'sparkles', 'confetti', 'dots', 'techGrid', 'sunburst'];
+    const borderStyles = ['solid', 'double', 'neon', 'dashed', 'pearl'];
+    const cornerStyles = ['geometric', 'ribbon', 'stars', 'floral', 'none'];
+    const stickers = Object.keys(this.stickers);
+
+    const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    const shape = rand(shapes);
+    const theme = rand(themes);
+    const pattern = rand(patterns);
+    const borderStyle = rand(borderStyles);
+    const cornerStyle = rand(cornerStyles);
+    const sticker = Math.random() > 0.4 ? rand(stickers) : 'none';
+
+    this.update({
+      shape,
+      theme,
+      pattern,
+      borderStyle,
+      cornerStyle,
+      sticker
+    });
+  }
+
+  // Draw Cutout Shape Path
+  buildCutoutPath(targetCtx, center, radius) {
+    const shape = this.settings.shape;
+
+    targetCtx.beginPath();
+    if (shape === 'circle') {
+      targetCtx.arc(center, center, radius, 0, Math.PI * 2);
+    } else if (shape === 'rounded') {
+      const size = radius * 1.94;
+      targetCtx.roundRect(center - size / 2, center - size / 2, size, size, 70);
+    } else if (shape === 'square') {
+      const size = radius * 1.94;
+      targetCtx.rect(center - size / 2, center - size / 2, size, size);
+    } else if (shape === 'heart') {
+      const hx = center;
+      const hy = center + radius * 0.08;
+      const hw = radius * 0.96;
+      targetCtx.moveTo(hx, hy + hw * 0.65);
+      targetCtx.bezierCurveTo(hx - hw * 1.25, hy - hw * 0.35, hx - hw * 0.85, hy - hw * 1.15, hx, hy - hw * 0.45);
+      targetCtx.bezierCurveTo(hx + hw * 0.85, hy - hw * 1.15, hx + hw * 1.25, hy - hw * 0.35, hx, hy + hw * 0.65);
+      targetCtx.closePath();
+    } else if (shape === 'arch') {
+      const aw = radius * 1.84;
+      const ah = radius * 1.95;
+      const ax = center - aw / 2;
+      const ay = center - ah / 2;
+      targetCtx.moveTo(ax, ay + ah);
+      targetCtx.lineTo(ax, ay + aw / 2);
+      targetCtx.arc(center, ay + aw / 2, aw / 2, Math.PI, 0);
+      targetCtx.lineTo(ax + aw, ay + ah);
+      targetCtx.closePath();
+    } else if (shape === 'hexagon') {
+      const r = radius * 1.04;
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI) / 3 - Math.PI / 6;
+        const x = center + r * Math.cos(angle);
+        const y = center + r * Math.sin(angle);
+        if (i === 0) targetCtx.moveTo(x, y);
+        else targetCtx.lineTo(x, y);
+      }
+      targetCtx.closePath();
+    } else if (shape === 'octagon') {
+      const r = radius * 1.02;
+      for (let i = 0; i < 8; i++) {
+        const angle = (i * Math.PI) / 4 - Math.PI / 8;
+        const x = center + r * Math.cos(angle);
+        const y = center + r * Math.sin(angle);
+        if (i === 0) targetCtx.moveTo(x, y);
+        else targetCtx.lineTo(x, y);
+      }
+      targetCtx.closePath();
+    } else if (shape === 'star') {
+      const outerR = radius * 1.08;
+      const innerR = radius * 0.52;
+      for (let i = 0; i < 10; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const angle = (i * Math.PI) / 5 - Math.PI / 2;
+        const x = center + r * Math.cos(angle);
+        const y = center + r * Math.sin(angle);
+        if (i === 0) targetCtx.moveTo(x, y);
+        else targetCtx.lineTo(x, y);
+      }
+      targetCtx.closePath();
+    } else if (shape === 'oval') {
+      targetCtx.ellipse(center, center, radius * 0.88, radius * 1.08, 0, 0, Math.PI * 2);
+    }
+  }
+
+  // Draw Background Pattern on Frame
+  drawPattern(targetCtx, s) {
+    const pattern = this.settings.pattern;
+    if (pattern === 'none') return;
+
+    targetCtx.save();
+    if (pattern === 'sparkles') {
+      // Draw 28 scattered stars
+      targetCtx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      const coords = [
+        [120, 150, 14], [250, 90, 8], [800, 120, 12], [890, 220, 16],
+        [90, 480, 10], [920, 520, 14], [110, 820, 18], [240, 910, 10],
+        [820, 870, 16], [910, 780, 12], [480, 70, 10], [520, 930, 12],
+        [60, 240, 8], [940, 360, 9], [70, 680, 11], [930, 670, 14],
+        [320, 60, 6], [680, 60, 7], [320, 940, 8], [680, 940, 8]
+      ];
+      for (const [x, y, r] of coords) {
+        targetCtx.beginPath();
+        targetCtx.moveTo(x, y - r);
+        targetCtx.quadraticCurveTo(x, y, x + r, y);
+        targetCtx.quadraticCurveTo(x, y, x, y + r);
+        targetCtx.quadraticCurveTo(x, y, x - r, y);
+        targetCtx.quadraticCurveTo(x, y, x, y - r);
+        targetCtx.fill();
+      }
+    } else if (pattern === 'confetti') {
+      // Draw festive confetti particles
+      const colors = ['#f59e0b', '#ec4899', '#3b82f6', '#10b981', '#f43f5e', '#ffffff'];
+      for (let i = 0; i < 48; i++) {
+        const cx = (i * 73 + 47) % s;
+        const cy = (i * 109 + 29) % s;
+        const angle = (i * 37 * Math.PI) / 180;
+        const col = colors[i % colors.length];
+        targetCtx.save();
+        targetCtx.translate(cx, cy);
+        targetCtx.rotate(angle);
+        targetCtx.fillStyle = col;
+        targetCtx.globalAlpha = 0.55;
+        if (i % 2 === 0) {
+          targetCtx.fillRect(-7, -4, 14, 8);
+        } else {
+          targetCtx.beginPath();
+          targetCtx.arc(0, 0, 5, 0, Math.PI * 2);
+          targetCtx.fill();
+        }
+        targetCtx.restore();
+      }
+    } else if (pattern === 'dots') {
+      // Modern polka dots
+      targetCtx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+      const step = 42;
+      for (let x = 20; x < s; x += step) {
+        for (let y = 20; y < s; y += step) {
+          targetCtx.beginPath();
+          targetCtx.arc(x, y, 2.5, 0, Math.PI * 2);
+          targetCtx.fill();
+        }
+      }
+    } else if (pattern === 'techGrid') {
+      // Cyber isometric / grid lines
+      targetCtx.strokeStyle = 'rgba(6, 182, 212, 0.2)';
+      targetCtx.lineWidth = 1.5;
+      const step = 60;
+      targetCtx.beginPath();
+      for (let x = 0; x <= s; x += step) {
+        targetCtx.moveTo(x, 0);
+        targetCtx.lineTo(x, s);
+      }
+      for (let y = 0; y <= s; y += step) {
+        targetCtx.moveTo(0, y);
+        targetCtx.lineTo(s, y);
+      }
+      targetCtx.stroke();
+    } else if (pattern === 'sunburst') {
+      // Radial rays
+      targetCtx.save();
+      targetCtx.translate(s / 2, s / 2);
+      targetCtx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      const rays = 24;
+      const angleStep = (Math.PI * 2) / rays;
+      for (let i = 0; i < rays; i += 2) {
+        targetCtx.beginPath();
+        targetCtx.moveTo(0, 0);
+        targetCtx.arc(0, 0, s * 0.9, i * angleStep, (i + 1) * angleStep);
+        targetCtx.closePath();
+        targetCtx.fill();
+      }
+      targetCtx.restore();
+    }
+    targetCtx.restore();
+  }
+
+  // Draw Corner Ornaments
+  drawCorners(ctx, s, ringColor) {
+    const style = this.settings.cornerStyle;
+    if (style === 'none') return;
+
+    ctx.save();
+    ctx.fillStyle = ringColor;
+    ctx.strokeStyle = ringColor;
+
+    if (style === 'geometric') {
+      // Modern geometric brackets with double line
+      const off = 55;
+      const len = 90;
+
+      const drawBracket = (x, y, dx, dy) => {
+        ctx.beginPath();
+        ctx.moveTo(x, y + dy * len);
+        ctx.lineTo(x + dx * len, y);
+        ctx.lineTo(x + dx * (len + 30), y);
+        ctx.lineTo(x, y + dy * (len + 30));
+        ctx.closePath();
+        ctx.fill();
+
+        // Little square accent
+        ctx.fillRect(x + dx * 20 - 4, y + dy * 20 - 4, 8, 8);
+      };
+
+      drawBracket(off, off, 1, 1);
+      drawBracket(s - off, off, -1, 1);
+      drawBracket(off, s - off, 1, -1);
+      drawBracket(s - off, s - off, -1, -1);
+    } else if (style === 'ribbon') {
+      // Celebratory folded ribbon wings
+      const off = 50;
+      const drawRibbon = (x, y, dx, dy) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.beginPath();
+        ctx.moveTo(0, dy * 110);
+        ctx.lineTo(dx * 110, 0);
+        ctx.lineTo(dx * 140, 0);
+        ctx.lineTo(0, dy * 140);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(0, dy * 85);
+        ctx.lineTo(dx * 85, 0);
+        ctx.stroke();
+        ctx.restore();
+      };
+
+      drawRibbon(off, off, 1, 1);
+      drawRibbon(s - off, off, -1, 1);
+      drawRibbon(off, s - off, 1, -1);
+      drawRibbon(s - off, s - off, -1, -1);
+    } else if (style === 'stars') {
+      // 3-star cluster in corners
+      const drawStar = (cx, cy, r) => {
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const a1 = (i * Math.PI * 2) / 5 - Math.PI / 2;
+          const a2 = a1 + Math.PI / 5;
+          const x1 = cx + r * Math.cos(a1);
+          const y1 = cy + r * Math.sin(a1);
+          const x2 = cx + (r * 0.45) * Math.cos(a2);
+          const y2 = cy + (r * 0.45) * Math.sin(a2);
+          if (i === 0) ctx.moveTo(x1, y1);
+          else ctx.lineTo(x1, y1);
+          ctx.lineTo(x2, y2);
+        }
+        ctx.closePath();
+        ctx.fill();
+      };
+
+      const cornerPoints = [
+        [75, 75], [s - 75, 75], [75, s - 75], [s - 75, s - 75]
+      ];
+      for (const [cx, cy] of cornerPoints) {
+        drawStar(cx, cy, 22);
+        drawStar(cx + (cx < 500 ? 34 : -34), cy, 14);
+        drawStar(cx, cy + (cy < 500 ? 34 : -34), 14);
+      }
+    } else if (style === 'floral') {
+      // Classic floral scrolls
+      const drawLeaf = (x, y, angle) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(25, -25, 55, 0);
+        ctx.quadraticCurveTo(25, 25, 0, 0);
+        ctx.fill();
+        ctx.restore();
+      };
+
+      drawLeaf(70, 70, Math.PI / 4);
+      drawLeaf(s - 70, 70, (3 * Math.PI) / 4);
+      drawLeaf(70, s - 70, -Math.PI / 4);
+      drawLeaf(s - 70, s - 70, (-3 * Math.PI) / 4);
+    }
+    ctx.restore();
+  }
+
+  // Draw Sticker Stamp
+  drawSticker(ctx, s) {
+    const stickerKey = this.settings.sticker;
+    const emoji = this.stickers[stickerKey];
+    if (!emoji || stickerKey === 'none') return;
+
+    ctx.save();
+    let sx = s - 110;
+    let sy = 110;
+
+    if (this.settings.stickerPos === 'top-left') {
+      sx = 110;
+      sy = 110;
+    } else if (this.settings.stickerPos === 'bottom-right') {
+      sx = s - 110;
+      sy = s - 180;
+    } else if (this.settings.stickerPos === 'bottom-left') {
+      sx = 110;
+      sy = s - 180;
+    }
+
+    // Circular badge backdrop
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetY = 6;
+
+    ctx.beginPath();
+    ctx.arc(sx, sy, 48, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = this.settings.ringColor || '#fbbf24';
+    ctx.stroke();
+
+    // Render Emoji
+    ctx.shadowColor = 'transparent';
+    ctx.font = '50px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, sx, sy + 3);
+
+    ctx.restore();
+  }
+
+  // Draw Custom Uploaded Logo
+  drawCustomLogo(ctx, s) {
+    if (!this.settings.customLogo) return;
+
+    const img = this.settings.customLogo instanceof HTMLImageElement ? this.settings.customLogo : null;
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+
+    ctx.save();
+    const logoSize = 88;
+    let lx = 60;
+    let ly = 60;
+
+    if (this.settings.customLogoPos === 'top-right') {
+      lx = s - 60 - logoSize;
+      ly = 60;
+    } else if (this.settings.customLogoPos === 'bottom-left') {
+      lx = 60;
+      ly = s - 60 - logoSize;
+    } else if (this.settings.customLogoPos === 'bottom-right') {
+      lx = s - 60 - logoSize;
+      ly = s - 60 - logoSize;
+    }
+
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 4;
+
+    ctx.drawImage(img, lx, ly, logoSize, logoSize);
+    ctx.restore();
+  }
+
+  // Draw Live Mockup Face Placeholder
+  drawPreviewFace(ctx, s, center, radius) {
+    if (!this.settings.previewPhoto) return;
+
+    ctx.save();
+    // Warm soft portrait backdrop
+    const grad = ctx.createRadialGradient(center, center - 20, 50, center, center, radius);
+    grad.addColorStop(0, '#fde68a');
+    grad.addColorStop(0.5, '#fed7aa');
+    grad.addColorStop(1, '#cbd5e1');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, s, s);
+
+    // Render cute stylized person avatar silhouette
+    ctx.fillStyle = '#475569';
+    // Head
+    ctx.beginPath();
+    ctx.arc(center, center - 45, radius * 0.38, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Smile & eyes
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(center - 40, center - 60, 10, 0, Math.PI * 2);
+    ctx.arc(center + 40, center - 60, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(center, center - 25, 36, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+
+    // Shoulders
+    ctx.fillStyle = '#334155';
+    ctx.beginPath();
+    ctx.arc(center, center + radius * 0.95, radius * 0.72, Math.PI, 0);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
   render() {
     const ctx = this.ctx;
     const s = this.size;
     const center = s / 2;
-    const radius = 370;
+    const radius = 370 * (this.settings.cutoutScale || 0.74) / 0.74;
 
     // Clear canvas
     ctx.clearRect(0, 0, s, s);
 
-    const theme = this.themes[this.settings.theme] || this.themes.royalBlue;
+    // 0. Live Preview Face Model (underneath cutout)
+    this.drawPreviewFace(ctx, s, center, radius);
 
-    if (!theme.isTransparent && theme.gradient) {
+    const theme = this.themes[this.settings.theme] || this.themes.royalBlue;
+    const ringColor = this.settings.ringColor || theme.ring;
+
+    if (!theme.isTransparent && (theme.gradient || this.settings.customColor)) {
       // Create offscreen canvas for cutout masking
       const maskCanvas = document.createElement('canvas');
       maskCanvas.width = s;
@@ -8566,165 +9554,111 @@ class FrameDesigner {
       const mCtx = maskCanvas.getContext('2d');
 
       // 1. Draw solid outer frame background on maskCanvas
-      const grad = mCtx.createLinearGradient(0, 0, s, s);
-      grad.addColorStop(0, theme.gradient[0]);
-      grad.addColorStop(0.5, theme.gradient[1]);
-      grad.addColorStop(1, theme.gradient[2]);
-      mCtx.fillStyle = grad;
+      if (this.settings.customColor) {
+        mCtx.fillStyle = this.settings.customColor;
+      } else {
+        const grad = mCtx.createLinearGradient(0, 0, s, s);
+        grad.addColorStop(0, theme.gradient[0]);
+        grad.addColorStop(0.5, theme.gradient[1]);
+        grad.addColorStop(1, theme.gradient[2]);
+        mCtx.fillStyle = grad;
+      }
       mCtx.fillRect(0, 0, s, s);
 
-      // 2. Cut out the transparent hole using 'destination-out'
+      // 2. Draw Decorative Pattern on solid frame
+      this.drawPattern(mCtx, s);
+
+      // 3. Cut out the transparent hole using 'destination-out'
       mCtx.globalCompositeOperation = 'destination-out';
       mCtx.fillStyle = '#000000';
-      mCtx.beginPath();
-
-      if (this.settings.shape === 'circle') {
-        mCtx.arc(center, center, radius, 0, Math.PI * 2);
-      } else if (this.settings.shape === 'rounded') {
-        const rw = 720;
-        const rh = 720;
-        mCtx.roundRect(center - rw / 2, center - rh / 2, rw, rh, 70);
-      } else if (this.settings.shape === 'square') {
-        const sq = 720;
-        mCtx.rect(center - sq / 2, center - sq / 2, sq, sq);
-      } else if (this.settings.shape === 'arch') {
-        const aw = 680;
-        const ah = 720;
-        const ax = center - aw / 2;
-        const ay = center - ah / 2;
-        mCtx.moveTo(ax, ay + ah);
-        mCtx.lineTo(ax, ay + aw / 2);
-        mCtx.arc(center, ay + aw / 2, aw / 2, Math.PI, 0);
-        mCtx.lineTo(ax + aw, ay + ah);
-        mCtx.closePath();
-      } else if (this.settings.shape === 'octagon') {
-        const r = 380;
-        for (let i = 0; i < 8; i++) {
-          const angle = (i * Math.PI) / 4 - Math.PI / 8;
-          const x = center + r * Math.cos(angle);
-          const y = center + r * Math.sin(angle);
-          if (i === 0) mCtx.moveTo(x, y);
-          else mCtx.lineTo(x, y);
-        }
-        mCtx.closePath();
-      }
+      this.buildCutoutPath(mCtx, center, radius);
       mCtx.fill();
 
       // Reset composite operation
       mCtx.globalCompositeOperation = 'source-over';
 
-      // 3. Draw masked frame to main canvas
+      // 4. Draw masked frame to main canvas
       ctx.drawImage(maskCanvas, 0, 0);
     }
 
-    // 4. Draw Inner Ring / Border Accents
+    // 5. Draw Inner Ring / Border Accents
     ctx.save();
-    ctx.strokeStyle = this.settings.ringColor || theme.ring;
-    ctx.lineWidth = 14;
-    ctx.shadowColor = 'rgba(0,0,0,0.35)';
-    ctx.shadowBlur = 15;
+    ctx.shadowColor = 'rgba(0,0,0,0.38)';
+    ctx.shadowBlur = 16;
     ctx.shadowOffsetY = 6;
 
-    if (this.settings.shape === 'circle') {
-      ctx.beginPath();
-      ctx.arc(center, center, radius + 2, 0, Math.PI * 2);
+    const bStyle = this.settings.borderStyle || 'solid';
+    const bWidth = this.settings.borderWidth || 14;
+
+    if (bStyle === 'neon') {
+      ctx.strokeStyle = ringColor;
+      ctx.lineWidth = bWidth;
+      ctx.shadowColor = ringColor;
+      ctx.shadowBlur = 24;
+      this.buildCutoutPath(ctx, center, radius);
       ctx.stroke();
 
-      // Dashed subtle secondary ring
-      ctx.beginPath();
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([8, 6]);
-      ctx.arc(center, center, radius + 18, 0, Math.PI * 2);
+      ctx.lineWidth = Math.max(3, bWidth * 0.3);
+      ctx.shadowBlur = 8;
+      this.buildCutoutPath(ctx, center, radius);
       ctx.stroke();
-    } else if (this.settings.shape === 'rounded') {
-      ctx.beginPath();
-      ctx.roundRect(center - 362, center - 362, 724, 724, 72);
+    } else if (bStyle === 'double') {
+      ctx.strokeStyle = ringColor;
+      ctx.lineWidth = bWidth;
+      this.buildCutoutPath(ctx, center, radius);
       ctx.stroke();
-    } else if (this.settings.shape === 'square') {
-      ctx.beginPath();
-      ctx.rect(center - 362, center - 362, 724, 724);
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(3, bWidth * 0.35);
+      this.buildCutoutPath(ctx, center, radius + bWidth + 6);
       ctx.stroke();
-    } else if (this.settings.shape === 'arch') {
-      const aw = 684;
-      const ah = 724;
-      const ax = center - aw / 2;
-      const ay = center - ah / 2;
-      ctx.beginPath();
-      ctx.moveTo(ax, ay + ah);
-      ctx.lineTo(ax, ay + aw / 2);
-      ctx.arc(center, ay + aw / 2, aw / 2, Math.PI, 0);
-      ctx.lineTo(ax + aw, ay + ah);
-      ctx.closePath();
+    } else if (bStyle === 'dashed') {
+      ctx.strokeStyle = ringColor;
+      ctx.lineWidth = bWidth;
+      ctx.setLineDash([18, 12]);
+      this.buildCutoutPath(ctx, center, radius);
       ctx.stroke();
-    } else if (this.settings.shape === 'octagon') {
-      const r = 384;
-      ctx.beginPath();
-      for (let i = 0; i < 8; i++) {
-        const angle = (i * Math.PI) / 4 - Math.PI / 8;
-        const x = center + r * Math.cos(angle);
-        const y = center + r * Math.sin(angle);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+    } else if (bStyle === 'pearl') {
+      ctx.strokeStyle = ringColor;
+      ctx.lineWidth = Math.max(4, bWidth * 0.5);
+      this.buildCutoutPath(ctx, center, radius);
+      ctx.stroke();
+
+      // Draw pearl dots along circle/perimeter
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0,0,0,0.2)';
+      ctx.shadowBlur = 4;
+      const pearlCount = 36;
+      for (let i = 0; i < pearlCount; i++) {
+        const angle = (i * Math.PI * 2) / pearlCount;
+        const px = center + (radius + bWidth * 0.8) * Math.cos(angle);
+        const py = center + (radius + bWidth * 0.8) * Math.sin(angle);
+        ctx.beginPath();
+        ctx.arc(px, py, 6, 0, Math.PI * 2);
+        ctx.fill();
       }
-      ctx.closePath();
+    } else {
+      // Solid classic
+      ctx.strokeStyle = ringColor;
+      ctx.lineWidth = bWidth;
+      this.buildCutoutPath(ctx, center, radius);
       ctx.stroke();
     }
     ctx.restore();
 
-    // 5. Corner Accents
-    if (this.settings.showCornerAccents) {
-      ctx.save();
-      ctx.fillStyle = this.settings.ringColor || theme.ring;
-      const offset = 60;
-      const l = 100;
-      // Top Left
-      ctx.beginPath();
-      ctx.moveTo(offset, offset + l);
-      ctx.lineTo(offset + l, offset);
-      ctx.lineTo(offset + l + 60, offset);
-      ctx.lineTo(offset, offset + l + 60);
-      ctx.closePath();
-      ctx.fill();
+    // 6. Corner Accents
+    this.drawCorners(ctx, s, ringColor);
 
-      // Top Right
-      ctx.beginPath();
-      ctx.moveTo(s - offset, offset + l);
-      ctx.lineTo(s - offset - l, offset);
-      ctx.lineTo(s - offset - l - 60, offset);
-      ctx.lineTo(s - offset, offset + l + 60);
-      ctx.closePath();
-      ctx.fill();
-
-      // Bottom Left
-      ctx.beginPath();
-      ctx.moveTo(offset, s - offset - l);
-      ctx.lineTo(offset + l, s - offset);
-      ctx.lineTo(offset + l + 60, s - offset);
-      ctx.lineTo(offset, s - offset - l - 60);
-      ctx.closePath();
-      ctx.fill();
-
-      // Bottom Right
-      ctx.beginPath();
-      ctx.moveTo(s - offset, s - offset - l);
-      ctx.lineTo(s - offset - l, s - offset);
-      ctx.lineTo(s - offset - l - 60, s - offset);
-      ctx.lineTo(s - offset, s - offset - l - 60);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // 6. Header Badge Pill
-    if (this.settings.headerText.trim()) {
+    // 7. Header Badge Pill
+    if (this.settings.showHeader && this.settings.headerText.trim()) {
       ctx.save();
       ctx.font = "900 32px 'Segoe UI', 'Kantumruy Pro', sans-serif";
-      ctx.shadowColor = 'rgba(0,0,0,0.4)';
-      ctx.shadowBlur = 16;
+      ctx.shadowColor = 'rgba(0,0,0,0.45)';
+      ctx.shadowBlur = 18;
       ctx.shadowOffsetY = 6;
 
-      const badgeWidth = Math.min(Math.max(ctx.measureText(this.settings.headerText.toUpperCase()).width + 120, 480), 760);
+      const badgeWidth = Math.min(Math.max(ctx.measureText(this.settings.headerText.toUpperCase()).width + 120, 480), 780);
       const badgeHeight = 78;
       const bx = center - badgeWidth / 2;
       const by = 48;
@@ -8736,27 +9670,27 @@ class FrameDesigner {
       ctx.fill();
 
       // Border on pill
-      ctx.strokeStyle = this.settings.headerColor || theme.ring;
+      ctx.strokeStyle = this.settings.headerColor || ringColor;
       ctx.lineWidth = 3.5;
       ctx.stroke();
 
       // Text
-      ctx.fillStyle = this.settings.headerColor || theme.ring;
+      ctx.fillStyle = this.settings.headerColor || ringColor;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(this.settings.headerText.toUpperCase(), center, by + badgeHeight / 2);
       ctx.restore();
     }
 
-    // 7. Footer Badge / Ribbon
-    if (this.settings.footerText.trim()) {
+    // 8. Footer Badge / Ribbon
+    if (this.settings.showFooter && this.settings.footerText.trim()) {
       ctx.save();
       ctx.font = "800 30px 'Segoe UI', 'Kantumruy Pro', sans-serif";
-      ctx.shadowColor = 'rgba(0,0,0,0.4)';
-      ctx.shadowBlur = 16;
+      ctx.shadowColor = 'rgba(0,0,0,0.45)';
+      ctx.shadowBlur = 18;
       ctx.shadowOffsetY = 6;
 
-      const footerWidth = Math.min(Math.max(ctx.measureText(this.settings.footerText.toUpperCase()).width + 120, 460), 780);
+      const footerWidth = Math.min(Math.max(ctx.measureText(this.settings.footerText.toUpperCase()).width + 120, 460), 800);
       const footerHeight = 78;
       const fx = center - footerWidth / 2;
       const fy = s - 128;
@@ -8766,8 +9700,8 @@ class FrameDesigner {
       ctx.roundRect(fx, fy, footerWidth, footerHeight, 20);
       ctx.fill();
 
-      ctx.strokeStyle = this.settings.ringColor || theme.ring;
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = ringColor;
+      ctx.lineWidth = 3.5;
       ctx.stroke();
 
       ctx.fillStyle = this.settings.footerColor || '#ffffff';
@@ -8776,10 +9710,30 @@ class FrameDesigner {
       ctx.fillText(this.settings.footerText.toUpperCase(), center, fy + footerHeight / 2);
       ctx.restore();
     }
+
+    // 9. Sticker Stamp
+    this.drawSticker(ctx, s);
+
+    // 10. Custom Logo
+    this.drawCustomLogo(ctx, s);
   }
 
   getTransparentPNGDataUrl() {
-    return this.canvas.toDataURL('image/png');
+    // When exporting, ensure previewPhoto is temporarily disabled so it's a true transparent PNG frame!
+    const wasPreview = this.settings.previewPhoto;
+    if (wasPreview) {
+      this.settings.previewPhoto = false;
+      this.render();
+    }
+
+    const dataUrl = this.canvas.toDataURL('image/png');
+
+    if (wasPreview) {
+      this.settings.previewPhoto = true;
+      this.render();
+    }
+
+    return dataUrl;
   }
 }
 
@@ -11300,6 +12254,16 @@ class TwibbonApp {
             <span class="designer-res-badge">1000×1000 PNG</span>
           </div>
 
+          <!-- Quick Action Toolbar: Live Mockup Face & Surprise Me Randomizer -->
+          <div class="designer-toolbar-row">
+            <button type="button" class="designer-pill-btn" id="btnToggleMockup" title="${t('livePhotoPreview')}">
+              <span>👤</span> <span>${t('livePhotoPreview')}</span>
+            </button>
+            <button type="button" class="designer-pill-btn designer-surprise-btn" id="btnSurpriseMe" title="${t('surpriseMe')}">
+              <span>🎲</span> <span>${t('surpriseMe')}</span>
+            </button>
+          </div>
+
           <div class="canvas-container designer-canvas-container" id="designerCanvasWrap">
             <canvas id="designerCanvas" width="1000" height="1000"></canvas>
           </div>
@@ -11320,7 +12284,46 @@ class TwibbonApp {
             <h3>🎨 <span>${isKm ? 'កំណត់រចនាប័ទ្មស៊ុម' : 'Customize Frame'}</span></h3>
           </div>
 
-          <!-- Shape Selection with Visual Icons -->
+          <!-- 1-Click Instant Templates Carousel -->
+          <div class="form-group">
+            <label class="form-label">✨ ${t('templatesTitle')}</label>
+            <div class="designer-templates-scroll">
+              <div class="designer-tmpl-card" data-template="graduation">
+                <span class="designer-tmpl-emoji">🎓</span>
+                <span class="designer-tmpl-label">${t('tmplGraduation')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="khmerNewYear">
+                <span class="designer-tmpl-emoji">🇰🇭</span>
+                <span class="designer-tmpl-label">${t('tmplKhmerNewYear')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="birthday">
+                <span class="designer-tmpl-emoji">🎂</span>
+                <span class="designer-tmpl-label">${t('tmplBirthday')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="wedding">
+                <span class="designer-tmpl-emoji">💖</span>
+                <span class="designer-tmpl-label">${t('tmplWedding')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="techSummit">
+                <span class="designer-tmpl-emoji">🚀</span>
+                <span class="designer-tmpl-label">${t('tmplTechSummit')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="sports">
+                <span class="designer-tmpl-emoji">🏆</span>
+                <span class="designer-tmpl-label">${t('tmplSports')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="vip">
+                <span class="designer-tmpl-emoji">👑</span>
+                <span class="designer-tmpl-label">${t('tmplVip')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="transparent">
+                <span class="designer-tmpl-emoji">🎨</span>
+                <span class="designer-tmpl-label">${t('tmplTransparent')}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shape Selection with 9 Shapes -->
           <div class="form-group">
             <label class="form-label">🎯 ${t('cutoutShape')}</label>
             <div class="shape-picker-grid">
@@ -11336,18 +12339,91 @@ class TwibbonApp {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="0"/></svg>
                 <span>${t('shapeSquare')}</span>
               </button>
+              <button type="button" class="shape-picker-btn" data-shape="heart">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <span>${t('shapeHeart')}</span>
+              </button>
               <button type="button" class="shape-picker-btn" data-shape="arch">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 21V10a8 8 0 0 1 16 0v11"/></svg>
                 <span>${t('shapeArch')}</span>
+              </button>
+              <button type="button" class="shape-picker-btn" data-shape="hexagon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 21 7.2 21 16.8 12 22 3 16.8 3 7.2"/></svg>
+                <span>${t('shapeHexagon')}</span>
               </button>
               <button type="button" class="shape-picker-btn" data-shape="octagon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/></svg>
                 <span>${t('shapeOctagon')}</span>
               </button>
+              <button type="button" class="shape-picker-btn" data-shape="star">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>${t('shapeStar')}</span>
+              </button>
+              <button type="button" class="shape-picker-btn" data-shape="oval">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="12" cy="12" rx="6" ry="9"/></svg>
+                <span>${t('shapeOval')}</span>
+              </button>
+            </div>
+
+            <!-- Cutout Scale Slider -->
+            <div class="designer-slider-group">
+              <div class="designer-slider-header">
+                <span>${t('cutoutScale')}</span>
+                <span class="designer-slider-val" id="designerScaleVal">74%</span>
+              </div>
+              <input type="range" id="designerScaleSlider" class="designer-range-input" min="0.55" max="0.90" step="0.02" value="0.74" />
             </div>
           </div>
 
-          <!-- Theme / Gradient Swatches -->
+          <!-- Background Patterns -->
+          <div class="form-group">
+            <label class="form-label">✨ ${t('patternsTitle')}</label>
+            <div class="pattern-picker-grid">
+              <button type="button" class="pattern-picker-btn active" data-pattern="none">🧼 <span>${t('patternNone')}</span></button>
+              <button type="button" class="pattern-picker-btn" data-pattern="sparkles">✨ <span>${t('patternSparkles')}</span></button>
+              <button type="button" class="pattern-picker-btn" data-pattern="confetti">🎊 <span>${t('patternConfetti')}</span></button>
+              <button type="button" class="pattern-picker-btn" data-pattern="dots">🔵 <span>${t('patternDots')}</span></button>
+              <button type="button" class="pattern-picker-btn" data-pattern="techGrid">🌐 <span>${t('patternTechGrid')}</span></button>
+              <button type="button" class="pattern-picker-btn" data-pattern="sunburst">☀️ <span>${t('patternSunburst')}</span></button>
+            </div>
+          </div>
+
+          <!-- Border & Corner Style Controls -->
+          <div class="form-group">
+            <div class="designer-select-row">
+              <div>
+                <label class="form-label">⭕ ${t('borderStyleTitle')}</label>
+                <select id="designerBorderStyle" class="designer-custom-select">
+                  <option value="solid">${t('borderSolid')}</option>
+                  <option value="double">${t('borderDouble')}</option>
+                  <option value="neon">${t('borderNeon')}</option>
+                  <option value="dashed">${t('borderDashed')}</option>
+                  <option value="pearl">${t('borderPearl')}</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">⚜️ ${t('cornersTitle')}</label>
+                <select id="designerCornerStyle" class="designer-custom-select">
+                  <option value="geometric">${t('cornerGeometric')}</option>
+                  <option value="ribbon">${t('cornerRibbon')}</option>
+                  <option value="stars">${t('cornerStars')}</option>
+                  <option value="floral">${t('cornerFloral')}</option>
+                  <option value="none">${t('cornerNone')}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Border Thickness Slider -->
+            <div class="designer-slider-group">
+              <div class="designer-slider-header">
+                <span>${t('borderThickness')}</span>
+                <span class="designer-slider-val" id="designerBorderVal">14px</span>
+              </div>
+              <input type="range" id="designerBorderSlider" class="designer-range-input" min="4" max="32" step="2" value="14" />
+            </div>
+          </div>
+
+          <!-- Theme / Gradient Swatches & Custom Color Picker -->
           <div class="form-group">
             <label class="form-label">🌈 ${t('frameTheme')}</label>
             <div class="color-swatch-picker">
@@ -11358,7 +12434,50 @@ class TwibbonApp {
               <button type="button" class="color-swatch-btn" data-theme-name="midnightGold" style="background: linear-gradient(135deg, #0f172a, #eab308);" title="Midnight Gold"></button>
               <button type="button" class="color-swatch-btn" data-theme-name="cyberNeon" style="background: linear-gradient(135deg, #581c87, #06b6d4);" title="Cyber Neon"></button>
               <button type="button" class="color-swatch-btn" data-theme-name="rosePink" style="background: linear-gradient(135deg, #9d174d, #ec4899);" title="Rose Pink"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="purpleDream" style="background: linear-gradient(135deg, #4c1d95, #a855f7);" title="Purple Dream"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="sunshine" style="background: linear-gradient(135deg, #78350f, #f59e0b);" title="Sunshine Amber"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="silverSteel" style="background: linear-gradient(135deg, #334155, #94a3b8);" title="Silver Steel"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="oceanTeal" style="background: linear-gradient(135deg, #083344, #14b8a6);" title="Ocean Teal"></button>
               <button type="button" class="color-swatch-btn" data-theme-name="transparent" style="background: repeating-conic-gradient(#cbd5e1 0% 25%, #ffffff 0% 50%) 50% / 8px 8px;" title="${isKm ? 'គ្មានផ្ទៃពណ៌ (ថ្លាសុទ្ធ/Overlay)' : 'Transparent (Overlay Only)'}"></button>
+
+              <!-- Custom Color Picker Button -->
+              <label class="custom-color-input-btn" title="${t('customColor')}">
+                🎨
+                <input type="color" id="designerCustomColor" value="#3b82f6" />
+              </label>
+            </div>
+          </div>
+
+          <!-- Stickers & Stamp Badges -->
+          <div class="form-group">
+            <label class="form-label">🏷️ ${t('stickersTitle')}</label>
+            <div class="stickers-picker-wrap">
+              <button type="button" class="sticker-chip active" data-sticker="none" title="None">❌</button>
+              <button type="button" class="sticker-chip" data-sticker="graduation" title="Graduation">🎓</button>
+              <button type="button" class="sticker-chip" data-sticker="khmer" title="Khmer Flag">🇰🇭</button>
+              <button type="button" class="sticker-chip" data-sticker="trophy" title="Champion Trophy">🏆</button>
+              <button type="button" class="sticker-chip" data-sticker="heart" title="Love Heart">💖</button>
+              <button type="button" class="sticker-chip" data-sticker="crown" title="Royal Crown">👑</button>
+              <button type="button" class="sticker-chip" data-sticker="party" title="Celebration">🎉</button>
+              <button type="button" class="sticker-chip" data-sticker="rocket" title="Rocket Tech">🚀</button>
+              <button type="button" class="sticker-chip" data-sticker="lotus" title="Lotus Flower">🌸</button>
+              <button type="button" class="sticker-chip" data-sticker="star" title="Golden Star">⭐</button>
+              <button type="button" class="sticker-chip" data-sticker="fire" title="Hot Fire">🔥</button>
+            </div>
+          </div>
+
+          <!-- Custom Logo / Brand Stamp Upload -->
+          <div class="form-group">
+            <label class="form-label">🏢 ${t('customLogoUpload')}</label>
+            <div class="designer-logo-box">
+              <div class="designer-logo-preview" id="designerLogoThumb">🖼️</div>
+              <div style="flex:1;">
+                <label class="designer-logo-btn" for="designerLogoInput">
+                  📁 ${isKm ? 'ជ្រើសរើសរូប PNG' : 'Choose PNG Logo'}
+                  <input type="file" id="designerLogoInput" accept="image/png,image/jpeg,image/webp" style="display:none;" />
+                </label>
+              </div>
+              <button type="button" class="designer-logo-remove" id="btnRemoveLogo" style="display:none;">${t('delete')}</button>
             </div>
           </div>
 
@@ -11382,30 +12501,93 @@ class TwibbonApp {
     this.activeDesigner = new FrameDesigner(canvas);
     this.designer = this.activeDesigner;
 
-    // Synchronize UI inputs and chips with designer's restored settings
-    const currentSettings = this.activeDesigner.settings;
-    const headerInput = document.getElementById('designerHeaderInput');
-    const footerInput = document.getElementById('designerFooterInput');
-    if (headerInput && currentSettings.headerText) headerInput.value = currentSettings.headerText;
-    if (footerInput && currentSettings.footerText) footerInput.value = currentSettings.footerText;
+    // Helper to Synchronize UI with Designer Settings
+    const syncDesignerUI = (settings) => {
+      if (!settings) return;
+      const headerInput = document.getElementById('designerHeaderInput');
+      const footerInput = document.getElementById('designerFooterInput');
+      if (headerInput && settings.headerText !== undefined) headerInput.value = settings.headerText;
+      if (footerInput && settings.footerText !== undefined) footerInput.value = settings.footerText;
 
-    if (currentSettings.shape) {
+      // Shapes
       container.querySelectorAll('[data-shape]').forEach(chip => {
-        if (chip.getAttribute('data-shape') === currentSettings.shape) {
-          chip.classList.add('active');
-        } else {
-          chip.classList.remove('active');
-        }
+        chip.classList.toggle('active', chip.getAttribute('data-shape') === settings.shape);
+      });
+
+      // Themes
+      container.querySelectorAll('[data-theme-name]').forEach(chip => {
+        chip.classList.toggle('active', chip.getAttribute('data-theme-name') === settings.theme);
+      });
+
+      // Patterns
+      container.querySelectorAll('[data-pattern]').forEach(chip => {
+        chip.classList.toggle('active', chip.getAttribute('data-pattern') === (settings.pattern || 'none'));
+      });
+
+      // Stickers
+      container.querySelectorAll('[data-sticker]').forEach(chip => {
+        chip.classList.toggle('active', chip.getAttribute('data-sticker') === (settings.sticker || 'none'));
+      });
+
+      // Selects
+      const borderSelect = document.getElementById('designerBorderStyle');
+      if (borderSelect && settings.borderStyle) borderSelect.value = settings.borderStyle;
+
+      const cornerSelect = document.getElementById('designerCornerStyle');
+      if (cornerSelect && settings.cornerStyle) cornerSelect.value = settings.cornerStyle;
+
+      // Sliders
+      const scaleSlider = document.getElementById('designerScaleSlider');
+      const scaleVal = document.getElementById('designerScaleVal');
+      if (scaleSlider && settings.cutoutScale) {
+        scaleSlider.value = settings.cutoutScale;
+        if (scaleVal) scaleVal.textContent = Math.round(settings.cutoutScale * 100) + '%';
+      }
+
+      const borderSlider = document.getElementById('designerBorderSlider');
+      const borderVal = document.getElementById('designerBorderVal');
+      if (borderSlider && settings.borderWidth) {
+        borderSlider.value = settings.borderWidth;
+        if (borderVal) borderVal.textContent = settings.borderWidth + 'px';
+      }
+
+      // Mockup Toggle Button state
+      const btnMockup = document.getElementById('btnToggleMockup');
+      if (btnMockup) {
+        btnMockup.classList.toggle('active', !!settings.previewPhoto);
+      }
+    };
+
+    // Initial sync
+    syncDesignerUI(this.activeDesigner.settings);
+
+    // 1-Click Templates
+    container.querySelectorAll('[data-template]').forEach(card => {
+      card.addEventListener('click', () => {
+        const tmplKey = card.getAttribute('data-template');
+        container.querySelectorAll('[data-template]').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        this.activeDesigner.applyTemplate(tmplKey);
+        syncDesignerUI(this.activeDesigner.settings);
+      });
+    });
+
+    // Surprise Me Randomizer
+    const btnSurprise = document.getElementById('btnSurpriseMe');
+    if (btnSurprise) {
+      btnSurprise.addEventListener('click', () => {
+        container.querySelectorAll('[data-template]').forEach(c => c.classList.remove('active'));
+        this.activeDesigner.surpriseMe();
+        syncDesignerUI(this.activeDesigner.settings);
       });
     }
 
-    if (currentSettings.theme) {
-      container.querySelectorAll('[data-theme-name]').forEach(chip => {
-        if (chip.getAttribute('data-theme-name') === currentSettings.theme) {
-          chip.classList.add('active');
-        } else {
-          chip.classList.remove('active');
-        }
+    // Live Face Mockup Toggle
+    const btnMock = document.getElementById('btnToggleMockup');
+    if (btnMock) {
+      btnMock.addEventListener('click', () => {
+        const isMockup = this.activeDesigner.toggleLiveMockup();
+        btnMock.classList.toggle('active', isMockup);
       });
     }
 
@@ -11418,16 +12600,113 @@ class TwibbonApp {
       });
     });
 
+    // Bind Pattern Chips
+    container.querySelectorAll('[data-pattern]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        container.querySelectorAll('[data-pattern]').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        this.activeDesigner.update({ pattern: chip.getAttribute('data-pattern') });
+      });
+    });
+
+    // Bind Sticker Chips
+    container.querySelectorAll('[data-sticker]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        container.querySelectorAll('[data-sticker]').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        this.activeDesigner.update({ sticker: chip.getAttribute('data-sticker') });
+      });
+    });
+
     // Bind Theme Chips
     container.querySelectorAll('[data-theme-name]').forEach(chip => {
       chip.addEventListener('click', () => {
         container.querySelectorAll('[data-theme-name]').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
-        this.activeDesigner.update({ theme: chip.getAttribute('data-theme-name') });
+        this.activeDesigner.update({ theme: chip.getAttribute('data-theme-name'), customColor: '' });
       });
     });
 
-    // Inputs
+    // Custom Color Input
+    const colorPicker = document.getElementById('designerCustomColor');
+    if (colorPicker) {
+      colorPicker.addEventListener('input', (e) => {
+        container.querySelectorAll('[data-theme-name]').forEach(c => c.classList.remove('active'));
+        this.activeDesigner.update({ theme: 'custom', customColor: e.target.value });
+      });
+    }
+
+    // Cutout Scale Slider
+    const scaleSlider = document.getElementById('designerScaleSlider');
+    if (scaleSlider) {
+      scaleSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        const scaleVal = document.getElementById('designerScaleVal');
+        if (scaleVal) scaleVal.textContent = Math.round(val * 100) + '%';
+        this.activeDesigner.update({ cutoutScale: val });
+      });
+    }
+
+    // Border Thickness Slider
+    const borderSlider = document.getElementById('designerBorderSlider');
+    if (borderSlider) {
+      borderSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        const borderVal = document.getElementById('designerBorderVal');
+        if (borderVal) borderVal.textContent = val + 'px';
+        this.activeDesigner.update({ borderWidth: val });
+      });
+    }
+
+    // Border Style Select
+    const borderSelect = document.getElementById('designerBorderStyle');
+    if (borderSelect) {
+      borderSelect.addEventListener('change', (e) => {
+        this.activeDesigner.update({ borderStyle: e.target.value });
+      });
+    }
+
+    // Corner Style Select
+    const cornerSelect = document.getElementById('designerCornerStyle');
+    if (cornerSelect) {
+      cornerSelect.addEventListener('change', (e) => {
+        this.activeDesigner.update({ cornerStyle: e.target.value });
+      });
+    }
+
+    // Custom Logo Upload
+    const logoInput = document.getElementById('designerLogoInput');
+    const logoThumb = document.getElementById('designerLogoThumb');
+    const btnRemoveLogo = document.getElementById('btnRemoveLogo');
+    if (logoInput) {
+      logoInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+              this.activeDesigner.update({ customLogo: img });
+              if (logoThumb) logoThumb.innerHTML = `<img src="${ev.target.result}" alt="Logo" />`;
+              if (btnRemoveLogo) btnRemoveLogo.style.display = 'inline-block';
+            };
+            img.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    if (btnRemoveLogo) {
+      btnRemoveLogo.addEventListener('click', () => {
+        this.activeDesigner.update({ customLogo: null });
+        if (logoThumb) logoThumb.innerHTML = '🖼️';
+        if (logoInput) logoInput.value = '';
+        btnRemoveLogo.style.display = 'none';
+      });
+    }
+
+    // Text Badge Inputs
     document.getElementById('designerHeaderInput').addEventListener('input', (e) => {
       this.activeDesigner.update({ headerText: e.target.value });
     });
