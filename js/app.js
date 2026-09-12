@@ -2514,6 +2514,16 @@ class TwibbonApp {
             <span class="designer-res-badge">1000×1000 PNG</span>
           </div>
 
+          <!-- Quick Action Toolbar: Live Mockup Face & Surprise Me Randomizer -->
+          <div class="designer-toolbar-row">
+            <button type="button" class="designer-pill-btn" id="btnToggleMockup" title="${t('livePhotoPreview')}">
+              <span>👤</span> <span>${t('livePhotoPreview')}</span>
+            </button>
+            <button type="button" class="designer-pill-btn designer-surprise-btn" id="btnSurpriseMe" title="${t('surpriseMe')}">
+              <span>🎲</span> <span>${t('surpriseMe')}</span>
+            </button>
+          </div>
+
           <div class="canvas-container designer-canvas-container" id="designerCanvasWrap">
             <canvas id="designerCanvas" width="1000" height="1000"></canvas>
           </div>
@@ -2534,7 +2544,46 @@ class TwibbonApp {
             <h3>🎨 <span>${isKm ? 'កំណត់រចនាប័ទ្មស៊ុម' : 'Customize Frame'}</span></h3>
           </div>
 
-          <!-- Shape Selection with Visual Icons -->
+          <!-- 1-Click Instant Templates Carousel -->
+          <div class="form-group">
+            <label class="form-label">✨ ${t('templatesTitle')}</label>
+            <div class="designer-templates-scroll">
+              <div class="designer-tmpl-card" data-template="graduation">
+                <span class="designer-tmpl-emoji">🎓</span>
+                <span class="designer-tmpl-label">${t('tmplGraduation')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="khmerNewYear">
+                <span class="designer-tmpl-emoji">🇰🇭</span>
+                <span class="designer-tmpl-label">${t('tmplKhmerNewYear')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="birthday">
+                <span class="designer-tmpl-emoji">🎂</span>
+                <span class="designer-tmpl-label">${t('tmplBirthday')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="wedding">
+                <span class="designer-tmpl-emoji">💖</span>
+                <span class="designer-tmpl-label">${t('tmplWedding')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="techSummit">
+                <span class="designer-tmpl-emoji">🚀</span>
+                <span class="designer-tmpl-label">${t('tmplTechSummit')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="sports">
+                <span class="designer-tmpl-emoji">🏆</span>
+                <span class="designer-tmpl-label">${t('tmplSports')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="vip">
+                <span class="designer-tmpl-emoji">👑</span>
+                <span class="designer-tmpl-label">${t('tmplVip')}</span>
+              </div>
+              <div class="designer-tmpl-card" data-template="transparent">
+                <span class="designer-tmpl-emoji">🎨</span>
+                <span class="designer-tmpl-label">${t('tmplTransparent')}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shape Selection with 9 Shapes -->
           <div class="form-group">
             <label class="form-label">🎯 ${t('cutoutShape')}</label>
             <div class="shape-picker-grid">
@@ -2550,18 +2599,91 @@ class TwibbonApp {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="0"/></svg>
                 <span>${t('shapeSquare')}</span>
               </button>
+              <button type="button" class="shape-picker-btn" data-shape="heart">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <span>${t('shapeHeart')}</span>
+              </button>
               <button type="button" class="shape-picker-btn" data-shape="arch">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 21V10a8 8 0 0 1 16 0v11"/></svg>
                 <span>${t('shapeArch')}</span>
+              </button>
+              <button type="button" class="shape-picker-btn" data-shape="hexagon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 21 7.2 21 16.8 12 22 3 16.8 3 7.2"/></svg>
+                <span>${t('shapeHexagon')}</span>
               </button>
               <button type="button" class="shape-picker-btn" data-shape="octagon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/></svg>
                 <span>${t('shapeOctagon')}</span>
               </button>
+              <button type="button" class="shape-picker-btn" data-shape="star">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>${t('shapeStar')}</span>
+              </button>
+              <button type="button" class="shape-picker-btn" data-shape="oval">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="12" cy="12" rx="6" ry="9"/></svg>
+                <span>${t('shapeOval')}</span>
+              </button>
+            </div>
+
+            <!-- Cutout Scale Slider -->
+            <div class="designer-slider-group">
+              <div class="designer-slider-header">
+                <span>${t('cutoutScale')}</span>
+                <span class="designer-slider-val" id="designerScaleVal">74%</span>
+              </div>
+              <input type="range" id="designerScaleSlider" class="designer-range-input" min="0.55" max="0.90" step="0.02" value="0.74" />
             </div>
           </div>
 
-          <!-- Theme / Gradient Swatches -->
+          <!-- Background Patterns -->
+          <div class="form-group">
+            <label class="form-label">✨ ${t('patternsTitle')}</label>
+            <div class="pattern-picker-grid">
+              <button type="button" class="pattern-picker-btn active" data-pattern="none">🧼 <span>${t('patternNone')}</span></button>
+              <button type="button" class="pattern-picker-btn" data-pattern="sparkles">✨ <span>${t('patternSparkles')}</span></button>
+              <button type="button" class="pattern-picker-btn" data-pattern="confetti">🎊 <span>${t('patternConfetti')}</span></button>
+              <button type="button" class="pattern-picker-btn" data-pattern="dots">🔵 <span>${t('patternDots')}</span></button>
+              <button type="button" class="pattern-picker-btn" data-pattern="techGrid">🌐 <span>${t('patternTechGrid')}</span></button>
+              <button type="button" class="pattern-picker-btn" data-pattern="sunburst">☀️ <span>${t('patternSunburst')}</span></button>
+            </div>
+          </div>
+
+          <!-- Border & Corner Style Controls -->
+          <div class="form-group">
+            <div class="designer-select-row">
+              <div>
+                <label class="form-label">⭕ ${t('borderStyleTitle')}</label>
+                <select id="designerBorderStyle" class="designer-custom-select">
+                  <option value="solid">${t('borderSolid')}</option>
+                  <option value="double">${t('borderDouble')}</option>
+                  <option value="neon">${t('borderNeon')}</option>
+                  <option value="dashed">${t('borderDashed')}</option>
+                  <option value="pearl">${t('borderPearl')}</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">⚜️ ${t('cornersTitle')}</label>
+                <select id="designerCornerStyle" class="designer-custom-select">
+                  <option value="geometric">${t('cornerGeometric')}</option>
+                  <option value="ribbon">${t('cornerRibbon')}</option>
+                  <option value="stars">${t('cornerStars')}</option>
+                  <option value="floral">${t('cornerFloral')}</option>
+                  <option value="none">${t('cornerNone')}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Border Thickness Slider -->
+            <div class="designer-slider-group">
+              <div class="designer-slider-header">
+                <span>${t('borderThickness')}</span>
+                <span class="designer-slider-val" id="designerBorderVal">14px</span>
+              </div>
+              <input type="range" id="designerBorderSlider" class="designer-range-input" min="4" max="32" step="2" value="14" />
+            </div>
+          </div>
+
+          <!-- Theme / Gradient Swatches & Custom Color Picker -->
           <div class="form-group">
             <label class="form-label">🌈 ${t('frameTheme')}</label>
             <div class="color-swatch-picker">
@@ -2572,7 +2694,50 @@ class TwibbonApp {
               <button type="button" class="color-swatch-btn" data-theme-name="midnightGold" style="background: linear-gradient(135deg, #0f172a, #eab308);" title="Midnight Gold"></button>
               <button type="button" class="color-swatch-btn" data-theme-name="cyberNeon" style="background: linear-gradient(135deg, #581c87, #06b6d4);" title="Cyber Neon"></button>
               <button type="button" class="color-swatch-btn" data-theme-name="rosePink" style="background: linear-gradient(135deg, #9d174d, #ec4899);" title="Rose Pink"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="purpleDream" style="background: linear-gradient(135deg, #4c1d95, #a855f7);" title="Purple Dream"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="sunshine" style="background: linear-gradient(135deg, #78350f, #f59e0b);" title="Sunshine Amber"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="silverSteel" style="background: linear-gradient(135deg, #334155, #94a3b8);" title="Silver Steel"></button>
+              <button type="button" class="color-swatch-btn" data-theme-name="oceanTeal" style="background: linear-gradient(135deg, #083344, #14b8a6);" title="Ocean Teal"></button>
               <button type="button" class="color-swatch-btn" data-theme-name="transparent" style="background: repeating-conic-gradient(#cbd5e1 0% 25%, #ffffff 0% 50%) 50% / 8px 8px;" title="${isKm ? 'គ្មានផ្ទៃពណ៌ (ថ្លាសុទ្ធ/Overlay)' : 'Transparent (Overlay Only)'}"></button>
+
+              <!-- Custom Color Picker Button -->
+              <label class="custom-color-input-btn" title="${t('customColor')}">
+                🎨
+                <input type="color" id="designerCustomColor" value="#3b82f6" />
+              </label>
+            </div>
+          </div>
+
+          <!-- Stickers & Stamp Badges -->
+          <div class="form-group">
+            <label class="form-label">🏷️ ${t('stickersTitle')}</label>
+            <div class="stickers-picker-wrap">
+              <button type="button" class="sticker-chip active" data-sticker="none" title="None">❌</button>
+              <button type="button" class="sticker-chip" data-sticker="graduation" title="Graduation">🎓</button>
+              <button type="button" class="sticker-chip" data-sticker="khmer" title="Khmer Flag">🇰🇭</button>
+              <button type="button" class="sticker-chip" data-sticker="trophy" title="Champion Trophy">🏆</button>
+              <button type="button" class="sticker-chip" data-sticker="heart" title="Love Heart">💖</button>
+              <button type="button" class="sticker-chip" data-sticker="crown" title="Royal Crown">👑</button>
+              <button type="button" class="sticker-chip" data-sticker="party" title="Celebration">🎉</button>
+              <button type="button" class="sticker-chip" data-sticker="rocket" title="Rocket Tech">🚀</button>
+              <button type="button" class="sticker-chip" data-sticker="lotus" title="Lotus Flower">🌸</button>
+              <button type="button" class="sticker-chip" data-sticker="star" title="Golden Star">⭐</button>
+              <button type="button" class="sticker-chip" data-sticker="fire" title="Hot Fire">🔥</button>
+            </div>
+          </div>
+
+          <!-- Custom Logo / Brand Stamp Upload -->
+          <div class="form-group">
+            <label class="form-label">🏢 ${t('customLogoUpload')}</label>
+            <div class="designer-logo-box">
+              <div class="designer-logo-preview" id="designerLogoThumb">🖼️</div>
+              <div style="flex:1;">
+                <label class="designer-logo-btn" for="designerLogoInput">
+                  📁 ${isKm ? 'ជ្រើសរើសរូប PNG' : 'Choose PNG Logo'}
+                  <input type="file" id="designerLogoInput" accept="image/png,image/jpeg,image/webp" style="display:none;" />
+                </label>
+              </div>
+              <button type="button" class="designer-logo-remove" id="btnRemoveLogo" style="display:none;">${t('delete')}</button>
             </div>
           </div>
 
@@ -2596,30 +2761,93 @@ class TwibbonApp {
     this.activeDesigner = new FrameDesigner(canvas);
     this.designer = this.activeDesigner;
 
-    // Synchronize UI inputs and chips with designer's restored settings
-    const currentSettings = this.activeDesigner.settings;
-    const headerInput = document.getElementById('designerHeaderInput');
-    const footerInput = document.getElementById('designerFooterInput');
-    if (headerInput && currentSettings.headerText) headerInput.value = currentSettings.headerText;
-    if (footerInput && currentSettings.footerText) footerInput.value = currentSettings.footerText;
+    // Helper to Synchronize UI with Designer Settings
+    const syncDesignerUI = (settings) => {
+      if (!settings) return;
+      const headerInput = document.getElementById('designerHeaderInput');
+      const footerInput = document.getElementById('designerFooterInput');
+      if (headerInput && settings.headerText !== undefined) headerInput.value = settings.headerText;
+      if (footerInput && settings.footerText !== undefined) footerInput.value = settings.footerText;
 
-    if (currentSettings.shape) {
+      // Shapes
       container.querySelectorAll('[data-shape]').forEach(chip => {
-        if (chip.getAttribute('data-shape') === currentSettings.shape) {
-          chip.classList.add('active');
-        } else {
-          chip.classList.remove('active');
-        }
+        chip.classList.toggle('active', chip.getAttribute('data-shape') === settings.shape);
+      });
+
+      // Themes
+      container.querySelectorAll('[data-theme-name]').forEach(chip => {
+        chip.classList.toggle('active', chip.getAttribute('data-theme-name') === settings.theme);
+      });
+
+      // Patterns
+      container.querySelectorAll('[data-pattern]').forEach(chip => {
+        chip.classList.toggle('active', chip.getAttribute('data-pattern') === (settings.pattern || 'none'));
+      });
+
+      // Stickers
+      container.querySelectorAll('[data-sticker]').forEach(chip => {
+        chip.classList.toggle('active', chip.getAttribute('data-sticker') === (settings.sticker || 'none'));
+      });
+
+      // Selects
+      const borderSelect = document.getElementById('designerBorderStyle');
+      if (borderSelect && settings.borderStyle) borderSelect.value = settings.borderStyle;
+
+      const cornerSelect = document.getElementById('designerCornerStyle');
+      if (cornerSelect && settings.cornerStyle) cornerSelect.value = settings.cornerStyle;
+
+      // Sliders
+      const scaleSlider = document.getElementById('designerScaleSlider');
+      const scaleVal = document.getElementById('designerScaleVal');
+      if (scaleSlider && settings.cutoutScale) {
+        scaleSlider.value = settings.cutoutScale;
+        if (scaleVal) scaleVal.textContent = Math.round(settings.cutoutScale * 100) + '%';
+      }
+
+      const borderSlider = document.getElementById('designerBorderSlider');
+      const borderVal = document.getElementById('designerBorderVal');
+      if (borderSlider && settings.borderWidth) {
+        borderSlider.value = settings.borderWidth;
+        if (borderVal) borderVal.textContent = settings.borderWidth + 'px';
+      }
+
+      // Mockup Toggle Button state
+      const btnMockup = document.getElementById('btnToggleMockup');
+      if (btnMockup) {
+        btnMockup.classList.toggle('active', !!settings.previewPhoto);
+      }
+    };
+
+    // Initial sync
+    syncDesignerUI(this.activeDesigner.settings);
+
+    // 1-Click Templates
+    container.querySelectorAll('[data-template]').forEach(card => {
+      card.addEventListener('click', () => {
+        const tmplKey = card.getAttribute('data-template');
+        container.querySelectorAll('[data-template]').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        this.activeDesigner.applyTemplate(tmplKey);
+        syncDesignerUI(this.activeDesigner.settings);
+      });
+    });
+
+    // Surprise Me Randomizer
+    const btnSurprise = document.getElementById('btnSurpriseMe');
+    if (btnSurprise) {
+      btnSurprise.addEventListener('click', () => {
+        container.querySelectorAll('[data-template]').forEach(c => c.classList.remove('active'));
+        this.activeDesigner.surpriseMe();
+        syncDesignerUI(this.activeDesigner.settings);
       });
     }
 
-    if (currentSettings.theme) {
-      container.querySelectorAll('[data-theme-name]').forEach(chip => {
-        if (chip.getAttribute('data-theme-name') === currentSettings.theme) {
-          chip.classList.add('active');
-        } else {
-          chip.classList.remove('active');
-        }
+    // Live Face Mockup Toggle
+    const btnMock = document.getElementById('btnToggleMockup');
+    if (btnMock) {
+      btnMock.addEventListener('click', () => {
+        const isMockup = this.activeDesigner.toggleLiveMockup();
+        btnMock.classList.toggle('active', isMockup);
       });
     }
 
@@ -2632,16 +2860,113 @@ class TwibbonApp {
       });
     });
 
+    // Bind Pattern Chips
+    container.querySelectorAll('[data-pattern]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        container.querySelectorAll('[data-pattern]').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        this.activeDesigner.update({ pattern: chip.getAttribute('data-pattern') });
+      });
+    });
+
+    // Bind Sticker Chips
+    container.querySelectorAll('[data-sticker]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        container.querySelectorAll('[data-sticker]').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        this.activeDesigner.update({ sticker: chip.getAttribute('data-sticker') });
+      });
+    });
+
     // Bind Theme Chips
     container.querySelectorAll('[data-theme-name]').forEach(chip => {
       chip.addEventListener('click', () => {
         container.querySelectorAll('[data-theme-name]').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
-        this.activeDesigner.update({ theme: chip.getAttribute('data-theme-name') });
+        this.activeDesigner.update({ theme: chip.getAttribute('data-theme-name'), customColor: '' });
       });
     });
 
-    // Inputs
+    // Custom Color Input
+    const colorPicker = document.getElementById('designerCustomColor');
+    if (colorPicker) {
+      colorPicker.addEventListener('input', (e) => {
+        container.querySelectorAll('[data-theme-name]').forEach(c => c.classList.remove('active'));
+        this.activeDesigner.update({ theme: 'custom', customColor: e.target.value });
+      });
+    }
+
+    // Cutout Scale Slider
+    const scaleSlider = document.getElementById('designerScaleSlider');
+    if (scaleSlider) {
+      scaleSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        const scaleVal = document.getElementById('designerScaleVal');
+        if (scaleVal) scaleVal.textContent = Math.round(val * 100) + '%';
+        this.activeDesigner.update({ cutoutScale: val });
+      });
+    }
+
+    // Border Thickness Slider
+    const borderSlider = document.getElementById('designerBorderSlider');
+    if (borderSlider) {
+      borderSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        const borderVal = document.getElementById('designerBorderVal');
+        if (borderVal) borderVal.textContent = val + 'px';
+        this.activeDesigner.update({ borderWidth: val });
+      });
+    }
+
+    // Border Style Select
+    const borderSelect = document.getElementById('designerBorderStyle');
+    if (borderSelect) {
+      borderSelect.addEventListener('change', (e) => {
+        this.activeDesigner.update({ borderStyle: e.target.value });
+      });
+    }
+
+    // Corner Style Select
+    const cornerSelect = document.getElementById('designerCornerStyle');
+    if (cornerSelect) {
+      cornerSelect.addEventListener('change', (e) => {
+        this.activeDesigner.update({ cornerStyle: e.target.value });
+      });
+    }
+
+    // Custom Logo Upload
+    const logoInput = document.getElementById('designerLogoInput');
+    const logoThumb = document.getElementById('designerLogoThumb');
+    const btnRemoveLogo = document.getElementById('btnRemoveLogo');
+    if (logoInput) {
+      logoInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+              this.activeDesigner.update({ customLogo: img });
+              if (logoThumb) logoThumb.innerHTML = `<img src="${ev.target.result}" alt="Logo" />`;
+              if (btnRemoveLogo) btnRemoveLogo.style.display = 'inline-block';
+            };
+            img.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    if (btnRemoveLogo) {
+      btnRemoveLogo.addEventListener('click', () => {
+        this.activeDesigner.update({ customLogo: null });
+        if (logoThumb) logoThumb.innerHTML = '🖼️';
+        if (logoInput) logoInput.value = '';
+        btnRemoveLogo.style.display = 'none';
+      });
+    }
+
+    // Text Badge Inputs
     document.getElementById('designerHeaderInput').addEventListener('input', (e) => {
       this.activeDesigner.update({ headerText: e.target.value });
     });
