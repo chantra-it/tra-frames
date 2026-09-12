@@ -246,6 +246,11 @@ class TwibbonApp {
             <div style="padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.78rem; color: var(--text-muted); word-break: break-all;">
               ${SecurityUtils.escapeHtml(user.email)}
             </div>
+            ${(typeof AdminService !== 'undefined' && AdminService.isSuperAdmin(user)) ? `
+            <button class="user-dropdown-item admin-dropdown-btn" onclick="app.navigateTo('admin')" style="background: rgba(37, 99, 235, 0.08); color: var(--accent-primary); font-weight: 700; border-left: 3px solid var(--accent-primary);">
+              👑 <span>${t('adminDashboard')}</span>
+            </button>
+            ` : ''}
             <button class="user-dropdown-item" onclick="app.navigateTo('my-campaigns')">
               ${Icons.avatar} <span>${t('myCampaigns')}</span>
             </button>
@@ -1188,9 +1193,13 @@ class TwibbonApp {
       this.loadDesignerView();
     } else if (mainRoute === 'my-campaigns') {
       this.loadMyCampaignsView();
+    } else if (mainRoute === 'admin') {
+      this.loadAdminView(param);
     } else {
       this.loadExploreView();
     }
+
+    this.renderGlobalAnnouncementBanner();
 
     // Scroll handling:
     // If it's a page reload or refresh, restore previous scroll position!
@@ -2826,7 +2835,1248 @@ class TwibbonApp {
       setTimeout(() => toast.remove(), 250);
     }, 2800);
   }
+
+  // =========================================================
+  // GLOBAL ANNOUNCEMENT BANNER
+  // =========================================================
+  renderGlobalAnnouncementBanner() {
+    try {
+      const bannerEl = document.getElementById('globalAnnouncementBar');
+      if (typeof AdminService === 'undefined') return;
+      const settings = AdminService.getSystemSettings();
+      const isDismissed = sessionStorage.getItem('tra_announcement_dismissed') === 'true';
+
+      if (!settings || !settings.announcementEnabled || isDismissed) {
+        if (bannerEl) bannerEl.remove();
+        return;
+      }
+
+      const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+      const text = (isKm ? settings.announcementTextKm : settings.announcementTextEn) || settings.announcementTextKm || '';
+      if (!text.trim()) {
+        if (bannerEl) bannerEl.remove();
+        return;
+      }
+
+      const link = settings.announcementLink ? SecurityUtils.sanitizeUrl(settings.announcementLink) : '';
+      const type = settings.announcementType || 'info';
+
+      let container = bannerEl;
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'globalAnnouncementBar';
+        const navbar = document.querySelector('.navbar');
+        if (navbar && navbar.parentNode) {
+          navbar.parentNode.insertBefore(container, navbar);
+        } else {
+          document.body.prepend(container);
+        }
+      }
+
+      container.className = `global-announcement-bar banner-type-${type}`;
+      container.innerHTML = `
+        <div class="announcement-content-wrap">
+          <span class="announcement-icon-badge">📢</span>
+          <span class="announcement-text-msg">${SecurityUtils.cleanText(text, 250)}</span>
+          ${link ? `<a href="${link}" class="announcement-action-link">${isKm ? 'ស្វែងយល់បន្ថែម' : 'Learn More'} &rarr;</a>` : ''}
+          <button class="announcement-close-btn" onclick="app.dismissAnnouncement()" title="Close">&times;</button>
+        </div>
+      `;
+    } catch (e) {
+      console.warn("Announcement banner notice:", e);
+    }
+  }
+
+  dismissAnnouncement() {
+    sessionStorage.setItem('tra_announcement_dismissed', 'true');
+    const bannerEl = document.getElementById('globalAnnouncementBar');
+    if (bannerEl) bannerEl.remove();
+  }
+
+  // =========================================================
+  // VIEW 5: SUPER ADMIN DASHBOARD (MASTER CONTROL PANEL)
+  // =========================================================
+  async loadAdminView(subTab = null) {
+    this.currentView = 'admin';
+    const container = document.getElementById('appContent');
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+
+    if (subTab) {
+      this.adminActiveTab = subTab;
+    } else if (!this.adminActiveTab) {
+      this.adminActiveTab = 'overview';
+    }
+
+    const user = AuthService ? AuthService.currentUser : null;
+
+    // 1. Auth Guard: Check if logged in
+    if (!user) {
+      container.innerHTML = `
+        <div class="container section" style="max-width: 580px; margin: 3rem auto;">
+          <div class="admin-auth-gate-card">
+            <div class="admin-auth-gate-icon">🔐</div>
+            <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;">${t('adminDashboard')}</h2>
+            <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.5rem;">
+              ${isKm ? 'សូមចូលគណនីជា Super Admin ដើម្បីគ្រប់គ្រងគេហទំព័រ Tra Frames ទាំងមូល។' : 'Please log in with an authorized Super Admin account to access this management dashboard.'}
+            </p>
+            <button class="btn btn-primary" onclick="app.openAuthModal(() => app.loadAdminView())" style="padding: 0.75rem 1.75rem; font-size: 1rem;">
+              ${Icons.logIn} <span>${t('signIn')}</span>
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // 2. Role Guard: Check if Super Admin
+    if (!AdminService.isSuperAdmin(user)) {
+      container.innerHTML = `
+        <div class="container section" style="max-width: 620px; margin: 3rem auto;">
+          <div class="admin-denied-card">
+            <div class="admin-denied-icon">🚫</div>
+            <h2 style="font-size: 1.45rem; font-weight: 800; color: #ef4444; margin-bottom: 0.5rem;">${t('adminAccessDeniedTitle')}</h2>
+            <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.25rem;">
+              ${t('adminAccessDeniedDesc')}
+            </p>
+            <div class="admin-logged-info">
+              <span>${t('adminLoggedInAs')} <strong>${SecurityUtils.escapeHtml(user.email)}</strong></span>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap;">
+              <button class="btn btn-primary" onclick="app.navigateTo('explore')">
+                ${Icons.compass || '🧭'} <span>${t('adminReturnHome')}</span>
+              </button>
+              <button class="btn btn-outline" onclick="app.handleSignOut()">
+                ${Icons.logOut} <span>${t('signOut')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // 3. Render Loading Placeholder while fetching comprehensive data
+    container.innerHTML = `
+      <div class="container section" style="padding: 3rem 1rem; text-align: center;">
+        <div class="loading-spinner" style="margin: 0 auto 1rem auto;"></div>
+        <h3 style="font-weight: 700; color: var(--text-primary);">${isKm ? 'កំពុងទាញយកទិន្នន័យ Admin ពី Cloud Firestore...' : 'Loading Super Admin platform data from Cloud Firestore...'}</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">${isKm ? 'សូមរង់ចាំបន្តិច...' : 'Please wait a moment...'}</p>
+      </div>
+    `;
+
+    // 4. Fetch All Platform Data concurrently
+    try {
+      const [campaigns, users] = await Promise.all([
+        AdminService.fetchAllCampaignsAdmin(),
+        AdminService.fetchUsersList()
+      ]);
+      const metrics = AdminService.getPlatformMetrics(campaigns, users);
+      const settings = AdminService.getSystemSettings();
+
+      this.adminData = { campaigns, users, metrics, settings };
+      this.renderAdminMainLayout(container, isKm, user);
+    } catch (err) {
+      console.error("Failed to load admin data:", err);
+      container.innerHTML = `
+        <div class="container section" style="text-align: center; padding: 3rem 1rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+          <h3 style="color: #ef4444;">Error Loading Admin Dashboard</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">${SecurityUtils.escapeHtml(err.message)}</p>
+          <button class="btn btn-primary" onclick="app.loadAdminView()">🔄 Retry</button>
+        </div>
+      `;
+    }
+  }
+
+  renderAdminMainLayout(container, isKm, user) {
+    const { campaigns, users, metrics, settings } = this.adminData;
+    const activeTab = this.adminActiveTab || 'overview';
+
+    container.innerHTML = `
+      <div class="admin-wrapper container">
+        <!-- Top Admin Banner Header -->
+        <div class="admin-top-banner">
+          <div class="admin-banner-left">
+            <div class="admin-badge-pill">
+              <span class="admin-pulse-dot"></span>
+              <span>SUPER ADMIN PLATFORM CONTROL</span>
+            </div>
+            <h1 class="admin-main-title">👑 ${t('adminDashboard')}</h1>
+            <p class="admin-main-subtitle">${t('adminSubtitle')}</p>
+            <div class="admin-user-tag">
+              <span>👤 ${SecurityUtils.escapeHtml(user.email)}</span>
+              <span class="admin-tag-role">MASTER ADMIN</span>
+            </div>
+          </div>
+          <div class="admin-banner-actions">
+            <button class="btn btn-primary" onclick="app.openAdminCreateModal()">
+              ${Icons.plus} <span>${t('adminCreateNew')}</span>
+            </button>
+            <button class="btn btn-outline" onclick="app.handleAdminExportBackup()" title="Download Backup">
+              ${Icons.download} <span>Backup (.json)</span>
+            </button>
+            <button class="btn btn-secondary" onclick="app.loadAdminView()" title="Refresh Data">
+              🔄 <span>${t('adminRefreshData')}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Admin Navigation Tabs -->
+        <div class="admin-nav-tabs">
+          <button class="admin-tab-item ${activeTab === 'overview' ? 'active' : ''}" onclick="app.switchAdminTab('overview')">
+            <span class="admin-tab-icon">📊</span>
+            <span>${t('adminOverview')}</span>
+          </button>
+          <button class="admin-tab-item ${activeTab === 'campaigns' ? 'active' : ''}" onclick="app.switchAdminTab('campaigns')">
+            <span class="admin-tab-icon">🖼️</span>
+            <span>${t('adminCampaigns')}</span>
+            <span class="admin-tab-counter">${campaigns.length}</span>
+          </button>
+          <button class="admin-tab-item ${activeTab === 'users' ? 'active' : ''}" onclick="app.switchAdminTab('users')">
+            <span class="admin-tab-icon">👥</span>
+            <span>${t('adminUsers')}</span>
+            <span class="admin-tab-counter">${users.length}</span>
+          </button>
+          <button class="admin-tab-item ${activeTab === 'settings' ? 'active' : ''}" onclick="app.switchAdminTab('settings')">
+            <span class="admin-tab-icon">📢</span>
+            <span>${t('adminSettings')}</span>
+          </button>
+          <button class="admin-tab-item ${activeTab === 'backup' ? 'active' : ''}" onclick="app.switchAdminTab('backup')">
+            <span class="admin-tab-icon">💾</span>
+            <span>${t('adminBackup')}</span>
+          </button>
+        </div>
+
+        <!-- Tab Content Container -->
+        <div class="admin-tab-content-wrap" id="adminTabContentWrap">
+          ${this.getAdminTabHtml(activeTab, isKm)}
+        </div>
+      </div>
+    `;
+
+    // Attach Tab-specific listeners
+    this.initAdminTabListeners(activeTab, isKm);
+  }
+
+  switchAdminTab(tabName) {
+    this.adminActiveTab = tabName;
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    
+    // Update tab active classes
+    document.querySelectorAll('.admin-tab-item').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    const clickedBtn = Array.from(document.querySelectorAll('.admin-tab-item')).find(b => b.onclick && b.onclick.toString().includes(tabName));
+    if (clickedBtn) clickedBtn.classList.add('active');
+
+    const contentWrap = document.getElementById('adminTabContentWrap');
+    if (contentWrap) {
+      contentWrap.innerHTML = this.getAdminTabHtml(tabName, isKm);
+      this.initAdminTabListeners(tabName, isKm);
+    }
+  }
+
+  getAdminTabHtml(tabName, isKm) {
+    const { campaigns, users, metrics, settings } = this.adminData;
+    switch (tabName) {
+      case 'campaigns':
+        return this.renderAdminCampaignsTab(campaigns, isKm);
+      case 'users':
+        return this.renderAdminUsersTab(users, isKm);
+      case 'settings':
+        return this.renderAdminSettingsTab(settings, isKm);
+      case 'backup':
+        return this.renderAdminBackupTab(isKm);
+      case 'overview':
+      default:
+        return this.renderAdminOverviewTab(campaigns, users, metrics, isKm);
+    }
+  }
+
+  // =========================================================
+  // TAB 1: OVERVIEW & ANALYTICS
+  // =========================================================
+  renderAdminOverviewTab(campaigns, users, metrics, isKm) {
+    const cloudCount = campaigns.filter(c => c._source === 'cloud').length;
+    const localCount = campaigns.filter(c => c._source === 'local').length;
+    const presetCount = campaigns.filter(c => c._source === 'preset' || c.isPreset).length;
+    const verifiedUsersCount = users.filter(u => u.verified).length;
+
+    const catKey = 'cat' + (metrics.topCategory ? (metrics.topCategory[0].toUpperCase() + metrics.topCategory.slice(1)) : 'Celebration');
+    const topCatName = t(catKey) || metrics.topCategory;
+
+    return `
+      <!-- KPI Stats Grid -->
+      <div class="admin-kpi-grid">
+        <div class="admin-kpi-card card-kpi-blue">
+          <div class="admin-kpi-header">
+            <span class="admin-kpi-title">${t('adminTotalCampaigns')}</span>
+            <span class="admin-kpi-icon">🖼️</span>
+          </div>
+          <div class="admin-kpi-value">${metrics.totalCampaigns}</div>
+          <div class="admin-kpi-subtext">
+            <span>Cloud: <strong>${cloudCount}</strong></span> • <span>Local: <strong>${localCount}</strong></span> • <span>Preset: <strong>${presetCount}</strong></span>
+          </div>
+        </div>
+
+        <div class="admin-kpi-card card-kpi-cyan">
+          <div class="admin-kpi-header">
+            <span class="admin-kpi-title">${t('adminTotalSupporters')}</span>
+            <span class="admin-kpi-icon">👥</span>
+          </div>
+          <div class="admin-kpi-value">${metrics.totalSupporters.toLocaleString()}</div>
+          <div class="admin-kpi-subtext">
+            ${isKm ? 'ការចូលរួមបង្កើតរូបថតគាំទ្រសរុប' : 'Total frame generation interactions'}
+          </div>
+        </div>
+
+        <div class="admin-kpi-card card-kpi-indigo">
+          <div class="admin-kpi-header">
+            <span class="admin-kpi-title">${t('adminTotalUsers')}</span>
+            <span class="admin-kpi-icon">👤</span>
+          </div>
+          <div class="admin-kpi-value">${metrics.totalUsers}</div>
+          <div class="admin-kpi-subtext">
+            <span>✅ ${isKm ? 'បានផ្ទៀងផ្ទាត់' : 'Verified'}: <strong>${verifiedUsersCount}</strong></span>
+          </div>
+        </div>
+
+        <div class="admin-kpi-card card-kpi-purple">
+          <div class="admin-kpi-header">
+            <span class="admin-kpi-title">${t('adminTopCategory')}</span>
+            <span class="admin-kpi-icon">🌟</span>
+          </div>
+          <div class="admin-kpi-value" style="font-size: 1.5rem; text-transform: capitalize;">${topCatName}</div>
+          <div class="admin-kpi-subtext">
+            ${isKm ? 'ប្រភេទដែលមានសកម្មភាពច្រើនជាងគេ' : 'Highest engagement category'}
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-Column Analytics Layout -->
+      <div class="admin-analytics-row">
+        <!-- Left: Category Distribution Chart -->
+        <div class="admin-card admin-chart-card">
+          <div class="admin-card-header">
+            <h3 class="admin-card-title">📊 ${t('adminCategoryDistribution')}</h3>
+          </div>
+          <div class="admin-cat-bars-list">
+            ${Object.entries(metrics.categoryCounts).map(([cat, count]) => {
+              const catLabel = t('cat' + cat[0].toUpperCase() + cat.slice(1)) || cat;
+              const pct = metrics.totalCampaigns > 0 ? Math.round((count / metrics.totalCampaigns) * 100) : 0;
+              return `
+                <div class="admin-cat-bar-item">
+                  <div class="admin-cat-bar-label">
+                    <span>${catLabel}</span>
+                    <span class="admin-cat-bar-count"><strong>${count}</strong> (${pct}%)</span>
+                  </div>
+                  <div class="admin-progress-track">
+                    <div class="admin-progress-fill cat-color-${cat}" style="width: ${Math.max(4, pct)}%;"></div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Right: Top 5 Most Popular Campaigns -->
+        <div class="admin-card admin-top-list-card">
+          <div class="admin-card-header">
+            <h3 class="admin-card-title">🔥 ${t('adminTopCampaigns')}</h3>
+          </div>
+          <div class="admin-top-campaigns-list">
+            ${metrics.topCampaigns.length === 0 ? `
+              <div style="padding: 1.5rem; text-align: center; color: var(--text-muted);">No campaigns yet.</div>
+            ` : metrics.topCampaigns.map((c, index) => {
+              const title = (isKm ? c.titleKm : c.titleEn) || c.titleKm || c.titleEn || 'Untitled';
+              const supporters = (parseInt(c.supporters, 10) || 0).toLocaleString();
+              const slug = c.slug || c.id;
+              const frameUrl = SecurityUtils.sanitizeUrl(c.frameUrl);
+              return `
+                <div class="admin-top-camp-item">
+                  <div class="admin-top-rank rank-${index + 1}">#${index + 1}</div>
+                  <div class="admin-top-thumb-wrap">
+                    <img src="${SAMPLE_AVATARS[0]}" class="admin-thumb-bg" />
+                    <img src="${frameUrl}" class="admin-thumb-frame" />
+                  </div>
+                  <div class="admin-top-info">
+                    <a href="#campaign/${slug}" class="admin-top-name">${SecurityUtils.cleanText(title, 45)}</a>
+                    <span class="admin-top-sub">👥 ${supporters} ${t('supporters')}</span>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" onclick="app.navigateTo('campaign/${slug}')">
+                    ${Icons.camera}
+                  </button>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Platform Activity / Campaigns -->
+      <div class="admin-card" style="margin-top: 1.5rem;">
+        <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="admin-card-title">⏱️ ${t('adminRecentCampaigns')}</h3>
+          <button class="btn btn-outline btn-sm" onclick="app.switchAdminTab('campaigns')">
+            ${isKm ? 'មើលទាំងអស់' : 'View All'} &rarr;
+          </button>
+        </div>
+        <div class="admin-recent-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>${isKm ? 'ស៊ុម' : 'Frame'}</th>
+                <th>${isKm ? 'ចំណងជើង' : 'Title'}</th>
+                <th>${isKm ? 'ប្រភេទ' : 'Category'}</th>
+                <th>${isKm ? 'អ្នកបង្កើត' : 'Creator'}</th>
+                <th>${isKm ? 'អ្នកគាំទ្រ' : 'Supporters'}</th>
+                <th>${isKm ? 'កាលបរិច្ឆេទ' : 'Date'}</th>
+                <th>${isKm ? 'សកម្មភាព' : 'Action'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${metrics.recentCampaigns.map(c => {
+                const title = (isKm ? c.titleKm : c.titleEn) || c.titleKm || c.titleEn || 'Untitled';
+                const catLabel = t('cat' + (c.category ? c.category[0].toUpperCase() + c.category.slice(1) : 'Celebration')) || c.category;
+                const slug = c.slug || c.id;
+                const date = (c.createdAt || '').split('T')[0] || '2026';
+                const supporters = (parseInt(c.supporters, 10) || 0).toLocaleString();
+                const frameUrl = SecurityUtils.sanitizeUrl(c.frameUrl);
+                return `
+                  <tr>
+                    <td>
+                      <div class="admin-mini-thumb">
+                        <img src="${SAMPLE_AVATARS[0]}" class="admin-thumb-bg" />
+                        <img src="${frameUrl}" class="admin-thumb-frame" />
+                      </div>
+                    </td>
+                    <td>
+                      <strong>${SecurityUtils.cleanText(title, 40)}</strong>
+                      <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">/${SecurityUtils.escapeHtml(slug)}</div>
+                    </td>
+                    <td><span class="admin-cat-badge cat-color-${c.category || 'celebration'}">${catLabel}</span></td>
+                    <td>${SecurityUtils.cleanText(c.creator || c.creatorEmail || 'Admin', 25)}</td>
+                    <td><strong>${supporters}</strong></td>
+                    <td>${date}</td>
+                    <td>
+                      <div style="display: flex; gap: 0.35rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="app.navigateTo('campaign/${slug}')" title="View">👁️</button>
+                        <button class="btn btn-outline btn-sm" onclick="app.openAdminEditCampaignModal('${c.id || c.slug}')" title="Edit">✏️</button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  // =========================================================
+  // TAB 2: CAMPAIGNS MANAGEMENT (FULL CRUD)
+  // =========================================================
+  renderAdminCampaignsTab(campaigns, isKm) {
+    return `
+      <div class="admin-card">
+        <!-- Filter and Search Toolbar -->
+        <div class="admin-toolbar">
+          <div class="admin-search-wrap">
+            <span class="admin-search-icon">${Icons.search}</span>
+            <input type="text" id="adminCampSearchInput" class="form-input admin-search-input" placeholder="${t('adminSearchPlaceholder')}" />
+          </div>
+
+          <div class="admin-filters-wrap">
+            <select id="adminCampCatSelect" class="form-select admin-filter-select">
+              <option value="all">${t('adminFilterCategory')}</option>
+              <option value="education">${t('catEducation')}</option>
+              <option value="culture">${t('catCulture')}</option>
+              <option value="charity">${t('catCharity')}</option>
+              <option value="sports">${t('catSports')}</option>
+              <option value="tech">${t('catTech')}</option>
+              <option value="celebration">${t('catCelebration')}</option>
+            </select>
+
+            <select id="adminCampSourceSelect" class="form-select admin-filter-select">
+              <option value="all">${t('adminAllSources')}</option>
+              <option value="cloud">${t('adminSourceCloud')}</option>
+              <option value="local">${t('adminSourceLocal')}</option>
+              <option value="preset">${t('adminSourcePreset')}</option>
+            </select>
+
+            <button class="btn btn-primary" onclick="app.openAdminCreateModal()">
+              ${Icons.plus} <span>${t('adminCreateNew')}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Summary Counter -->
+        <div class="admin-table-meta-bar">
+          <span id="adminTableCountLabel">${isKm ? `បង្ហាញយុទ្ធនាការសរុបចំនួន ${campaigns.length}` : `Showing all ${campaigns.length} campaigns`}</span>
+        </div>
+
+        <!-- Campaigns Data Table Container -->
+        <div class="admin-table-responsive" id="adminCampTableContainer">
+          ${this.buildCampaignsTableHtml(campaigns, isKm)}
+        </div>
+      </div>
+    `;
+  }
+
+  buildCampaignsTableHtml(campaigns, isKm) {
+    if (!campaigns || campaigns.length === 0) {
+      return `
+        <div style="padding: 3rem 1rem; text-align: center; color: var(--text-muted);">
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
+          <p>${isKm ? 'មិនមានយុទ្ធនាការដែលត្រូវនឹងការស្វែងរកទេ' : 'No campaigns matched your search criteria.'}</p>
+        </div>
+      `;
+    }
+
+    return `
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th style="width: 60px;">${isKm ? 'ស៊ុម' : 'Frame'}</th>
+            <th>${isKm ? 'ព័ត៌មានយុទ្ធនាការ (Title & Slug)' : 'Campaign (Title & Slug)'}</th>
+            <th>${isKm ? 'ប្រភេទ' : 'Category'}</th>
+            <th>${isKm ? 'អ្នកបង្កើត (Creator)' : 'Creator'}</th>
+            <th style="text-align: right;">${isKm ? 'អ្នកគាំទ្រ' : 'Supporters'}</th>
+            <th>${isKm ? 'ប្រភព' : 'Source'}</th>
+            <th>${isKm ? 'កាលបរិច្ឆេទ' : 'Date'}</th>
+            <th style="text-align: center; width: 140px;">${isKm ? 'សកម្មភាព' : 'Actions'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${campaigns.map(c => {
+            const titleKm = c.titleKm || '';
+            const titleEn = c.titleEn || '';
+            const displayTitle = (isKm ? titleKm : titleEn) || titleKm || titleEn || 'Untitled';
+            const catLabel = t('cat' + (c.category ? c.category[0].toUpperCase() + c.category.slice(1) : 'Celebration')) || c.category;
+            const slug = c.slug || c.id;
+            const supporters = (parseInt(c.supporters, 10) || 0).toLocaleString();
+            const date = (c.createdAt || '').split('T')[0] || '2026';
+            const frameUrl = SecurityUtils.sanitizeUrl(c.frameUrl);
+            const source = c._source || (c.isPreset ? 'preset' : 'cloud');
+            const safeCampId = SecurityUtils.escapeHtml(c.id || c.slug);
+            const safeTitleEscaped = SecurityUtils.escapeHtml(displayTitle).replace(/'/g, "\\'");
+
+            let sourceBadge = `<span class="badge-source badge-cloud">Cloud</span>`;
+            if (source === 'local') sourceBadge = `<span class="badge-source badge-local">Local</span>`;
+            if (source === 'preset') sourceBadge = `<span class="badge-source badge-preset">Preset</span>`;
+
+            return `
+              <tr id="adminRow_${safeCampId}">
+                <td>
+                  <div class="admin-table-thumb" onclick="app.navigateTo('campaign/${slug}')" title="Click to view">
+                    <img src="${SAMPLE_AVATARS[0]}" class="admin-thumb-bg" />
+                    <img src="${frameUrl}" class="admin-thumb-frame" />
+                  </div>
+                </td>
+                <td>
+                  <div class="admin-camp-cell-title">
+                    <a href="#campaign/${slug}" class="admin-link-title" title="${SecurityUtils.escapeHtml(displayTitle)}">
+                      ${SecurityUtils.cleanText(displayTitle, 50)}
+                    </a>
+                    <div class="admin-slug-tag">/${SecurityUtils.escapeHtml(slug)}</div>
+                  </div>
+                </td>
+                <td>
+                  <span class="admin-cat-badge cat-color-${c.category || 'celebration'}">${catLabel}</span>
+                </td>
+                <td>
+                  <div class="admin-creator-cell">
+                    <span class="admin-creator-name">${SecurityUtils.cleanText(c.creator || 'Admin', 30)}</span>
+                    <span class="admin-creator-email">${SecurityUtils.escapeHtml(c.creatorEmail || '')}</span>
+                  </div>
+                </td>
+                <td style="text-align: right;">
+                  <span class="admin-supporter-pill">${supporters}</span>
+                </td>
+                <td>${sourceBadge}</td>
+                <td style="font-size: 0.82rem; color: var(--text-muted);">${date}</td>
+                <td>
+                  <div class="admin-actions-group">
+                    <button class="btn-action-icon btn-action-view" onclick="app.navigateTo('campaign/${slug}')" title="${isKm ? 'មើលស៊ុម' : 'Preview'}">
+                      👁️
+                    </button>
+                    <button class="btn-action-icon btn-action-edit" onclick="app.openAdminEditCampaignModal('${safeCampId}')" title="${isKm ? 'កែប្រែ' : 'Edit'}">
+                      ✏️
+                    </button>
+                    <button class="btn-action-icon btn-action-delete" onclick="app.handleAdminDeleteCampaign('${safeCampId}', '${safeTitleEscaped}')" title="${isKm ? 'លុប' : 'Delete'}">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // =========================================================
+  // TAB 3: USER MANAGEMENT
+  // =========================================================
+  renderAdminUsersTab(users, isKm) {
+    return `
+      <div class="admin-card">
+        <div class="admin-toolbar">
+          <div class="admin-search-wrap">
+            <span class="admin-search-icon">${Icons.search}</span>
+            <input type="text" id="adminUserSearchInput" class="form-input admin-search-input" placeholder="${isKm ? 'ស្វែងរកតាម Email, ឈ្មោះ, ឬ UID...' : 'Search by email, name, or UID...'}" />
+          </div>
+          <div class="admin-filters-wrap">
+            <button class="btn btn-secondary" onclick="app.loadAdminView('users')">
+              🔄 <span>${isKm ? 'ផ្ទុកទិន្នន័យឡើងវិញ' : 'Refresh Users'}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="admin-table-meta-bar">
+          <span id="adminUserCountLabel">${isKm ? `អ្នកប្រើប្រាស់សរុបចំនួន ${users.length} នាក់` : `Total registered accounts: ${users.length}`}</span>
+        </div>
+
+        <div class="admin-table-responsive" id="adminUserTableContainer">
+          ${this.buildUsersTableHtml(users, isKm)}
+        </div>
+      </div>
+    `;
+  }
+
+  buildUsersTableHtml(users, isKm) {
+    if (!users || users.length === 0) {
+      return `
+        <div style="padding: 3rem 1rem; text-align: center; color: var(--text-muted);">
+          No users found.
+        </div>
+      `;
+    }
+
+    return `
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>${isKm ? 'អ្នកប្រើប្រាស់' : 'User'}</th>
+            <th>${isKm ? 'អ៊ីមែល (Email)' : 'Email'}</th>
+            <th>UID</th>
+            <th>${isKm ? 'តួនាទី (Role)' : 'Role'}</th>
+            <th>${isKm ? 'ស្ថានភាព OTP' : 'Verification Status'}</th>
+            <th style="text-align: center;">${isKm ? 'យុទ្ធនាការដែលបានបង្កើត' : 'Campaigns'}</th>
+            <th style="text-align: center; width: 140px;">${isKm ? 'សកម្មភាព' : 'Action'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(u => {
+            const initial = SecurityUtils.cleanText(((u.displayName || u.email || 'U')[0] || 'U').toUpperCase(), 1);
+            const isVerified = !!u.verified;
+            const isSuper = !!u.isSuperAdmin;
+            const safeEmail = SecurityUtils.escapeHtml(u.email);
+
+            return `
+              <tr>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <div class="admin-user-avatar-placeholder">${initial}</div>
+                    <strong style="color: var(--text-primary); font-size: 0.9rem;">${SecurityUtils.cleanText(u.displayName || u.email.split('@')[0], 30)}</strong>
+                  </div>
+                </td>
+                <td><a href="mailto:${safeEmail}" style="color: var(--accent-primary); font-size: 0.88rem;">${safeEmail}</a></td>
+                <td style="font-family: monospace; font-size: 0.78rem; color: var(--text-muted);">${SecurityUtils.cleanText(u.uid, 20)}</td>
+                <td>
+                  ${isSuper 
+                    ? `<span class="badge-role badge-role-super">👑 Super Admin</span>` 
+                    : `<span class="badge-role badge-role-member">👤 ${t('adminRoleUser')}</span>`
+                  }
+                </td>
+                <td>
+                  ${isVerified
+                    ? `<span class="badge-verify badge-verify-yes">✅ ${t('adminUserVerified')}</span>`
+                    : `<span class="badge-verify badge-verify-no">⚠️ ${t('adminUserUnverified')}</span>`
+                  }
+                </td>
+                <td style="text-align: center;">
+                  <span class="admin-camp-count-badge">${u.campaignCount || 0}</span>
+                </td>
+                <td style="text-align: center;">
+                  <button class="btn btn-sm ${isVerified ? 'btn-outline' : 'btn-primary'}" onclick="app.handleAdminToggleVerifyUser('${u.email}', ${isVerified})">
+                    ${isVerified ? 'បិទ OTP' : '✅ ផ្ទៀងផ្ទាត់'}
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // =========================================================
+  // TAB 4: SITE SETTINGS & ANNOUNCEMENTS
+  // =========================================================
+  renderAdminSettingsTab(settings, isKm) {
+    const isEnabled = settings && settings.announcementEnabled;
+    const type = (settings && settings.announcementType) || 'info';
+
+    return `
+      <div class="admin-settings-layout">
+        <!-- Announcement Banner Setting Card -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3 class="admin-card-title">📢 ${t('adminAnnouncementBanner')}</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">
+              ${isKm ? 'បង្ហាញសារប្រកាសព័ត៌មានបន្ទាន់ ឬកម្មវិធីពិសេសនៅលើកំពូលគេហទំព័រ Tra Frames ទាំងមូល' : 'Display a global announcement alert banner across the top of all pages.'}
+            </p>
+          </div>
+
+          <form id="adminSettingsForm" onsubmit="event.preventDefault(); app.handleAdminSaveSettings();">
+            <div class="form-group">
+              <label class="admin-switch-wrap">
+                <input type="checkbox" id="settingAnnouncementEnable" ${isEnabled ? 'checked' : ''} onchange="app.updateBannerPreview()" />
+                <span class="admin-switch-slider"></span>
+                <span class="admin-switch-label"><strong>${t('adminBannerEnable')}</strong></span>
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">${t('adminBannerTextKm')}</label>
+              <textarea id="settingAnnouncementKm" class="form-textarea" rows="2" placeholder="សរសេរសារប្រកាសជាភាសាខ្មែរ..." oninput="app.updateBannerPreview()">${SecurityUtils.escapeHtml(settings.announcementTextKm || '')}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">${t('adminBannerTextEn')}</label>
+              <textarea id="settingAnnouncementEn" class="form-textarea" rows="2" placeholder="Write announcement message in English..." oninput="app.updateBannerPreview()">${SecurityUtils.escapeHtml(settings.announcementTextEn || '')}</textarea>
+            </div>
+
+            <div class="admin-form-grid-2">
+              <div class="form-group">
+                <label class="form-label">${t('adminBannerLink')}</label>
+                <input type="text" id="settingAnnouncementLink" class="form-input" placeholder="#explore ឬតំណភ្ជាប់ URL..." value="${SecurityUtils.escapeHtml(settings.announcementLink || '')}" oninput="app.updateBannerPreview()" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${t('adminBannerType')}</label>
+                <select id="settingAnnouncementType" class="form-select" onchange="app.updateBannerPreview()">
+                  <option value="info" ${type === 'info' ? 'selected' : ''}>${t('adminBannerTypeInfo')}</option>
+                  <option value="success" ${type === 'success' ? 'selected' : ''}>${t('adminBannerTypeSuccess')}</option>
+                  <option value="warning" ${type === 'warning' ? 'selected' : ''}>${t('adminBannerTypeWarning')}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Live Banner Preview -->
+            <div style="margin: 1.25rem 0;">
+              <label class="form-label" style="margin-bottom: 0.5rem;">👁️ ${t('adminBannerPreview')}:</label>
+              <div id="adminLiveBannerPreviewBox" class="global-announcement-bar banner-type-${type}">
+                <div class="announcement-content-wrap">
+                  <span class="announcement-icon-badge">📢</span>
+                  <span class="announcement-text-msg" id="previewMsgText">${isKm ? (settings.announcementTextKm || 'សារគំរូ') : (settings.announcementTextEn || 'Sample Message')}</span>
+                  <span class="announcement-action-link">&rarr;</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+              <button type="submit" class="btn btn-primary" id="btnSaveAdminSettings">
+                ${Icons.check} <span>${t('adminSaveSettings')}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Maintenance Mode Card -->
+        <div class="admin-card" style="margin-top: 1.5rem;">
+          <div class="admin-card-header">
+            <h3 class="admin-card-title">🛠️ ${t('adminMaintenanceMode')}</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">
+              ${isKm ? 'បើកដំណើរការពេលត្រូវការកែលម្អប្រព័ន្ធ ឬរៀបចំទិន្នន័យឡើងវិញ' : 'Temporarily display maintenance notification to regular visitors.'}
+            </p>
+          </div>
+          <label class="admin-switch-wrap" style="margin-top: 0.5rem;">
+            <input type="checkbox" id="settingMaintenanceMode" ${settings && settings.maintenanceMode ? 'checked' : ''} onchange="app.handleAdminSaveSettings()" />
+            <span class="admin-switch-slider"></span>
+            <span class="admin-switch-label"><strong>${isKm ? 'បើកដំណើរការ Maintenance Mode' : 'Enable Maintenance Mode'}</strong></span>
+          </label>
+        </div>
+      </div>
+    `;
+  }
+
+  updateBannerPreview() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const textKm = document.getElementById('settingAnnouncementKm')?.value || '';
+    const textEn = document.getElementById('settingAnnouncementEn')?.value || '';
+    const type = document.getElementById('settingAnnouncementType')?.value || 'info';
+    const previewBox = document.getElementById('adminLiveBannerPreviewBox');
+    const msgText = document.getElementById('previewMsgText');
+
+    if (previewBox) {
+      previewBox.className = `global-announcement-bar banner-type-${type}`;
+    }
+    if (msgText) {
+      msgText.textContent = (isKm ? textKm : textEn) || textKm || textEn || 'Sample Preview Message';
+    }
+  }
+
+  // =========================================================
+  // TAB 5: BACKUP & DATA TOOLS
+  // =========================================================
+  renderAdminBackupTab(isKm) {
+    return `
+      <div class="admin-backup-grid">
+        <!-- 1-Click Backup Card -->
+        <div class="admin-card">
+          <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">📥</div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${t('adminExportBackup')}</h3>
+          <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem;">
+            ${isKm 
+              ? 'ទាញយកទិន្នន័យយុទ្ធនាការស៊ុមទាំងអស់ រួមទាំងបញ្ជីអ្នកប្រើប្រាស់ និងការកំណត់ប្រព័ន្ធ មកទុកលើកុំព្យូទ័រជាឯកសារ .json ដោយសុវត្ថិភាព។' 
+              : 'Download complete snapshot of all campaigns, users metadata, and platform settings as a standalone .json backup file.'}
+          </p>
+          <button class="btn btn-primary" onclick="app.handleAdminExportBackup()" style="width: 100%;">
+            ${Icons.download} <span>${isKm ? 'ទាញយក JSON Backup ឥឡូវនេះ' : 'Download JSON Backup'}</span>
+          </button>
+        </div>
+
+        <!-- Restore Backup Card -->
+        <div class="admin-card">
+          <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">📤</div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${t('adminImportBackup')}</h3>
+          <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem;">
+            ${isKm 
+              ? 'បញ្ចូលឯកសារ JSON Backup ដើម្បីស្តារឡើងវិញនូវរាល់យុទ្ធនាការ ឬការកំណត់ដែលបានបម្រុងទុកពីមុនមក។' 
+              : 'Restore campaigns and platform configuration from a previously exported JSON backup file.'}
+          </p>
+          <input type="file" id="adminImportFileInput" accept=".json" style="display: none;" onchange="app.handleAdminImportBackup(this)" />
+          <button class="btn btn-secondary" onclick="document.getElementById('adminImportFileInput').click()" style="width: 100%;">
+            ${Icons.upload} <span>${isKm ? 'ជ្រើសរើស File Backup (.json)' : 'Select Backup File (.json)'}</span>
+          </button>
+        </div>
+
+        <!-- System Cache Purge Card -->
+        <div class="admin-card">
+          <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">🧹</div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${t('adminPurgeCache')}</h3>
+          <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem;">
+            ${isKm 
+              ? 'សម្អាត Local Memory Cache និងទាញយកទិន្នន័យស្រស់បំផុតពី Cloud Firestore ដើម្បីធានាភាពសុក្រឹត។' 
+              : 'Purge local in-memory cache and force re-synchronization with latest Cloud Firestore documents.'}
+          </p>
+          <button class="btn btn-outline" onclick="app.handleAdminPurgeCache()" style="width: 100%;">
+            🔄 <span>${isKm ? 'សម្អាត Cache និង Sync ឡើងវិញ' : 'Purge Cache & Sync'}</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // =========================================================
+  // ADMIN TAB LISTENERS (FILTERING & SEARCH)
+  // =========================================================
+  initAdminTabListeners(activeTab, isKm) {
+    if (activeTab === 'campaigns') {
+      const searchInput = document.getElementById('adminCampSearchInput');
+      const catSelect = document.getElementById('adminCampCatSelect');
+      const sourceSelect = document.getElementById('adminCampSourceSelect');
+      const tableContainer = document.getElementById('adminCampTableContainer');
+      const countLabel = document.getElementById('adminTableCountLabel');
+
+      const applyFilters = () => {
+        const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+        const selectedCat = catSelect ? catSelect.value : 'all';
+        const selectedSource = sourceSelect ? sourceSelect.value : 'all';
+
+        const filtered = this.adminData.campaigns.filter(c => {
+          const matchCat = (selectedCat === 'all') || (c.category === selectedCat);
+          const cSource = c._source || (c.isPreset ? 'preset' : 'cloud');
+          const matchSource = (selectedSource === 'all') || (cSource === selectedSource);
+
+          let matchQuery = true;
+          if (query) {
+            const titleKm = (c.titleKm || '').toLowerCase();
+            const titleEn = (c.titleEn || '').toLowerCase();
+            const slug = (c.slug || '').toLowerCase();
+            const creator = (c.creator || '').toLowerCase();
+            const email = (c.creatorEmail || '').toLowerCase();
+            matchQuery = titleKm.includes(query) || titleEn.includes(query) || slug.includes(query) || creator.includes(query) || email.includes(query);
+          }
+
+          return matchCat && matchSource && matchQuery;
+        });
+
+        if (tableContainer) {
+          tableContainer.innerHTML = this.buildCampaignsTableHtml(filtered, isKm);
+        }
+        if (countLabel) {
+          countLabel.textContent = isKm 
+            ? `បង្ហាញ ${filtered.length} នៃ ${this.adminData.campaigns.length} យុទ្ធនាការ` 
+            : `Showing ${filtered.length} of ${this.adminData.campaigns.length} campaigns`;
+        }
+      };
+
+      if (searchInput) searchInput.addEventListener('input', applyFilters);
+      if (catSelect) catSelect.addEventListener('change', applyFilters);
+      if (sourceSelect) sourceSelect.addEventListener('change', applyFilters);
+    } else if (activeTab === 'users') {
+      const userSearch = document.getElementById('adminUserSearchInput');
+      const userTableContainer = document.getElementById('adminUserTableContainer');
+      const userCountLabel = document.getElementById('adminUserCountLabel');
+
+      if (userSearch) {
+        userSearch.addEventListener('input', () => {
+          const q = userSearch.value.toLowerCase().trim();
+          const filtered = this.adminData.users.filter(u => {
+            const email = (u.email || '').toLowerCase();
+            const name = (u.displayName || '').toLowerCase();
+            const uid = (u.uid || '').toLowerCase();
+            return !q || email.includes(q) || name.includes(q) || uid.includes(q);
+          });
+
+          if (userTableContainer) {
+            userTableContainer.innerHTML = this.buildUsersTableHtml(filtered, isKm);
+          }
+          if (userCountLabel) {
+            userCountLabel.textContent = isKm 
+              ? `បង្ហាញ ${filtered.length} នៃ ${this.adminData.users.length} នាក់` 
+              : `Showing ${filtered.length} of ${this.adminData.users.length} users`;
+          }
+        });
+      }
+    }
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: EDIT CAMPAIGN MODAL
+  // =========================================================
+  openAdminEditCampaignModal(campaignId) {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const camp = this.adminData.campaigns.find(c => c.id === campaignId || c.slug === campaignId);
+    if (!camp) {
+      this.showToast("Campaign not found", "error");
+      return;
+    }
+
+    const existing = document.getElementById('adminEditModalOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'adminEditModalOverlay';
+
+    const safeFrameUrl = SecurityUtils.sanitizeUrl(camp.frameUrl);
+    const cat = camp.category || 'celebration';
+
+    overlay.innerHTML = `
+      <div class="modal-card admin-modal-edit-card" style="max-width: 780px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+          <div>
+            <h3 style="font-weight: 800; font-size: 1.25rem;">✏️ ${t('adminEditCampaign')}</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">${t('adminEditCampaignSubtitle')}</p>
+          </div>
+          <button class="modal-close-btn" onclick="document.getElementById('adminEditModalOverlay').remove()">&times;</button>
+        </div>
+
+        <form id="adminEditForm" onsubmit="event.preventDefault(); app.handleAdminSaveCampaignEdit('${camp.id || camp.slug}')">
+          <div class="admin-edit-layout">
+            <!-- Left: Frame Preview -->
+            <div class="admin-edit-preview-col">
+              <label class="form-label">🖼️ ${isKm ? 'រូបភាពស៊ុមបច្ចុប្បន្ន' : 'Current Frame'}</label>
+              <div class="admin-edit-frame-preview-box">
+                <img src="${SAMPLE_AVATARS[0]}" class="admin-thumb-bg" />
+                <img src="${safeFrameUrl}" class="admin-thumb-frame" id="adminEditFramePreviewImg" />
+              </div>
+              <div style="margin-top: 0.75rem;">
+                <label class="form-label" style="font-size: 0.78rem;">${isKm ? 'ប្តូររូបភាពស៊ុមថ្មី (PNG ថ្លា)' : 'Replace Frame (PNG)'}</label>
+                <input type="file" id="adminEditFrameFileInput" accept="image/png,image/webp" class="form-input" style="font-size: 0.8rem; padding: 0.35rem;" />
+              </div>
+            </div>
+
+            <!-- Right: Metadata Form -->
+            <div class="admin-edit-fields-col">
+              <div class="form-group">
+                <label class="form-label">${t('fieldTitle')} (Khmer) *</label>
+                <input type="text" id="editCampTitleKm" class="form-input" value="${SecurityUtils.escapeHtml(camp.titleKm || '')}" required />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${t('fieldTitle')} (English) *</label>
+                <input type="text" id="editCampTitleEn" class="form-input" value="${SecurityUtils.escapeHtml(camp.titleEn || '')}" required />
+              </div>
+
+              <div class="admin-form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">${t('fieldSlug')} *</label>
+                  <input type="text" id="editCampSlug" class="form-input" value="${SecurityUtils.escapeHtml(camp.slug || '')}" required />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">${t('fieldCategory')} *</label>
+                  <select id="editCampCategory" class="form-select">
+                    <option value="education" ${cat === 'education' ? 'selected' : ''}>${t('catEducation')}</option>
+                    <option value="culture" ${cat === 'culture' ? 'selected' : ''}>${t('catCulture')}</option>
+                    <option value="charity" ${cat === 'charity' ? 'selected' : ''}>${t('catCharity')}</option>
+                    <option value="sports" ${cat === 'sports' ? 'selected' : ''}>${t('catSports')}</option>
+                    <option value="tech" ${cat === 'tech' ? 'selected' : ''}>${t('catTech')}</option>
+                    <option value="celebration" ${cat === 'celebration' ? 'selected' : ''}>${t('catCelebration')}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="admin-form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">${isKm ? 'ចំនួនអ្នកគាំទ្រ (Supporters)' : 'Supporters Count'} *</label>
+                  <input type="number" id="editCampSupporters" class="form-input" value="${camp.supporters || 1}" min="1" required />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">${isKm ? 'ឈ្មោះអ្នកបង្កើត' : 'Creator Name'}</label>
+                  <input type="text" id="editCampCreator" class="form-input" value="${SecurityUtils.escapeHtml(camp.creator || '')}" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${isKm ? 'អ៊ីមែលអ្នកបង្កើត' : 'Creator Email'}</label>
+                <input type="email" id="editCampCreatorEmail" class="form-input" value="${SecurityUtils.escapeHtml(camp.creatorEmail || '')}" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${t('fieldDesc')} (Khmer)</label>
+                <textarea id="editCampDescKm" class="form-textarea" rows="2">${SecurityUtils.escapeHtml(camp.descriptionKm || '')}</textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${t('fieldDesc')} (English)</label>
+                <textarea id="editCampDescEn" class="form-textarea" rows="2">${SecurityUtils.escapeHtml(camp.descriptionEn || '')}</textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${t('fieldCaption')}</label>
+                <textarea id="editCampCaptionKm" class="form-textarea" rows="2">${SecurityUtils.escapeHtml(camp.captionKm || camp.captionEn || '')}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('adminEditModalOverlay').remove()">
+              ${t('adminCancel')}
+            </button>
+            <button type="submit" class="btn btn-primary" id="btnAdminSaveEdit">
+              ${Icons.check} <span>${t('adminSaveCampaignChanges')}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Handle frame file change preview
+    const fileInput = document.getElementById('adminEditFrameFileInput');
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const previewImg = document.getElementById('adminEditFramePreviewImg');
+            if (previewImg) previewImg.src = evt.target.result;
+            overlay._newFrameDataUrl = evt.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+  }
+
+  async handleAdminSaveCampaignEdit(campaignId) {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const overlay = document.getElementById('adminEditModalOverlay');
+    const saveBtn = document.getElementById('btnAdminSaveEdit');
+
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<span>⏳ ${isKm ? 'កំពុងរក្សាទុក...' : 'Saving...'}</span>`;
+    }
+
+    try {
+      const titleKm = document.getElementById('editCampTitleKm').value.trim();
+      const titleEn = document.getElementById('editCampTitleEn').value.trim();
+      const slug = document.getElementById('editCampSlug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+      const category = document.getElementById('editCampCategory').value;
+      const supporters = parseInt(document.getElementById('editCampSupporters').value, 10) || 1;
+      const creator = document.getElementById('editCampCreator').value.trim();
+      const creatorEmail = document.getElementById('editCampCreatorEmail').value.trim();
+      const descriptionKm = document.getElementById('editCampDescKm').value.trim();
+      const descriptionEn = document.getElementById('editCampDescEn').value.trim();
+      const captionKm = document.getElementById('editCampCaptionKm').value.trim();
+
+      const updatePayload = {
+        titleKm,
+        titleEn,
+        slug,
+        category,
+        supporters,
+        creator,
+        creatorEmail,
+        descriptionKm,
+        descriptionEn,
+        captionKm,
+        captionEn: captionKm
+      };
+
+      if (overlay && overlay._newFrameDataUrl) {
+        updatePayload.frameUrl = overlay._newFrameDataUrl;
+      }
+
+      await AdminService.adminUpdateCampaign(campaignId, updatePayload);
+
+      this.showToast(t('adminCampaignUpdated'), 'success');
+      if (overlay) overlay.remove();
+
+      // Refresh admin data
+      await this.loadAdminView('campaigns');
+    } catch (err) {
+      console.error("Admin save edit error:", err);
+      this.showToast("Error updating campaign: " + (err.message || ''), 'error');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = `${Icons.check} <span>${t('adminSaveCampaignChanges')}</span>`;
+      }
+    }
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: DELETE CAMPAIGN
+  // =========================================================
+  async handleAdminDeleteCampaign(campaignId, title) {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const confirmMsg = `${t('adminDeleteCampaignConfirm')}\n\n• Campaign: "${title || campaignId}"`;
+    
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await AdminService.adminDeleteCampaign(campaignId);
+      this.showToast(t('adminCampaignDeleted'), 'success');
+
+      // Refresh table
+      await this.loadAdminView('campaigns');
+    } catch (err) {
+      console.error("Admin delete error:", err);
+      this.showToast("Error deleting campaign: " + (err.message || ''), 'error');
+    }
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: CREATE CAMPAIGN DIRECTLY
+  // =========================================================
+  openAdminCreateModal() {
+    // Super Admin can easily jump to #create
+    this.navigateTo('create');
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: EXPORT & IMPORT BACKUP
+  // =========================================================
+  async handleAdminExportBackup() {
+    try {
+      this.showToast("Preparing backup JSON...", "info");
+      await AdminService.exportDatabaseBackup();
+      this.showToast("Backup exported successfully!", "success");
+    } catch (err) {
+      this.showToast("Backup export failed: " + err.message, "error");
+    }
+  }
+
+  async handleAdminImportBackup(fileInput) {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    if (!window.confirm(t('adminRestoreConfirm'))) {
+      fileInput.value = '';
+      return;
+    }
+
+    try {
+      this.showToast("Reading backup file...", "info");
+      const text = await file.text();
+      const jsonData = JSON.parse(text);
+      const res = await AdminService.importDatabaseBackup(jsonData);
+      this.showToast(t('adminRestoreSuccess') + ` (${res.restoredCampaigns} campaigns)`, "success");
+      fileInput.value = '';
+      await this.loadAdminView('backup');
+    } catch (err) {
+      console.error("Backup import error:", err);
+      this.showToast("Import failed: " + (err.message || ''), "error");
+      fileInput.value = '';
+    }
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: PURGE SYSTEM CACHE
+  // =========================================================
+  async handleAdminPurgeCache() {
+    if (CampaignService._memoryCache) {
+      CampaignService._memoryCache.clear();
+    }
+    this.showToast(t('adminPurgeSuccess'), "success");
+    await this.loadAdminView(this.adminActiveTab || 'overview');
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: SAVE SETTINGS
+  // =========================================================
+  async handleAdminSaveSettings() {
+    const saveBtn = document.getElementById('btnSaveAdminSettings');
+    if (saveBtn) saveBtn.disabled = true;
+
+    try {
+      const enabled = document.getElementById('settingAnnouncementEnable')?.checked || false;
+      const textKm = document.getElementById('settingAnnouncementKm')?.value.trim() || '';
+      const textEn = document.getElementById('settingAnnouncementEn')?.value.trim() || '';
+      const link = document.getElementById('settingAnnouncementLink')?.value.trim() || '';
+      const type = document.getElementById('settingAnnouncementType')?.value || 'info';
+      const maintenance = document.getElementById('settingMaintenanceMode')?.checked || false;
+
+      const newSettings = {
+        announcementEnabled: enabled,
+        announcementTextKm: textKm,
+        announcementTextEn: textEn,
+        announcementLink: link,
+        announcementType: type,
+        maintenanceMode: maintenance
+      };
+
+      await AdminService.saveSystemSettings(newSettings);
+      this.showToast(t('adminSettingsSaved'), 'success');
+
+      // Update active announcement banner immediately
+      sessionStorage.removeItem('tra_announcement_dismissed');
+      this.renderGlobalAnnouncementBanner();
+    } catch (err) {
+      this.showToast("Error saving settings: " + (err.message || ''), 'error');
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+    }
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: TOGGLE USER VERIFICATION
+  // =========================================================
+  async handleAdminToggleVerifyUser(email, currentStatus) {
+    try {
+      const newStatus = !currentStatus;
+      await AdminService.updateUserStatus(email, newStatus);
+      this.showToast(t('adminUserStatusUpdated'), 'success');
+      await this.loadAdminView('users');
+    } catch (err) {
+      this.showToast("Error updating user: " + (err.message || ''), 'error');
+    }
+  }
 }
+
 
 // Global App Instance
 let app;
