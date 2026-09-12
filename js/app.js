@@ -14,6 +14,7 @@ class TwibbonApp {
     this.designer = null;
     this.isCreateFormDirty = false;
     this.isAuthPendingOtp = false;
+    this.adminSelectedCampaigns = new Set();
 
     // Restore Explore states from sessionStorage
     try {
@@ -3311,6 +3312,28 @@ class TwibbonApp {
           </div>
         </div>
 
+        <!-- Batch Actions Toolbar -->
+        <div id="adminBatchBar" class="admin-batch-bar" style="display: none;">
+          <div class="admin-batch-bar-left">
+            <span class="admin-batch-badge" id="adminBatchCountBadge">0</span>
+            <span class="admin-batch-text" id="adminBatchCountText">${t('adminSelectedCount').replace('{count}', '0')}</span>
+          </div>
+          <div class="admin-batch-bar-actions">
+            <button class="btn btn-sm btn-batch-delete" onclick="app.handleAdminBatchDelete()" title="${t('adminBatchDelete')}">
+              ${Icons.trash || '🗑️'} <span>${t('adminBatchDelete')}</span>
+            </button>
+            <button class="btn btn-sm btn-batch-export" onclick="app.handleAdminBatchExport()" title="${t('adminBatchExport')}">
+              ${Icons.download || '📦'} <span>${t('adminBatchExport')}</span>
+            </button>
+            <button class="btn btn-sm btn-batch-cat" onclick="app.openAdminBatchCategoryModal()" title="${t('adminBatchChangeCategory')}">
+              🏷️ <span>${t('adminBatchChangeCategory')}</span>
+            </button>
+            <button class="btn btn-sm btn-batch-close" onclick="app.handleAdminDeselectAll()" title="${t('adminDeselectAll')}">
+              ${t('adminDeselectAll')}
+            </button>
+          </div>
+        </div>
+
         <!-- Table Summary Counter -->
         <div class="admin-table-meta-bar">
           <span id="adminTableCountLabel">${isKm ? `បង្ហាញយុទ្ធនាការសរុបចំនួន ${campaigns.length}` : `Showing all ${campaigns.length} campaigns`}</span>
@@ -3338,14 +3361,17 @@ class TwibbonApp {
       <table class="admin-table">
         <thead>
           <tr>
-            <th style="width: 60px;">${isKm ? 'ស៊ុម' : 'Frame'}</th>
+            <th style="width: 44px; text-align: center;">
+              <input type="checkbox" id="adminMasterCb" class="admin-checkbox" onchange="app.handleAdminMasterCheckboxToggle(this.checked)" title="${t('adminSelectAll')}" />
+            </th>
+            <th style="width: 54px;">${isKm ? 'ស៊ុម' : 'Frame'}</th>
             <th>${isKm ? 'ព័ត៌មានយុទ្ធនាការ (Title & Slug)' : 'Campaign (Title & Slug)'}</th>
             <th>${isKm ? 'ប្រភេទ' : 'Category'}</th>
             <th>${isKm ? 'អ្នកបង្កើត (Creator)' : 'Creator'}</th>
             <th style="text-align: right;">${isKm ? 'អ្នកគាំទ្រ' : 'Supporters'}</th>
             <th>${isKm ? 'ប្រភព' : 'Source'}</th>
             <th>${isKm ? 'កាលបរិច្ឆេទ' : 'Date'}</th>
-            <th style="text-align: center; width: 140px;">${isKm ? 'សកម្មភាព' : 'Actions'}</th>
+            <th style="text-align: center; width: 130px;">${isKm ? 'សកម្មភាព' : 'Actions'}</th>
           </tr>
         </thead>
         <tbody>
@@ -3362,13 +3388,17 @@ class TwibbonApp {
             const campKey = c.slug || c.id || c._docId;
             const safeCampId = SecurityUtils.escapeHtml(campKey);
             const safeTitleEscaped = SecurityUtils.escapeHtml(displayTitle).replace(/'/g, "\\'");
+            const isSelected = this.adminSelectedCampaigns && this.adminSelectedCampaigns.has(campKey);
 
             let sourceBadge = `<span class="badge-source badge-cloud">Cloud</span>`;
             if (source === 'local') sourceBadge = `<span class="badge-source badge-local">Local</span>`;
             if (source === 'preset') sourceBadge = `<span class="badge-source badge-preset">Preset</span>`;
 
             return `
-              <tr id="adminRow_${safeCampId}">
+              <tr id="adminRow_${safeCampId}" class="${isSelected ? 'admin-row-selected' : ''}">
+                <td style="text-align: center; width: 44px;">
+                  <input type="checkbox" class="admin-checkbox admin-camp-cb" data-key="${safeCampId}" ${isSelected ? 'checked' : ''} onchange="app.handleAdminRowCheckboxToggle('${safeCampId}', this.checked)" />
+                </td>
                 <td>
                   <div class="admin-table-thumb" onclick="app.navigateTo('campaign/${slug}')" title="Click to view">
                     <img src="${SAMPLE_AVATARS[0]}" class="admin-thumb-bg" />
@@ -3709,6 +3739,7 @@ class TwibbonApp {
 
         if (tableContainer) {
           tableContainer.innerHTML = this.buildCampaignsTableHtml(filtered, isKm);
+          this.updateAdminBatchBarUI();
         }
         if (countLabel) {
           countLabel.textContent = isKm 
@@ -3993,25 +4024,250 @@ class TwibbonApp {
 
       this.showToast(t('adminCampaignDeleted'), 'success');
 
-      // Refresh table immediately
-      const tableWrap = document.getElementById('adminCampTableContainer');
-      if (tableWrap) {
-        tableWrap.innerHTML = this.buildCampaignsTableHtml(this.adminData.campaigns, isKm);
-        this.initAdminTabListeners('campaigns', isKm);
-        const countLabel = document.getElementById('adminTableCountLabel');
-        if (countLabel) {
-          countLabel.textContent = isKm 
-            ? `បង្ហាញយុទ្ធនាការសរុបចំនួន ${this.adminData.campaigns.length}`
-            : `Showing all ${this.adminData.campaigns.length} campaigns`;
-        }
-        const campTabPill = document.querySelector('.admin-tab-item:nth-child(2) .admin-tab-counter');
-        if (campTabPill) campTabPill.textContent = this.adminData.campaigns.length;
-      } else {
-        await this.loadAdminView('campaigns');
+      // Remove from selection if deleted
+      if (this.adminSelectedCampaigns) {
+        this.adminSelectedCampaigns.delete(campaignId);
       }
+
+      this.refreshAdminCampaignsTable();
     } catch (err) {
       console.error("Admin delete error:", err);
       this.showToast("Error deleting campaign: " + (err.message || ''), 'error');
+    }
+  }
+
+  // =========================================================
+  // ADMIN BATCH SELECTION & ACTIONS
+  // =========================================================
+  handleAdminRowCheckboxToggle(safeCampId, isChecked) {
+    if (!this.adminSelectedCampaigns) this.adminSelectedCampaigns = new Set();
+    if (isChecked) {
+      this.adminSelectedCampaigns.add(safeCampId);
+    } else {
+      this.adminSelectedCampaigns.delete(safeCampId);
+    }
+    const row = document.getElementById(`adminRow_${safeCampId}`);
+    if (row) {
+      if (isChecked) row.classList.add('admin-row-selected');
+      else row.classList.remove('admin-row-selected');
+    }
+    this.updateAdminBatchBarUI();
+  }
+
+  handleAdminMasterCheckboxToggle(isChecked) {
+    if (!this.adminSelectedCampaigns) this.adminSelectedCampaigns = new Set();
+    const cbs = document.querySelectorAll('.admin-camp-cb');
+    cbs.forEach(cb => {
+      cb.checked = isChecked;
+      const key = cb.getAttribute('data-key');
+      if (key) {
+        if (isChecked) this.adminSelectedCampaigns.add(key);
+        else this.adminSelectedCampaigns.delete(key);
+      }
+      const row = cb.closest('tr');
+      if (row) {
+        if (isChecked) row.classList.add('admin-row-selected');
+        else row.classList.remove('admin-row-selected');
+      }
+    });
+    this.updateAdminBatchBarUI();
+  }
+
+  updateAdminBatchBarUI() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const count = this.adminSelectedCampaigns ? this.adminSelectedCampaigns.size : 0;
+    const batchBar = document.getElementById('adminBatchBar');
+    const badge = document.getElementById('adminBatchCountBadge');
+    const text = document.getElementById('adminBatchCountText');
+
+    if (batchBar) {
+      if (count > 0) {
+        batchBar.style.display = 'flex';
+        if (badge) badge.textContent = count;
+        if (text) text.textContent = t('adminSelectedCount').replace('{count}', count);
+      } else {
+        batchBar.style.display = 'none';
+      }
+    }
+
+    const allVisibleCbs = Array.from(document.querySelectorAll('.admin-camp-cb'));
+    const masterCb = document.getElementById('adminMasterCb');
+    if (masterCb) {
+      if (allVisibleCbs.length === 0) {
+        masterCb.checked = false;
+        masterCb.indeterminate = false;
+      } else {
+        const checkedCount = allVisibleCbs.filter(cb => cb.checked).length;
+        masterCb.checked = (checkedCount === allVisibleCbs.length);
+        masterCb.indeterminate = (checkedCount > 0 && checkedCount < allVisibleCbs.length);
+      }
+    }
+  }
+
+  handleAdminDeselectAll() {
+    if (this.adminSelectedCampaigns) this.adminSelectedCampaigns.clear();
+    document.querySelectorAll('.admin-camp-cb').forEach(cb => {
+      cb.checked = false;
+      cb.closest('tr')?.classList.remove('admin-row-selected');
+    });
+    const masterCb = document.getElementById('adminMasterCb');
+    if (masterCb) {
+      masterCb.checked = false;
+      masterCb.indeterminate = false;
+    }
+    this.updateAdminBatchBarUI();
+  }
+
+  async handleAdminBatchDelete() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const count = this.adminSelectedCampaigns ? this.adminSelectedCampaigns.size : 0;
+    if (count === 0) return;
+
+    const confirmMsg = t('adminBatchDeleteConfirm').replace('{count}', count);
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      this.showToast(isKm ? 'កំពុងលុបយុទ្ធនាការដែលបានជ្រើស...' : 'Deleting selected campaigns...', 'info');
+      const targetKeys = Array.from(this.adminSelectedCampaigns);
+
+      const res = await AdminService.adminBatchDeleteCampaigns(targetKeys);
+
+      // Update in-memory campaigns
+      if (this.adminData && this.adminData.campaigns) {
+        const deletedSet = new Set(res.deletedIdentifiers || targetKeys);
+        this.adminData.campaigns = this.adminData.campaigns.filter(c => 
+          !deletedSet.has(c.slug) && !deletedSet.has(c.id) && !(c._docId && deletedSet.has(c._docId))
+        );
+        this.adminData.metrics = AdminService.getPlatformMetrics(this.adminData.campaigns, this.adminData.users);
+      }
+
+      this.adminSelectedCampaigns.clear();
+      this.showToast(t('adminBatchDeletedSuccess').replace('{count}', count), 'success');
+      this.refreshAdminCampaignsTable();
+    } catch (err) {
+      console.error("Batch delete error:", err);
+      this.showToast("Error during batch delete: " + (err.message || ''), 'error');
+    }
+  }
+
+  async handleAdminBatchExport() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const count = this.adminSelectedCampaigns ? this.adminSelectedCampaigns.size : 0;
+    if (count === 0) return;
+
+    try {
+      this.showToast(isKm ? 'កំពុងបង្កើត Backup...' : 'Generating JSON backup...', 'info');
+      const targetKeys = Array.from(this.adminSelectedCampaigns);
+      await AdminService.exportSelectedCampaignsBackup(targetKeys);
+      this.showToast(isKm ? `បានទាញយក Backup យុទ្ធនាការចំនួន ${count}!` : `Exported ${count} selected campaigns!`, 'success');
+    } catch (err) {
+      console.error("Batch export error:", err);
+      this.showToast("Error exporting campaigns: " + (err.message || ''), 'error');
+    }
+  }
+
+  openAdminBatchCategoryModal() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const count = this.adminSelectedCampaigns ? this.adminSelectedCampaigns.size : 0;
+    if (count === 0) return;
+
+    const existing = document.getElementById('adminBatchCatModalOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'adminBatchCatModalOverlay';
+
+    overlay.innerHTML = `
+      <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-header">
+          <div>
+            <h3 style="font-weight: 800; font-size: 1.2rem;">🏷️ ${t('adminBatchChangeCategory')}</h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+              ${t('adminBatchCategoryPrompt').replace('{count}', count)}
+            </p>
+          </div>
+          <button class="modal-close-btn" onclick="document.getElementById('adminBatchCatModalOverlay').remove()">&times;</button>
+        </div>
+
+        <form onsubmit="event.preventDefault(); app.handleAdminSaveBatchCategory();">
+          <div class="form-group" style="margin: 1.25rem 0;">
+            <label class="form-label">${t('fieldCategory')} *</label>
+            <select id="batchNewCategorySelect" class="form-select" style="padding: 0.75rem 1rem; font-size: 1rem;">
+              <option value="celebration">🎉 ${t('catCelebration')}</option>
+              <option value="education">🎓 ${t('catEducation')}</option>
+              <option value="culture">🏛️ ${t('catCulture')}</option>
+              <option value="charity">❤️ ${t('catCharity')}</option>
+              <option value="sports">⚽ ${t('catSports')}</option>
+              <option value="tech">💻 ${t('catTech')}</option>
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('adminBatchCatModalOverlay').remove()">
+              ${t('adminCancel')}
+            </button>
+            <button type="submit" class="btn btn-primary">
+              💾 <span>${isKm ? `ប្តូរទៅ Category ថ្មី (${count})` : `Update Category (${count})`}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+  }
+
+  async handleAdminSaveBatchCategory() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const select = document.getElementById('batchNewCategorySelect');
+    const newCat = select ? select.value : 'celebration';
+    const targetKeys = Array.from(this.adminSelectedCampaigns);
+    const count = targetKeys.length;
+
+    try {
+      this.showToast(isKm ? 'កំពុងកែប្រែ Category...' : 'Updating categories...', 'info');
+      await AdminService.adminBatchUpdateCategory(targetKeys, newCat);
+
+      // Update in-memory campaigns
+      if (this.adminData && this.adminData.campaigns) {
+        const targetSet = new Set(targetKeys);
+        this.adminData.campaigns.forEach(c => {
+          if (targetSet.has(c.slug) || targetSet.has(c.id) || (c._docId && targetSet.has(c._docId))) {
+            c.category = newCat;
+          }
+        });
+        this.adminData.metrics = AdminService.getPlatformMetrics(this.adminData.campaigns, this.adminData.users);
+      }
+
+      const modal = document.getElementById('adminBatchCatModalOverlay');
+      if (modal) modal.remove();
+
+      this.showToast(t('adminBatchCategoryUpdated').replace('{count}', count), 'success');
+      this.refreshAdminCampaignsTable();
+    } catch (err) {
+      console.error("Batch category update error:", err);
+      this.showToast("Error updating category: " + (err.message || ''), 'error');
+    }
+  }
+
+  refreshAdminCampaignsTable() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const tableWrap = document.getElementById('adminCampTableContainer');
+    if (tableWrap && this.adminData) {
+      tableWrap.innerHTML = this.buildCampaignsTableHtml(this.adminData.campaigns, isKm);
+      this.initAdminTabListeners('campaigns', isKm);
+      const countLabel = document.getElementById('adminTableCountLabel');
+      if (countLabel) {
+        countLabel.textContent = isKm 
+          ? `បង្ហាញយុទ្ធនាការសរុបចំនួន ${this.adminData.campaigns.length}`
+          : `Showing all ${this.adminData.campaigns.length} campaigns`;
+      }
+      const campTabPill = document.querySelector('.admin-tab-item:nth-child(2) .admin-tab-counter');
+      if (campTabPill) campTabPill.textContent = this.adminData.campaigns.length;
+      this.updateAdminBatchBarUI();
+    } else {
+      this.loadAdminView('campaigns');
     }
   }
 
