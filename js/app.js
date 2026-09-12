@@ -2511,7 +2511,7 @@ class TwibbonApp {
             <span class="designer-live-badge">
               <span class="live-dot"></span> <span>${isKm ? 'ការមើលផ្ទាល់' : 'Live Canvas'}</span>
             </span>
-            <span class="designer-res-badge">1000×1000 PNG</span>
+            <span class="designer-res-badge">1000×1000 PNG • ${isKm ? 'ផ្ទៃកណ្ដាលថ្លា (Transparent)' : 'Transparent Cutout'}</span>
           </div>
 
           <!-- Quick Action Toolbar: Live Mockup Face & Surprise Me Randomizer -->
@@ -3295,17 +3295,38 @@ class TwibbonApp {
       window.location.hash = '#create/designer';
     });
 
-    // Download PNG
-    const dlHandler = () => {
+    // Download PNG (Guaranteed 100% transparent cutout with no background)
+    const dlHandler = async () => {
       this.activeDesigner.clearDirty();
-      const dataUrl = this.activeDesigner.getTransparentPNGDataUrl();
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `custom-frame-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      this.showToast(t('downloadSuccess'), 'success');
+      try {
+        const blob = await this.activeDesigner.exportBlob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `custom-frame-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          a.remove();
+          URL.revokeObjectURL(url);
+        }, 1000);
+
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
+        }
+        const isKm = getLanguage() === 'km';
+        this.showToast(isKm ? 'បានទាញយក Frame PNG ផ្ទៃកណ្ដាលថ្លា (Transparent) រួចរាល់!' : 'Transparent PNG frame downloaded successfully!', 'success');
+      } catch (err) {
+        console.error('Download error:', err);
+        const dataUrl = this.activeDesigner.getTransparentPNGDataUrl();
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `custom-frame-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        this.showToast(t('downloadSuccess'), 'success');
+      }
     };
 
     document.getElementById('btnDownloadDesignerFrame').addEventListener('click', dlHandler);
@@ -5107,6 +5128,7 @@ class TwibbonApp {
 let app;
 window.addEventListener('DOMContentLoaded', () => {
   app = new TwibbonApp();
+  window.app = app;
   setTimeout(() => {
     CampaignService.syncLocalCampaignsToCloud();
   }, 1000);
