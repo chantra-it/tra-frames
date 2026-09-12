@@ -8789,7 +8789,11 @@ class TwibbonApp {
     try {
       await AuthService.logout();
       this.showToast(t('logoutSuccess'), 'success');
-      if (this.currentView === 'create' || this.currentView === 'my-campaigns') {
+      try {
+        sessionStorage.removeItem('tra_admin_active_tab');
+        localStorage.removeItem('tra_admin_active_tab');
+      } catch (e) {}
+      if (this.currentView === 'create' || this.currentView === 'my-campaigns' || this.currentView === 'admin') {
         window.location.hash = '#explore';
       }
     } catch (err) {
@@ -11404,11 +11408,44 @@ class TwibbonApp {
     const container = document.getElementById('appContent');
     const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
 
-    if (subTab) {
-      this.adminActiveTab = subTab;
-    } else if (!this.adminActiveTab) {
-      this.adminActiveTab = 'overview';
+    // Multi-tier active tab resolution:
+    // 1. Explicit parameter passed in (e.g. from hash route #admin/users)
+    // 2. Parsed directly from window.location.hash (#admin/<tab>)
+    // 3. Current in-memory this.adminActiveTab
+    // 4. Stored in sessionStorage or localStorage (preserves tab across F5/browser refresh)
+    // 5. Fallback to 'overview'
+    let targetTab = subTab;
+    if (!targetTab) {
+      const hashParts = (window.location.hash || '').slice(1).split('/');
+      if (hashParts[0] === 'admin' && hashParts[1]) {
+        targetTab = hashParts[1];
+      }
     }
+    if (!targetTab && this.adminActiveTab) {
+      targetTab = this.adminActiveTab;
+    }
+    if (!targetTab) {
+      try {
+        targetTab = sessionStorage.getItem('tra_admin_active_tab') || localStorage.getItem('tra_admin_active_tab');
+      } catch (e) {}
+    }
+
+    const validTabs = ['overview', 'campaigns', 'users', 'settings', 'backup'];
+    if (!targetTab || !validTabs.includes(targetTab)) {
+      targetTab = 'overview';
+    }
+
+    this.adminActiveTab = targetTab;
+    try {
+      sessionStorage.setItem('tra_admin_active_tab', targetTab);
+      localStorage.setItem('tra_admin_active_tab', targetTab);
+      const targetHash = '#admin/' + targetTab;
+      if (window.location.hash !== targetHash) {
+        history.replaceState(null, '', targetHash);
+        this.currentRouteHash = targetHash;
+        localStorage.setItem('tra_last_active_route', targetHash);
+      }
+    } catch (e) {}
 
     const user = AuthService ? AuthService.currentUser : null;
 
@@ -11562,8 +11599,23 @@ class TwibbonApp {
   }
 
   switchAdminTab(tabName) {
+    const validTabs = ['overview', 'campaigns', 'users', 'settings', 'backup'];
+    if (!validTabs.includes(tabName)) tabName = 'overview';
+
     this.adminActiveTab = tabName;
     const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+
+    // Persist active tab across browser refresh and reload
+    try {
+      sessionStorage.setItem('tra_admin_active_tab', tabName);
+      localStorage.setItem('tra_admin_active_tab', tabName);
+      const targetHash = '#admin/' + tabName;
+      if (window.location.hash !== targetHash) {
+        history.replaceState(null, '', targetHash);
+        this.currentRouteHash = targetHash;
+        localStorage.setItem('tra_last_active_route', targetHash);
+      }
+    } catch (e) {}
     
     // Update tab active classes
     document.querySelectorAll('.admin-tab-item').forEach(btn => {
