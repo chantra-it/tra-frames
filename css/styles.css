@@ -167,6 +167,7 @@ svg {
 .studio-top-bar svg,
 .studio-controls-card svg,
 .share-action-btn svg,
+.live-preview-header svg,
 .toast svg {
   width: 18px;
   height: 18px;
@@ -1995,15 +1996,63 @@ button, input, textarea, select {
 }
 
 .live-preview-header {
-  padding: 0.65rem 1rem;
+  padding: 0.7rem 1rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
+}
+
+.live-preview-header svg {
+  width: 16px;
+  height: 16px;
+  max-width: 16px;
+  max-height: 16px;
+  flex-shrink: 0;
+  color: var(--accent-primary);
+}
+
+.preset-frame-picker {
+  display: flex;
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding: 0.25rem 0.15rem 0.65rem;
+}
+
+.preset-frame-chip {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-color);
+  overflow: hidden;
+  cursor: pointer;
+  padding: 3px;
+  background: var(--bg-secondary);
+  transition: all var(--dur-fast) var(--ease-spring);
+  box-shadow: var(--shadow-xs);
+  flex-shrink: 0;
+}
+
+.preset-frame-chip:hover {
+  transform: translateY(-2px) scale(1.05);
+  border-color: var(--accent-primary);
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.preset-frame-chip.active {
+  border-color: var(--accent-primary);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.preset-frame-chip img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .checkerboard-preview {
