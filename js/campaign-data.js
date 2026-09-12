@@ -418,8 +418,8 @@ const SAMPLE_AVATARS = [
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
   <defs>
     <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10b981"/>
-      <stop offset="100%" stop-color="#047857"/>
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
     </linearGradient>
   </defs>
   <rect width="600" height="600" fill="url(#bg3)"/>
@@ -685,13 +685,13 @@ const OtpService = {
             text: `សួស្តី ${name}!\nលេខកូដសម្ងាត់ ៦ ខ្ទង់របស់អ្នកគឺ៖ ${otpCode}\nលេខកូដនេះមានសុពលភាពរយៈពេល ១០ នាទី។`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 25px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; text-align: center;">
-                <h2 style="color: #059669; margin-bottom: 6px;">Tra Frames</h2>
+                <h2 style="color: #2563eb; margin-bottom: 6px;">Tra Frames</h2>
                 <p style="color: #64748b; font-size: 14px; margin-top: 0;">វេទិកាស៊ុមរូបថតយុទ្ធនាការ និងព្រឹត្តិការណ៍</p>
                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 18px 0;">
                 <p style="color: #334155; font-size: 15px;">សួស្តី <strong>${name}</strong>,</p>
                 <p style="color: #475569; font-size: 14px;">នេះជាលេខកូដផ្ទៀងផ្ទាត់អ៊ីមែល (OTP) របស់អ្នក៖</p>
                 <div style="margin: 24px 0;">
-                  <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f172a; background: #f0fdf4; padding: 12px 24px; border-radius: 8px; border: 2px dashed #10b981; display: inline-block;">
+                  <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f172a; background: #eff6ff; padding: 12px 24px; border-radius: 8px; border: 2px dashed #2563eb; display: inline-block;">
                     ${otpCode}
                   </span>
                 </div>
@@ -717,7 +717,7 @@ const OtpService = {
     window.dispatchEvent(new CustomEvent('tra_otp_dispatched', {
       detail: { email: cleanEmail, otpCode }
     }));
-    console.log(`%c🔑 [Tra Frames OTP] Code generated for ${cleanEmail}: ${otpCode}`, "color: #059669; font-weight: bold; font-size: 14px;");
+    console.log(`%c🔑 [Tra Frames OTP] Code generated for ${cleanEmail}: ${otpCode}`, "color: #2563eb; font-weight: bold; font-size: 14px;");
   },
 
   async verifyOtp(email, enteredCode) {
@@ -1424,7 +1424,7 @@ const CampaignService = {
       if (cloudStatusEl) {
         const isKm = getLanguage() === 'km';
         cloudStatusEl.innerHTML = `☁️ ${isKm ? 'បាន Sync ឡើង Cloud Firestore រួចរាល់ • អាចបើកលើទូរស័ព្ទបាន' : 'Synced to Cloud Firestore • Accessible on Mobile'}`;
-        cloudStatusEl.style.color = '#10b981';
+        cloudStatusEl.style.color = '#2563eb';
       }
       return true;
     } catch (err) {
