@@ -3261,7 +3261,7 @@ class TwibbonApp {
                     <td>
                       <div style="display: flex; gap: 0.35rem;">
                         <button class="btn btn-secondary btn-sm" onclick="app.navigateTo('campaign/${slug}')" title="View">👁️</button>
-                        <button class="btn btn-outline btn-sm" onclick="app.openAdminEditCampaignModal('${c.id || c.slug}')" title="Edit">✏️</button>
+                        <button class="btn btn-outline btn-sm" onclick="app.openAdminEditCampaignModal('${c.slug || c.id || c._docId}')" title="Edit">✏️</button>
                       </div>
                     </td>
                   </tr>
@@ -3359,7 +3359,8 @@ class TwibbonApp {
             const date = (c.createdAt || '').split('T')[0] || '2026';
             const frameUrl = SecurityUtils.sanitizeUrl(c.frameUrl);
             const source = c._source || (c.isPreset ? 'preset' : 'cloud');
-            const safeCampId = SecurityUtils.escapeHtml(c.id || c.slug);
+            const campKey = c.slug || c.id || c._docId;
+            const safeCampId = SecurityUtils.escapeHtml(campKey);
             const safeTitleEscaped = SecurityUtils.escapeHtml(displayTitle).replace(/'/g, "\\'");
 
             let sourceBadge = `<span class="badge-source badge-cloud">Cloud</span>`;
@@ -3752,7 +3753,9 @@ class TwibbonApp {
   // =========================================================
   openAdminEditCampaignModal(campaignId) {
     const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
-    const camp = this.adminData.campaigns.find(c => c.id === campaignId || c.slug === campaignId);
+    const camp = (this.adminData && this.adminData.campaigns)
+      ? this.adminData.campaigns.find(c => c.slug === campaignId || c.id === campaignId || c._docId === campaignId)
+      : null;
     if (!camp) {
       this.showToast("Campaign not found", "error");
       return;
@@ -3767,6 +3770,7 @@ class TwibbonApp {
 
     const safeFrameUrl = SecurityUtils.sanitizeUrl(camp.frameUrl);
     const cat = camp.category || 'celebration';
+    const targetKey = camp.slug || camp.id || camp._docId || campaignId;
 
     overlay.innerHTML = `
       <div class="modal-card admin-modal-edit-card" style="max-width: 780px; max-height: 90vh; overflow-y: auto;">
@@ -3778,7 +3782,7 @@ class TwibbonApp {
           <button class="modal-close-btn" onclick="document.getElementById('adminEditModalOverlay').remove()">&times;</button>
         </div>
 
-        <form id="adminEditForm" onsubmit="event.preventDefault(); app.handleAdminSaveCampaignEdit('${camp.id || camp.slug}')">
+        <form id="adminEditForm" onsubmit="event.preventDefault(); app.handleAdminSaveCampaignEdit('${SecurityUtils.escapeHtml(targetKey)}')">
           <div class="admin-edit-layout">
             <!-- Left: Frame Preview -->
             <div class="admin-edit-preview-col">
@@ -3930,13 +3934,33 @@ class TwibbonApp {
         updatePayload.frameUrl = overlay._newFrameDataUrl;
       }
 
-      await AdminService.adminUpdateCampaign(campaignId, updatePayload);
+      const res = await AdminService.adminUpdateCampaign(campaignId, updatePayload);
+      const updated = res.campaign;
+
+      // Immediately update local in-memory adminData
+      if (this.adminData && this.adminData.campaigns) {
+        const idx = this.adminData.campaigns.findIndex(c => 
+          c.slug === campaignId || c.id === campaignId || c._docId === campaignId
+        );
+        if (idx !== -1) {
+          this.adminData.campaigns[idx] = updated;
+        } else {
+          this.adminData.campaigns.unshift(updated);
+        }
+        this.adminData.metrics = AdminService.getPlatformMetrics(this.adminData.campaigns, this.adminData.users);
+      }
 
       this.showToast(t('adminCampaignUpdated'), 'success');
       if (overlay) overlay.remove();
 
-      // Refresh admin data
-      await this.loadAdminView('campaigns');
+      // Refresh admin data and table UI
+      const tableWrap = document.getElementById('adminCampTableContainer');
+      if (tableWrap && this.adminActiveTab === 'campaigns') {
+        tableWrap.innerHTML = this.buildCampaignsTableHtml(this.adminData.campaigns, isKm);
+        this.initAdminTabListeners('campaigns', isKm);
+      } else {
+        await this.loadAdminView('campaigns');
+      }
     } catch (err) {
       console.error("Admin save edit error:", err);
       this.showToast("Error updating campaign: " + (err.message || ''), 'error');
@@ -3958,10 +3982,33 @@ class TwibbonApp {
 
     try {
       await AdminService.adminDeleteCampaign(campaignId);
+
+      // Immediately update local in-memory adminData
+      if (this.adminData && this.adminData.campaigns) {
+        this.adminData.campaigns = this.adminData.campaigns.filter(c => 
+          c.slug !== campaignId && c.id !== campaignId && c._docId !== campaignId
+        );
+        this.adminData.metrics = AdminService.getPlatformMetrics(this.adminData.campaigns, this.adminData.users);
+      }
+
       this.showToast(t('adminCampaignDeleted'), 'success');
 
-      // Refresh table
-      await this.loadAdminView('campaigns');
+      // Refresh table immediately
+      const tableWrap = document.getElementById('adminCampTableContainer');
+      if (tableWrap) {
+        tableWrap.innerHTML = this.buildCampaignsTableHtml(this.adminData.campaigns, isKm);
+        this.initAdminTabListeners('campaigns', isKm);
+        const countLabel = document.getElementById('adminTableCountLabel');
+        if (countLabel) {
+          countLabel.textContent = isKm 
+            ? `បង្ហាញយុទ្ធនាការសរុបចំនួន ${this.adminData.campaigns.length}`
+            : `Showing all ${this.adminData.campaigns.length} campaigns`;
+        }
+        const campTabPill = document.querySelector('.admin-tab-item:nth-child(2) .admin-tab-counter');
+        if (campTabPill) campTabPill.textContent = this.adminData.campaigns.length;
+      } else {
+        await this.loadAdminView('campaigns');
+      }
     } catch (err) {
       console.error("Admin delete error:", err);
       this.showToast("Error deleting campaign: " + (err.message || ''), 'error');
