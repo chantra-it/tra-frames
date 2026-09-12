@@ -3248,7 +3248,8 @@ const Icons = {
   eye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
   chart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
   tune: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
-  share2: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`
+  share2: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
 };
 
 function getIcon(name) {
@@ -3628,23 +3629,34 @@ const SecurityUtils = {
   sanitizeUrl(url) {
     if (!url || typeof url !== 'string') return '#';
     const trimmed = url.trim();
-    // Allow standard https, relative paths, hashes, and safe raster data URLs
+    // Allow standard https, http, relative paths, hashes, and safe raster data URLs
     if (/^(https?:\/\/|\/|#|data:image\/(png|jpeg|jpg|webp)[;,])/i.test(trimmed)) {
       return trimmed;
     }
     // For SVG data URLs, rigorously sanitize the SVG markup
-    if (/^data:image\/svg\+xml[;,]/i.test(trimmed)) {
+    if (/^data:image\/svg\+xml/i.test(trimmed)) {
       try {
-        let svgBody = '';
-        if (trimmed.includes(';base64,')) {
-          svgBody = atob(trimmed.split(';base64,')[1]);
-          const cleanSvg = this.sanitizeSvg(svgBody);
-          return `data:image/svg+xml;base64,${btoa(cleanSvg)}`;
-        } else if (trimmed.includes(';utf8,')) {
-          svgBody = decodeURIComponent(trimmed.split(';utf8,')[1]);
-          const cleanSvg = this.sanitizeSvg(svgBody);
-          return `data:image/svg+xml;utf8,${encodeURIComponent(cleanSvg)}`;
+        const commaIdx = trimmed.indexOf(',');
+        if (commaIdx === -1) return '#';
+        const meta = trimmed.slice(0, commaIdx).toLowerCase();
+        const body = trimmed.slice(commaIdx + 1);
+        let svgText = '';
+        if (meta.includes(';base64')) {
+          try {
+            svgText = decodeURIComponent(escape(atob(body)));
+          } catch (e) {
+            svgText = atob(body);
+          }
+        } else {
+          try {
+            svgText = decodeURIComponent(body);
+          } catch (e) {
+            svgText = body;
+          }
         }
+        const cleanSvg = this.sanitizeSvg(svgText);
+        if (!cleanSvg || !cleanSvg.includes('<svg')) return '#';
+        return `data:image/svg+xml;utf8,${encodeURIComponent(cleanSvg)}`;
       } catch (e) {
         return '#';
       }
@@ -4777,6 +4789,7 @@ const AuthService = {
       email: found.email,
       displayName: SecurityUtils.cleanText(found.displayName, 50),
       photoURL: SecurityUtils.sanitizeUrl(found.photoURL || ''),
+      emailVerified: found.emailVerified !== false,
       isLocal: true
     };
     this.currentUser = user;
@@ -5030,26 +5043,35 @@ const CampaignService = {
       else if (val.timestampValue !== undefined) result[key] = val.timestampValue;
       else if (val.nullValue !== undefined) result[key] = null;
     }
+    const docId = doc.name ? doc.name.split('/').pop() : null;
+    if (!result.id && docId) result.id = docId;
+    if (!result.slug && docId) result.slug = docId;
     return result;
   },
 
-  // Save to memory cache and local storage so subsequent loads are instant
+  // Save to memory cache (and local storage only if owned/created by user)
   cacheCloudCampaign(campaign) {
     if (!campaign) return;
     if (campaign.slug) this._memoryCache.set(campaign.slug, campaign);
     if (campaign.id) this._memoryCache.set(campaign.id, campaign);
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      let userCampaigns = stored ? JSON.parse(stored) : [];
-      const idx = userCampaigns.findIndex(c => c.slug === campaign.slug || c.id === campaign.id);
-      if (idx >= 0) {
-        userCampaigns[idx] = campaign;
-      } else {
-        userCampaigns.unshift(campaign);
+
+    // Only cache to local storage if it's explicitly user created or belongs to current user
+    const user = AuthService.currentUser;
+    const isOwner = (user && campaign.creatorUid && campaign.creatorUid === user.uid);
+    if (campaign.isUserCreated || isOwner) {
+      try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        let userCampaigns = stored ? JSON.parse(stored) : [];
+        const idx = userCampaigns.findIndex(c => c.slug === campaign.slug || c.id === campaign.id);
+        if (idx >= 0) {
+          userCampaigns[idx] = campaign;
+        } else {
+          userCampaigns.unshift(campaign);
+        }
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+      } catch (e) {
+        console.warn("Storage quota warning on cacheCloudCampaign:", e);
       }
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
-    } catch (e) {
-      console.warn("Storage quota warning on cacheCloudCampaign:", e);
     }
   },
 
@@ -5187,6 +5209,13 @@ const CampaignService = {
         userCampaigns = userCampaigns.filter(c => c.id !== safeId && c.slug !== safeId);
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
 
+        // Delete from memory cache so it doesn't re-appear on route changes
+        if (this._memoryCache) {
+          this._memoryCache.delete(safeId);
+          if (target && target.slug) this._memoryCache.delete(target.slug);
+          if (target && target.id) this._memoryCache.delete(target.id);
+        }
+
         // Delete from Cloud Firestore if authorized
         const db = initFirestore();
         if (db && target) {
@@ -5209,9 +5238,9 @@ const CampaignService = {
       const allUserCampaigns = stored ? JSON.parse(stored) : [];
       const user = AuthService.currentUser;
       if (user) {
-        return allUserCampaigns.filter(c => !c.creatorUid || c.creatorUid === user.uid);
+        return allUserCampaigns.filter(c => c.creatorUid === user.uid || (c.isUserCreated && !c.creatorUid));
       }
-      return allUserCampaigns;
+      return allUserCampaigns.filter(c => c.isUserCreated);
     } catch (e) {
       return [];
     }
@@ -5490,7 +5519,7 @@ class CanvasStudio {
       if (!this.userImage) return;
       this.isDragging = true;
       const rect = el.getBoundingClientRect();
-      const scaleCoord = this.canvas.width / rect.width;
+      const scaleCoord = (rect.width > 0) ? (this.canvas.width / rect.width) : 1;
       this.dragStartX = e.clientX * scaleCoord - this.state.x;
       this.dragStartY = e.clientY * scaleCoord - this.state.y;
       el.style.cursor = 'grabbing';
@@ -5499,7 +5528,7 @@ class CanvasStudio {
     window.addEventListener('mousemove', (e) => {
       if (!this.isDragging || !this.userImage) return;
       const rect = el.getBoundingClientRect();
-      const scaleCoord = this.canvas.width / rect.width;
+      const scaleCoord = (rect.width > 0) ? (this.canvas.width / rect.width) : 1;
       this.state.x = e.clientX * scaleCoord - this.dragStartX;
       this.state.y = e.clientY * scaleCoord - this.dragStartY;
       this.render();
@@ -5528,7 +5557,7 @@ class CanvasStudio {
       if (e.touches.length === 1) {
         this.isDragging = true;
         const rect = el.getBoundingClientRect();
-        const scaleCoord = this.canvas.width / rect.width;
+        const scaleCoord = (rect.width > 0) ? (this.canvas.width / rect.width) : 1;
         this.dragStartX = e.touches[0].clientX * scaleCoord - this.state.x;
         this.dragStartY = e.touches[0].clientY * scaleCoord - this.state.y;
       } else if (e.touches.length === 2) {
@@ -5545,7 +5574,7 @@ class CanvasStudio {
       e.preventDefault();
       if (e.touches.length === 1 && this.isDragging) {
         const rect = el.getBoundingClientRect();
-        const scaleCoord = this.canvas.width / rect.width;
+        const scaleCoord = (rect.width > 0) ? (this.canvas.width / rect.width) : 1;
         this.state.x = e.touches[0].clientX * scaleCoord - this.dragStartX;
         this.state.y = e.touches[0].clientY * scaleCoord - this.dragStartY;
         this.render();
@@ -5568,7 +5597,7 @@ class CanvasStudio {
       if (e.touches.length === 1 && this.userImage) {
         this.isDragging = true;
         const rect = el.getBoundingClientRect();
-        const scaleCoord = this.canvas.width / rect.width;
+        const scaleCoord = (rect.width > 0) ? (this.canvas.width / rect.width) : 1;
         this.dragStartX = e.touches[0].clientX * scaleCoord - this.state.x;
         this.dragStartY = e.touches[0].clientY * scaleCoord - this.state.y;
       } else if (e.touches.length === 0) {
@@ -5656,10 +5685,21 @@ class CanvasStudio {
 
       this.renderToContext(expCtx, this.outputResolution, this.outputResolution, true);
 
-      exportCanvas.toBlob((blob) => {
+      if (exportCanvas.toBlob) {
+        exportCanvas.toBlob((blob) => {
+          this.clearDirty();
+          if (blob) {
+            resolve(blob);
+          } else {
+            const dataUrl = exportCanvas.toDataURL('image/png', 1.0);
+            fetch(dataUrl).then(res => res.blob()).then(resolve).catch(() => resolve(null));
+          }
+        }, 'image/png', 1.0);
+      } else {
         this.clearDirty();
-        resolve(blob);
-      }, 'image/png', 1.0);
+        const dataUrl = exportCanvas.toDataURL('image/png', 1.0);
+        fetch(dataUrl).then(res => res.blob()).then(resolve).catch(() => resolve(null));
+      }
     });
   }
 }
@@ -5979,11 +6019,12 @@ class FrameDesigner {
     // 6. Header Badge Pill
     if (this.settings.headerText.trim()) {
       ctx.save();
+      ctx.font = "900 32px 'Segoe UI', 'Kantumruy Pro', sans-serif";
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
       ctx.shadowBlur = 16;
       ctx.shadowOffsetY = 6;
 
-      const badgeWidth = Math.min(Math.max(ctx.measureText(this.settings.headerText).width + 120, 480), 760);
+      const badgeWidth = Math.min(Math.max(ctx.measureText(this.settings.headerText.toUpperCase()).width + 120, 480), 760);
       const badgeHeight = 78;
       const bx = center - badgeWidth / 2;
       const by = 48;
@@ -6001,7 +6042,6 @@ class FrameDesigner {
 
       // Text
       ctx.fillStyle = this.settings.headerColor || theme.ring;
-      ctx.font = "900 32px 'Segoe UI', 'Kantumruy Pro', sans-serif";
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(this.settings.headerText.toUpperCase(), center, by + badgeHeight / 2);
@@ -6011,11 +6051,12 @@ class FrameDesigner {
     // 7. Footer Badge / Ribbon
     if (this.settings.footerText.trim()) {
       ctx.save();
+      ctx.font = "800 30px 'Segoe UI', 'Kantumruy Pro', sans-serif";
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
       ctx.shadowBlur = 16;
       ctx.shadowOffsetY = 6;
 
-      const footerWidth = Math.min(Math.max(ctx.measureText(this.settings.footerText).width + 120, 460), 780);
+      const footerWidth = Math.min(Math.max(ctx.measureText(this.settings.footerText.toUpperCase()).width + 120, 460), 780);
       const footerHeight = 78;
       const fx = center - footerWidth / 2;
       const fy = s - 128;
@@ -6030,7 +6071,6 @@ class FrameDesigner {
       ctx.stroke();
 
       ctx.fillStyle = this.settings.footerColor || '#ffffff';
-      ctx.font = "800 30px 'Segoe UI', 'Kantumruy Pro', sans-serif";
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(this.settings.footerText.toUpperCase(), center, fy + footerHeight / 2);
@@ -6170,7 +6210,7 @@ class TwibbonApp {
   hasUnsavedWork() {
     // 1. Check Canvas Studio
     const studio = this.activeStudio || this.studio;
-    if (this.currentView === 'campaign' && studio && typeof studio.hasUnsavedWork === 'function') {
+    if ((this.currentView === 'campaign' || this.currentView === 'studio') && studio && typeof studio.hasUnsavedWork === 'function') {
       if (studio.hasUnsavedWork()) return true;
     }
 
@@ -7344,7 +7384,7 @@ class TwibbonApp {
         <div class="card-preview-wrapper" onclick="window.location.hash='#campaign/${slug}'">
           <img src="${SAMPLE_AVATARS[0]}" class="card-sample-backdrop" alt="Preview backdrop" loading="lazy" />
           <img src="${frameUrl}" alt="${title}" class="card-preview-frame" loading="lazy" />
-          <div class="card-badge-category">${t('cat' + (campaign.category.charAt(0).toUpperCase() + campaign.category.slice(1)))}</div>
+          <div class="card-badge-category">${t('cat' + (campaign.category ? (campaign.category.charAt(0).toUpperCase() + campaign.category.slice(1)) : 'Celebration'))}</div>
           <div class="card-badge-supporters">${Icons.users} <span>${supporterCount}</span></div>
         </div>
         <div class="card-content">
