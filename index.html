@@ -3158,6 +3158,885 @@ button, input, textarea, select {
   color: var(--accent-hover);
 }
 
+/* =========================================================
+   GLOBAL ANNOUNCEMENT BANNER
+   ========================================================= */
+.global-announcement-bar {
+  width: 100%;
+  position: relative;
+  z-index: 999;
+  padding: 0.6rem 1rem;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.banner-type-info {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  color: #ffffff;
+}
+
+.banner-type-success {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+}
+
+.banner-type-warning {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  color: #ffffff;
+}
+
+.announcement-content-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.announcement-icon-badge {
+  font-size: 1rem;
+}
+
+.announcement-text-msg {
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.announcement-action-link {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.announcement-action-link:hover {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.announcement-close-btn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+  padding: 0 0.4rem;
+  margin-left: auto;
+  transition: opacity 0.2s ease;
+}
+
+.announcement-close-btn:hover {
+  opacity: 1;
+}
+
+/* =========================================================
+   SUPER ADMIN DASHBOARD STYLES
+   ========================================================= */
+.admin-wrapper {
+  padding-top: 1.75rem;
+  padding-bottom: 4rem;
+}
+
+/* Top Hero Banner */
+.admin-top-banner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #1e3a8a 100%);
+  color: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 2rem 2.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  box-shadow: 0 12px 36px -6px rgba(15, 23, 42, 0.25);
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-top-banner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.admin-banner-left {
+  flex: 1;
+  min-width: 280px;
+  position: relative;
+  z-index: 1;
+}
+
+.admin-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(37, 99, 235, 0.25);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #93c5fd;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+}
+
+.admin-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: pulseGreen 1.8s infinite;
+}
+
+@keyframes pulseGreen {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+}
+
+.admin-main-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.4rem 0;
+  color: #ffffff;
+}
+
+.admin-main-subtitle {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+}
+
+.admin-user-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  color: #f1f5f9;
+}
+
+.admin-tag-role {
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.04em;
+}
+
+.admin-banner-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+/* Admin Tabs Navigation */
+.admin-nav-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--bg-card);
+  padding: 0.5rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.75rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.admin-nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-tab-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.35rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.admin-tab-item:hover {
+  color: var(--accent-primary);
+  background: var(--accent-soft);
+}
+
+.admin-tab-item.active {
+  color: #ffffff;
+  background: var(--accent-primary);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+.admin-tab-icon {
+  font-size: 1.1rem;
+}
+
+.admin-tab-counter {
+  background: rgba(0, 0, 0, 0.12);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.admin-tab-item.active .admin-tab-counter {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* KPI Cards Grid */
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.admin-kpi-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem 1.6rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.admin-kpi-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.admin-kpi-icon {
+  font-size: 1.5rem;
+}
+
+.admin-kpi-value {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.admin-kpi-subtext {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.card-kpi-blue {
+  border-left: 4px solid #2563eb;
+}
+
+.card-kpi-cyan {
+  border-left: 4px solid #06b6d4;
+}
+
+.card-kpi-indigo {
+  border-left: 4px solid #6366f1;
+}
+
+.card-kpi-purple {
+  border-left: 4px solid #a855f7;
+}
+
+/* Analytics Row (Chart & Top List) */
+.admin-analytics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .admin-analytics-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  padding: 1.75rem;
+}
+
+.admin-card-header {
+  margin-bottom: 1.25rem;
+}
+
+.admin-card-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Category Bars */
+.admin-cat-bars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-cat-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-cat-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.admin-cat-bar-count {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+.admin-progress-track {
+  width: 100%;
+  height: 9px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.admin-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+}
+
+/* Category Colors */
+.cat-color-education { background: #3b82f6; }
+.cat-color-culture   { background: #ec4899; }
+.cat-color-charity   { background: #10b981; }
+.cat-color-sports    { background: #f97316; }
+.cat-color-tech      { background: #8b5cf6; }
+.cat-color-celebration { background: #f59e0b; }
+
+.admin-cat-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Top Campaigns List */
+.admin-top-campaigns-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.admin-top-camp-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  transition: background 0.2s ease;
+}
+
+.admin-top-camp-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.admin-top-rank {
+  font-size: 0.95rem;
+  font-weight: 800;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.admin-top-rank.rank-1 { background: #fbbf24; color: #78350f; }
+.admin-top-rank.rank-2 { background: #94a3b8; color: #0f172a; }
+.admin-top-rank.rank-3 { background: #d97706; color: #ffffff; }
+
+.admin-top-thumb-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+.admin-thumb-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-thumb-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.admin-top-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-top-name {
+  display: block;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-top-name:hover {
+  color: var(--accent-primary);
+}
+
+.admin-top-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Toolbar & Filters */
+.admin-toolbar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+}
+
+.admin-search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.admin-search-input {
+  padding-left: 2.35rem;
+}
+
+.admin-filters-wrap {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-filter-select {
+  width: auto;
+  min-width: 150px;
+}
+
+.admin-table-meta-bar {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 0.85rem;
+}
+
+/* Data Table */
+.admin-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  text-align: left;
+}
+
+.admin-table th {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.admin-table tr:hover td {
+  background: var(--bg-secondary);
+}
+
+.admin-table-thumb {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: #e2e8f0;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.admin-mini-thumb {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: #e2e8f0;
+}
+
+.admin-camp-cell-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.admin-link-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.admin-link-title:hover {
+  color: var(--accent-primary);
+}
+
+.admin-slug-tag {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.admin-creator-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-creator-name {
+  font-weight: 600;
+}
+
+.admin-creator-email {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.admin-supporter-pill {
+  display: inline-block;
+  font-weight: 800;
+  font-size: 0.86rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+}
+
+/* Badges */
+.badge-source {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.badge-cloud  { background: rgba(37, 99, 235, 0.12); color: #2563eb; }
+.badge-local  { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.badge-preset { background: rgba(168, 85, 247, 0.12); color: #9333ea; }
+
+.badge-role {
+  display: inline-block;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.badge-role-super { background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
+.badge-role-member { background: var(--bg-secondary); color: var(--text-secondary); }
+
+.badge-verify {
+  display: inline-block;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.badge-verify-yes { background: rgba(16, 185, 129, 0.12); color: #059669; }
+.badge-verify-no  { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+
+.admin-camp-count-badge {
+  display: inline-block;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+}
+
+.admin-user-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+/* Actions in Table */
+.admin-actions-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.btn-action-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.btn-action-view:hover   { background: var(--accent-soft); border-color: var(--accent-primary); }
+.btn-action-edit:hover   { background: rgba(245, 158, 11, 0.12); border-color: #f59e0b; }
+.btn-action-delete:hover { background: rgba(239, 68, 68, 0.12); border-color: #ef4444; }
+
+/* Admin Edit Modal Layout */
+.admin-modal-edit-card {
+  width: 100%;
+  max-width: 820px;
+}
+
+.admin-edit-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 720px) {
+  .admin-edit-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-edit-frame-preview-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #f1f5f9;
+  border: 2px dashed var(--border-color);
+}
+
+.admin-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .admin-form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Switch & Toggle */
+.admin-switch-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.admin-switch-wrap input {
+  display: none;
+}
+
+.admin-switch-slider {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  background: #cbd5e1;
+  border-radius: var(--radius-full);
+  transition: background 0.3s ease;
+}
+
+.admin-switch-slider::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.admin-switch-wrap input:checked + .admin-switch-slider {
+  background: var(--accent-primary);
+}
+
+.admin-switch-wrap input:checked + .admin-switch-slider::after {
+  transform: translateX(22px);
+}
+
+.admin-switch-label {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+/* Backup Cards Grid */
+.admin-backup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Auth Gate & 403 Card */
+.admin-auth-gate-card,
+.admin-denied-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--border-color);
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-auth-gate-icon,
+.admin-denied-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.admin-logged-info {
+  display: inline-block;
+  background: var(--bg-secondary);
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
 
 
 </style>
@@ -3471,7 +4350,67 @@ const translations = {
     otpMaxAttempts: "អ្នកបានវាយខុសលើសកំណត់! សូមស្នើសុំលេខកូដថ្មី។",
     otpVerifiedSuccess: "🎉 ផ្ទៀងផ្ទាត់ជោគជ័យ! អ៊ីមែលរបស់អ្នកត្រូវបានបញ្ជាក់ត្រឹមត្រូវ។",
     otpEnterCodeBtn: "🔑 បញ្ចូលលេខកូដ OTP",
-    otpSendNewBtn: "📩 ផ្ញើលេខកូដ OTP ទៅ Email"
+    otpSendNewBtn: "📩 ផ្ញើលេខកូដ OTP ទៅ Email",
+
+    // Super Admin Dashboard Translations
+    adminDashboard: "ផ្ទាំងគ្រប់គ្រង Admin",
+    adminSubtitle: "ប្រព័ន្ធគ្រប់គ្រងវេទិកា Tra Frames ទាំងមូល",
+    adminOverview: "ស្ថិតិ & ទិដ្ឋភាពទូទៅ",
+    adminCampaigns: "គ្រប់គ្រងយុទ្ធនាការ",
+    adminUsers: "គ្រប់គ្រងអ្នកប្រើប្រាស់",
+    adminSettings: "ការកំណត់គេហទំព័រ",
+    adminBackup: "បម្រុងទុកទិន្នន័យ",
+    adminTotalCampaigns: "យុទ្ធនាការសរុប",
+    adminTotalSupporters: "អ្នកគាំទ្រសរុប",
+    adminTotalUsers: "អ្នកប្រើប្រាស់សរុប",
+    adminTopCategory: "ប្រភេទពេញនិយមបំផុត",
+    adminSearchPlaceholder: "ស្វែងរកចំណងជើង, Slug, ឬអ៊ីមែលអ្នកបង្កើត...",
+    adminFilterCategory: "គ្រប់ប្រភេទ",
+    adminAllSources: "គ្រប់ប្រភពទិន្នន័យ",
+    adminSourceCloud: "Cloud Firestore",
+    adminSourceLocal: "Local Draft",
+    adminSourcePreset: "Preset ដើម",
+    adminCreateNew: "+ បង្កើតយុទ្ធនាការថ្មី",
+    adminRefreshData: "🔄 ផ្ទុកទិន្នន័យឡើងវិញ",
+    adminExportBackup: "📥 ទាញយកទិន្នន័យ Backup (JSON)",
+    adminImportBackup: "📤 Restore ទិន្នន័យពី JSON Backup",
+    adminPurgeCache: "🧹 សម្អាត Cache ប្រព័ន្ធ",
+    adminPurgeSuccess: "បានសម្អាត Cache និងផ្ទុកទិន្នន័យស្រស់ឡើងវិញ!",
+    adminEditCampaign: "កែប្រែព័ត៌មានយុទ្ធនាការ",
+    adminEditCampaignSubtitle: "Admin អាចកែសម្រួលគ្រប់ព័ត៌មានទាំងអស់របស់ Campaign នេះ",
+    adminSaveCampaignChanges: "💾 រក្សាទុកការកែប្រែ",
+    adminCancel: "បោះបង់",
+    adminDeleteCampaignConfirm: "⚠️ តើអ្នកពិតជាចង់លុបយុទ្ធនាការនេះចេញពី Cloud Firestore ជារៀងរហូតមែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់ក្រោយបានឡើយ!",
+    adminCampaignDeleted: "យុទ្ធនាការត្រូវបានលុបចេញពីប្រព័ន្ធដោយជោគជ័យ!",
+    adminCampaignUpdated: "យុទ្ធនាការត្រូវបានកែប្រែជោគជ័យ!",
+    adminAnnouncementBanner: "បដាប្រកាសព័ត៌មានលើគេហទំព័រ (Global Announcement)",
+    adminBannerEnable: "បើកដំណើរការបដាប្រកាសព័ត៌មាន",
+    adminBannerTextKm: "អត្ថបទប្រកាស (ភាសាខ្មែរ)",
+    adminBannerTextEn: "អត្ថបទប្រកាស (English)",
+    adminBannerLink: "តំណភ្ជាប់ពេលចុច (Link / Route)",
+    adminBannerType: "ប្រភេទបដា",
+    adminBannerTypeInfo: "ព័ត៌មាន (ខៀវ - Info)",
+    adminBannerTypeSuccess: "ជោគជ័យ (បៃតង - Success)",
+    adminBannerTypeWarning: "ប្រុងប្រយ័ត្ន (លឿង - Warning)",
+    adminBannerPreview: "រូបភាពគំរូនៃបដាប្រកាស",
+    adminMaintenanceMode: "មុខងារថែទាំប្រព័ន្ធ (Maintenance Mode)",
+    adminSaveSettings: "💾 រក្សាទុកការកំណត់គេហទំព័រ",
+    adminSettingsSaved: "ការកំណត់គេហទំព័រត្រូវបានរក្សាទុកដោយជោគជ័យ!",
+    adminAccessDeniedTitle: "គ្មានសិទ្ធិចូលប្រើប្រាស់ (403 Access Denied)",
+    adminAccessDeniedDesc: "ទំព័រនេះត្រូវបានការពារយ៉ាងតឹងរ៉ឹងសម្រាប់តែ Super Admin នៃ Tra Frames ប៉ុណ្ណោះ។ គណនីបច្ចុប្បន្នរបស់អ្នកមិនមានសិទ្ធិគ្រប់គ្រងផ្ទាំងនេះទេ។",
+    adminLoggedInAs: "គណនីកំពុង Login៖",
+    adminReturnHome: "ត្រឡប់ទៅទំព័រដើម",
+    adminUserVerified: "ផ្ទៀងផ្ទាត់រួចរាល់",
+    adminUserUnverified: "មិនទាន់ផ្ទៀងផ្ទាត់",
+    adminToggleVerify: "ប្តូរស្ថានភាព OTP",
+    adminUserStatusUpdated: "ស្ថានភាពអ្នកប្រើប្រាស់ត្រូវបានផ្លាស់ប្តូរ!",
+    adminRoleSuper: "Super Admin",
+    adminRoleUser: "សមាជិក",
+    adminTopCampaigns: "យុទ្ធនាការពេញនិយមបំផុតទាំង ៥",
+    adminRecentCampaigns: "យុទ្ធនាការដែលទើបបង្កើតថ្មីៗ",
+    adminCategoryDistribution: "ការបែងចែកយុទ្ធនាការតាមប្រភេទ",
+    adminRestoreConfirm: "តើអ្នកពិតជាចង់បញ្ចូលទិន្នន័យពី File Backup នេះមែនទេ? ទិន្នន័យដែលមានស្រាប់នឹងត្រូវ Update។",
+    adminRestoreSuccess: "ទិន្នន័យត្រូវបានស្ដារជោគជ័យ!"
   },
   en: {
     appName: "Tra Frames",
@@ -3626,7 +4565,67 @@ const translations = {
     otpMaxAttempts: "Maximum attempts exceeded! Please request a new code.",
     otpVerifiedSuccess: "🎉 Verified successfully! Your email has been confirmed.",
     otpEnterCodeBtn: "🔑 Enter OTP Code",
-    otpSendNewBtn: "📩 Send OTP Code to Email"
+    otpSendNewBtn: "📩 Send OTP Code to Email",
+
+    // Super Admin Dashboard Translations
+    adminDashboard: "Admin Dashboard",
+    adminSubtitle: "Master Control Panel for Tra Frames",
+    adminOverview: "Overview & Analytics",
+    adminCampaigns: "Manage Campaigns",
+    adminUsers: "Manage Users",
+    adminSettings: "Site Settings",
+    adminBackup: "Data & Backup",
+    adminTotalCampaigns: "Total Campaigns",
+    adminTotalSupporters: "Total Supporters",
+    adminTotalUsers: "Total Users",
+    adminTopCategory: "Top Category",
+    adminSearchPlaceholder: "Search by title, slug, or creator email...",
+    adminFilterCategory: "All Categories",
+    adminAllSources: "All Sources",
+    adminSourceCloud: "Cloud Firestore",
+    adminSourceLocal: "Local Draft",
+    adminSourcePreset: "Initial Preset",
+    adminCreateNew: "+ Create New Campaign",
+    adminRefreshData: "🔄 Refresh Data",
+    adminExportBackup: "📥 Download Database Backup (JSON)",
+    adminImportBackup: "📤 Restore Database from JSON",
+    adminPurgeCache: "🧹 Clear System Cache",
+    adminPurgeSuccess: "Cache cleared and data re-synchronized!",
+    adminEditCampaign: "Edit Campaign Details",
+    adminEditCampaignSubtitle: "Super Admin can update all campaign metadata directly",
+    adminSaveCampaignChanges: "💾 Save Changes",
+    adminCancel: "Cancel",
+    adminDeleteCampaignConfirm: "⚠️ Are you sure you want to permanently delete this campaign from Cloud Firestore? This action cannot be undone!",
+    adminCampaignDeleted: "Campaign successfully deleted from the platform!",
+    adminCampaignUpdated: "Campaign successfully updated!",
+    adminAnnouncementBanner: "Global Announcement Banner",
+    adminBannerEnable: "Enable Announcement Banner",
+    adminBannerTextKm: "Announcement Text (Khmer)",
+    adminBannerTextEn: "Announcement Text (English)",
+    adminBannerLink: "Target Link / Hash Route",
+    adminBannerType: "Banner Style",
+    adminBannerTypeInfo: "Info (Blue)",
+    adminBannerTypeSuccess: "Success (Green)",
+    adminBannerTypeWarning: "Warning (Amber)",
+    adminBannerPreview: "Live Banner Preview",
+    adminMaintenanceMode: "System Maintenance Mode",
+    adminSaveSettings: "💾 Save Platform Settings",
+    adminSettingsSaved: "Platform settings saved successfully!",
+    adminAccessDeniedTitle: "Access Denied (403 Forbidden)",
+    adminAccessDeniedDesc: "This section is strictly restricted to Tra Frames Super Administrators. Your current account does not have authorization to view or edit this dashboard.",
+    adminLoggedInAs: "Logged in as:",
+    adminReturnHome: "Return to Home",
+    adminUserVerified: "Verified",
+    adminUserUnverified: "Unverified",
+    adminToggleVerify: "Toggle Verification",
+    adminUserStatusUpdated: "User status updated successfully!",
+    adminRoleSuper: "Super Admin",
+    adminRoleUser: "Member",
+    adminTopCampaigns: "Top 5 Most Popular Campaigns",
+    adminRecentCampaigns: "Recently Created Campaigns",
+    adminCategoryDistribution: "Campaigns by Category",
+    adminRestoreConfirm: "Are you sure you want to restore data from this backup file? Existing documents will be merged and updated.",
+    adminRestoreSuccess: "Database restored successfully from backup!"
   }
 };
 
@@ -5515,6 +6514,560 @@ const CampaignService = {
   }
 };
 
+// =========================================================
+// SUPER ADMIN SERVICE (Master Platform Management)
+// =========================================================
+const AdminService = {
+  SUPER_ADMIN_EMAILS: ['haschitra@gmail.com', 'ctpro007@gmail.com'],
+
+  // Verify if given user has Super Admin authority
+  isSuperAdmin(user) {
+    if (!user) return false;
+    const cleanEmail = (user.email || '').toLowerCase().trim();
+    if (this.SUPER_ADMIN_EMAILS.includes(cleanEmail)) return true;
+    if (user.role === 'admin' || user.isSuperAdmin === true) return true;
+    return false;
+  },
+
+  // Check current active user
+  isCurrentSuperAdmin() {
+    return this.isSuperAdmin(AuthService ? AuthService.currentUser : null);
+  },
+
+  // Fetch all campaigns across all cloud and local sources for admin management
+  async fetchAllCampaignsAdmin() {
+    const campaignMap = new Map();
+
+    // 1. Fetch from Cloud Firestore (SDK + REST fallback)
+    const db = initFirestore();
+    let cloudFound = false;
+
+    if (db) {
+      try {
+        const snapshot = await db.collection("campaigns").get();
+        if (!snapshot.empty) {
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data) {
+              const key = data.slug || data.id || doc.id;
+              campaignMap.set(key, { ...data, id: data.id || doc.id, _source: 'cloud' });
+              CampaignService.cacheCloudCampaign(data);
+            }
+          });
+          cloudFound = true;
+        }
+      } catch (sdkErr) {
+        console.warn("Admin fetch SDK notice, trying REST:", sdkErr);
+      }
+    }
+
+    // Direct REST fetch if SDK didn't return or for comprehensive coverage
+    if (!cloudFound) {
+      try {
+        const restUrl = `https://firestore.googleapis.com/v1/projects/tra-frames/databases/(default)/documents/campaigns`;
+        const res = await fetch(restUrl);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.documents && Array.isArray(json.documents)) {
+            json.documents.forEach(d => {
+              const parsed = CampaignService.parseFirestoreDoc(d);
+              if (parsed) {
+                const key = parsed.slug || parsed.id;
+                campaignMap.set(key, { ...parsed, _source: 'cloud' });
+                CampaignService.cacheCloudCampaign(parsed);
+              }
+            });
+          }
+        }
+      } catch (restErr) {
+        console.warn("Admin fetch REST notice:", restErr);
+      }
+    }
+
+    // 2. Fetch from Local Storage user campaigns
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        const localList = JSON.parse(stored);
+        localList.forEach(c => {
+          const key = c.slug || c.id;
+          if (!campaignMap.has(key)) {
+            campaignMap.set(key, { ...c, _source: 'local' });
+          }
+        });
+      }
+    } catch (e) {}
+
+    // 3. Include Initial Preset Campaigns (if not deleted/suppressed)
+    let suppressed = [];
+    try {
+      suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+    } catch (e) {}
+
+    INITIAL_CAMPAIGNS.forEach(preset => {
+      const key = preset.slug || preset.id;
+      if (!suppressed.includes(key) && !campaignMap.has(key)) {
+        campaignMap.set(key, { ...preset, _source: 'preset', isPreset: true });
+      }
+    });
+
+    const result = Array.from(campaignMap.values());
+    // Sort newest first
+    return result.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
+  },
+
+  // Admin Update Campaign: update all fields in Firestore and cache
+  async adminUpdateCampaign(targetId, updateData) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    if (!targetId) throw new Error("Target campaign ID is required.");
+
+    const safeId = String(targetId).trim();
+    const docId = updateData.slug ? String(updateData.slug).trim() : safeId;
+
+    // Sanitize fields
+    const sanitizedUpdate = {
+      titleKm: SecurityUtils.cleanText(updateData.titleKm || '', 120),
+      titleEn: SecurityUtils.cleanText(updateData.titleEn || '', 120),
+      slug: (updateData.slug || safeId).toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 60),
+      category: ['education', 'culture', 'charity', 'sports', 'tech', 'celebration'].includes(updateData.category) ? updateData.category : 'celebration',
+      creator: SecurityUtils.cleanText(updateData.creator || 'Admin', 80),
+      creatorEmail: SecurityUtils.cleanText(updateData.creatorEmail || '', 100),
+      descriptionKm: SecurityUtils.cleanText(updateData.descriptionKm || '', 1000),
+      descriptionEn: SecurityUtils.cleanText(updateData.descriptionEn || '', 1000),
+      captionKm: SecurityUtils.cleanText(updateData.captionKm || '', 1000),
+      captionEn: SecurityUtils.cleanText(updateData.captionEn || '', 1000),
+      supporters: Math.max(1, parseInt(updateData.supporters, 10) || 1),
+      updatedAt: new Date().toISOString()
+    };
+
+    if (updateData.frameUrl) {
+      sanitizedUpdate.frameUrl = SecurityUtils.sanitizeUrl(updateData.frameUrl);
+    }
+
+    // 1. Update in Firestore SDK
+    let updatedInCloud = false;
+    const db = initFirestore();
+    if (db) {
+      try {
+        await db.collection("campaigns").doc(docId).set(sanitizedUpdate, { merge: true });
+        console.log("🔥 Admin updated campaign in Cloud Firestore:", docId);
+        updatedInCloud = true;
+      } catch (sdkErr) {
+        console.warn("Firestore SDK admin update notice:", sdkErr);
+      }
+    }
+
+    // 2. Update memory cache
+    if (CampaignService._memoryCache) {
+      const cached = CampaignService._memoryCache.get(safeId) || CampaignService._memoryCache.get(docId) || {};
+      const merged = { ...cached, ...sanitizedUpdate };
+      CampaignService._memoryCache.set(docId, merged);
+      if (safeId !== docId) CampaignService._memoryCache.set(safeId, merged);
+    }
+
+    // 3. Update in LocalStorage if present
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        let userCampaigns = JSON.parse(stored);
+        const idx = userCampaigns.findIndex(c => c.id === safeId || c.slug === safeId || c.slug === docId);
+        if (idx !== -1) {
+          userCampaigns[idx] = { ...userCampaigns[idx], ...sanitizedUpdate };
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+        }
+      }
+    } catch (e) {}
+
+    return { success: true, docId, data: sanitizedUpdate };
+  },
+
+  // Admin Delete Campaign: permanently remove from Firestore, cache and localStorage
+  async adminDeleteCampaign(targetId) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    if (!targetId) throw new Error("Target campaign ID is required.");
+
+    const safeId = String(targetId).trim();
+
+    // Check if it's a preset
+    const isPreset = INITIAL_CAMPAIGNS.some(p => p.id === safeId || p.slug === safeId);
+    if (isPreset) {
+      try {
+        const suppressed = JSON.parse(localStorage.getItem('tra_suppressed_presets') || '[]');
+        if (!suppressed.includes(safeId)) {
+          suppressed.push(safeId);
+          localStorage.setItem('tra_suppressed_presets', JSON.stringify(suppressed));
+        }
+      } catch (e) {}
+    }
+
+    // 1. Delete from Cloud Firestore
+    const db = initFirestore();
+    if (db) {
+      try {
+        await db.collection("campaigns").doc(safeId).delete();
+        console.log("🔥 Admin deleted campaign from Cloud Firestore:", safeId);
+      } catch (sdkErr) {
+        console.warn("Firestore SDK admin delete notice:", sdkErr);
+      }
+    }
+
+    // 2. Clear from memory cache
+    if (CampaignService._memoryCache) {
+      CampaignService._memoryCache.delete(safeId);
+    }
+
+    // 3. Remove from LocalStorage
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        let userCampaigns = JSON.parse(stored);
+        userCampaigns = userCampaigns.filter(c => c.id !== safeId && c.slug !== safeId);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userCampaigns));
+      }
+    } catch (e) {}
+
+    return { success: true, deletedId: safeId };
+  },
+
+  // Fetch list of registered users and campaign creators
+  async fetchUsersList() {
+    const userMap = new Map();
+
+    // 1. Add Super Admins
+    this.SUPER_ADMIN_EMAILS.forEach(email => {
+      userMap.set(email.toLowerCase(), {
+        uid: 'admin_' + email.split('@')[0],
+        email: email,
+        displayName: email.split('@')[0],
+        verified: true,
+        isSuperAdmin: true,
+        campaignCount: 0,
+        createdAt: '2026-01-01'
+      });
+    });
+
+    // 2. Fetch Verified Users from Firestore
+    const db = initFirestore();
+    if (db) {
+      try {
+        const snapshot = await db.collection("verified_users").get();
+        if (!snapshot.empty) {
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const email = (data.email || '').toLowerCase().trim();
+            if (email) {
+              const existing = userMap.get(email) || {};
+              userMap.set(email, {
+                ...existing,
+                uid: doc.id || data.uid || existing.uid || ('usr_' + Math.random().toString(36).slice(2, 8)),
+                email: email,
+                displayName: data.displayName || existing.displayName || email.split('@')[0],
+                verified: true,
+                isSuperAdmin: existing.isSuperAdmin || this.SUPER_ADMIN_EMAILS.includes(email),
+                campaignCount: existing.campaignCount || 0,
+                createdAt: data.verifiedAt || data.createdAt || existing.createdAt || new Date().toISOString().split('T')[0]
+              });
+            }
+          });
+        }
+      } catch (err) {
+        console.warn("fetchUsersList SDK notice:", err);
+      }
+    }
+
+    // 3. Fetch from Local Accounts
+    try {
+      const stored = localStorage.getItem("tra_local_accounts");
+      if (stored) {
+        const accounts = JSON.parse(stored);
+        accounts.forEach(acc => {
+          const email = (acc.email || '').toLowerCase().trim();
+          if (email) {
+            const existing = userMap.get(email) || {};
+            userMap.set(email, {
+              ...existing,
+              uid: acc.uid || existing.uid,
+              email: email,
+              displayName: acc.displayName || existing.displayName || email.split('@')[0],
+              verified: acc.emailVerified !== false || existing.verified,
+              isSuperAdmin: existing.isSuperAdmin || this.SUPER_ADMIN_EMAILS.includes(email),
+              campaignCount: existing.campaignCount || 0,
+              createdAt: acc.createdAt || existing.createdAt || new Date().toISOString().split('T')[0]
+            });
+          }
+        });
+      }
+    } catch (e) {}
+
+    // 4. Extract creators from all campaigns to compute campaignCount
+    try {
+      const allCampaigns = await this.fetchAllCampaignsAdmin();
+      allCampaigns.forEach(c => {
+        const email = (c.creatorEmail || '').toLowerCase().trim();
+        const uid = c.creatorUid;
+        if (email) {
+          const existing = userMap.get(email) || {
+            uid: uid || ('usr_' + Math.random().toString(36).slice(2, 8)),
+            email: email,
+            displayName: c.creator || email.split('@')[0],
+            verified: true,
+            isSuperAdmin: this.SUPER_ADMIN_EMAILS.includes(email),
+            campaignCount: 0,
+            createdAt: c.createdAt ? c.createdAt.split('T')[0] : '2026-03-01'
+          };
+          existing.campaignCount = (existing.campaignCount || 0) + 1;
+          userMap.set(email, existing);
+        }
+      });
+    } catch (e) {}
+
+    return Array.from(userMap.values());
+  },
+
+  // Toggle user verification status
+  async updateUserStatus(email, isVerified) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    const cleanEmail = String(email).toLowerCase().trim();
+    if (!cleanEmail) return false;
+
+    // 1. Update verified_emails in LocalStorage
+    try {
+      const list = JSON.parse(localStorage.getItem('tra_verified_emails') || '[]');
+      if (isVerified && !list.includes(cleanEmail)) {
+        list.push(cleanEmail);
+      } else if (!isVerified) {
+        const idx = list.indexOf(cleanEmail);
+        if (idx !== -1) list.splice(idx, 1);
+      }
+      localStorage.setItem('tra_verified_emails', JSON.stringify(list));
+    } catch (e) {}
+
+    // 2. Update local accounts
+    try {
+      const accounts = JSON.parse(localStorage.getItem('tra_local_accounts') || '[]');
+      const acc = accounts.find(a => a.email && a.email.toLowerCase() === cleanEmail);
+      if (acc) {
+        acc.emailVerified = !!isVerified;
+        localStorage.setItem('tra_local_accounts', JSON.stringify(accounts));
+      }
+    } catch (e) {}
+
+    // 3. Update Cloud Firestore verified_users
+    const db = initFirestore();
+    if (db) {
+      try {
+        const snapshot = await db.collection("verified_users").where("email", "==", cleanEmail).get();
+        if (!snapshot.empty) {
+          snapshot.forEach(doc => {
+            if (isVerified) {
+              doc.ref.set({ verified: true, updatedAt: new Date().toISOString() }, { merge: true });
+            } else {
+              doc.ref.delete();
+            }
+          });
+        } else if (isVerified) {
+          await db.collection("verified_users").add({
+            email: cleanEmail,
+            verified: true,
+            createdAt: new Date().toISOString()
+          });
+        }
+      } catch (err) {
+        console.warn("updateUserStatus cloud notice:", err);
+      }
+    }
+
+    return true;
+  },
+
+  // Compute Platform Metrics & Analytics
+  getPlatformMetrics(campaigns = [], users = []) {
+    const totalCampaigns = campaigns.length;
+    const totalSupporters = campaigns.reduce((sum, c) => sum + (parseInt(c.supporters, 10) || 0), 0);
+    const totalUsers = users.length;
+
+    // Category breakdown
+    const categoryCounts = {
+      education: 0,
+      culture: 0,
+      charity: 0,
+      sports: 0,
+      tech: 0,
+      celebration: 0
+    };
+
+    campaigns.forEach(c => {
+      const cat = c.category || 'celebration';
+      if (categoryCounts.hasOwnProperty(cat)) {
+        categoryCounts[cat]++;
+      } else {
+        categoryCounts.celebration++;
+      }
+    });
+
+    // Top Category
+    let topCategory = 'celebration';
+    let maxCatCount = -1;
+    for (const [cat, count] of Object.entries(categoryCounts)) {
+      if (count > maxCatCount) {
+        maxCatCount = count;
+        topCategory = cat;
+      }
+    }
+
+    // Top 5 Most Supported Campaigns
+    const topCampaigns = [...campaigns]
+      .sort((a, b) => (parseInt(b.supporters, 10) || 0) - (parseInt(a.supporters, 10) || 0))
+      .slice(0, 5);
+
+    // Recent 5 Campaigns
+    const recentCampaigns = [...campaigns]
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      .slice(0, 5);
+
+    return {
+      totalCampaigns,
+      totalSupporters,
+      totalUsers,
+      categoryCounts,
+      topCategory,
+      topCampaigns,
+      recentCampaigns
+    };
+  },
+
+  // Export Full Platform Database as JSON Backup file
+  async exportDatabaseBackup() {
+    const campaigns = await this.fetchAllCampaignsAdmin();
+    const users = await this.fetchUsersList();
+    const settings = this.getSystemSettings();
+
+    const backupData = {
+      appName: "Tra Frames",
+      platform: "Tra Frames 2026",
+      exportTimestamp: new Date().toISOString(),
+      exportDateFormatted: new Date().toLocaleString(),
+      metrics: {
+        totalCampaigns: campaigns.length,
+        totalSupporters: campaigns.reduce((sum, c) => sum + (parseInt(c.supporters, 10) || 0), 0),
+        totalUsers: users.length
+      },
+      settings: settings,
+      campaigns: campaigns,
+      users: users
+    };
+
+    const jsonStr = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().split('T')[0];
+    a.href = url;
+    a.download = `tra-frames-backup-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return backupData;
+  },
+
+  // Restore Database from JSON Backup File
+  async importDatabaseBackup(jsonData) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    if (!jsonData || typeof jsonData !== 'object') {
+      throw new Error("Invalid backup file: Not valid JSON.");
+    }
+
+    let restoredCount = 0;
+    if (Array.isArray(jsonData.campaigns)) {
+      const db = initFirestore();
+      for (const camp of jsonData.campaigns) {
+        if (camp && (camp.slug || camp.id)) {
+          const docId = camp.slug || camp.id;
+          // Cache locally
+          CampaignService.cacheCloudCampaign(camp);
+          // Restore to Firestore if DB available
+          if (db) {
+            try {
+              await db.collection("campaigns").doc(docId).set(camp, { merge: true });
+            } catch (err) {}
+          }
+          restoredCount++;
+        }
+      }
+    }
+
+    if (jsonData.settings) {
+      await this.saveSystemSettings(jsonData.settings);
+    }
+
+    return { success: true, restoredCampaigns: restoredCount };
+  },
+
+  // System Settings Management
+  getSystemSettings() {
+    const defaults = {
+      announcementEnabled: false,
+      announcementTextKm: "🎉 សូមស្វាគមន៍មកកាន់ Tra Frames 2026 — វេទិកាស៊ុមរូបថតដ៏ទាក់ទាញបំផុត!",
+      announcementTextEn: "🎉 Welcome to Tra Frames 2026 — The premier photo frame platform!",
+      announcementLink: "#explore",
+      announcementType: "info", // 'info' | 'success' | 'warning'
+      maintenanceMode: false
+    };
+
+    try {
+      const stored = localStorage.getItem("tra_system_settings");
+      if (stored) {
+        return { ...defaults, ...JSON.parse(stored) };
+      }
+    } catch (e) {}
+
+    return defaults;
+  },
+
+  async saveSystemSettings(settings) {
+    if (!this.isCurrentSuperAdmin()) {
+      throw new Error("Unauthorized: Super Admin permissions required.");
+    }
+    const current = this.getSystemSettings();
+    const updated = { ...current, ...settings, updatedAt: new Date().toISOString() };
+
+    // Save to LocalStorage
+    try {
+      localStorage.setItem("tra_system_settings", JSON.stringify(updated));
+    } catch (e) {}
+
+    // Save to Cloud Firestore
+    const db = initFirestore();
+    if (db) {
+      try {
+        await db.collection("system_settings").doc("global").set(updated, { merge: true });
+      } catch (err) {
+        console.warn("saveSystemSettings cloud notice:", err);
+      }
+    }
+
+    // Trigger settings changed event
+    try {
+      window.dispatchEvent(new CustomEvent('traSettingsChanged', { detail: updated }));
+    } catch (e) {}
+
+    return updated;
+  }
+};
+
 
 // High-Performance Interactive HTML5 Canvas Studio for Twibbon Framing
 
@@ -6561,6 +8114,11 @@ class TwibbonApp {
             <div style="padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.78rem; color: var(--text-muted); word-break: break-all;">
               ${SecurityUtils.escapeHtml(user.email)}
             </div>
+            ${(typeof AdminService !== 'undefined' && AdminService.isSuperAdmin(user)) ? `
+            <button class="user-dropdown-item admin-dropdown-btn" onclick="app.navigateTo('admin')" style="background: rgba(37, 99, 235, 0.08); color: var(--accent-primary); font-weight: 700; border-left: 3px solid var(--accent-primary);">
+              👑 <span>${t('adminDashboard')}</span>
+            </button>
+            ` : ''}
             <button class="user-dropdown-item" onclick="app.navigateTo('my-campaigns')">
               ${Icons.avatar} <span>${t('myCampaigns')}</span>
             </button>
@@ -7503,9 +9061,13 @@ class TwibbonApp {
       this.loadDesignerView();
     } else if (mainRoute === 'my-campaigns') {
       this.loadMyCampaignsView();
+    } else if (mainRoute === 'admin') {
+      this.loadAdminView(param);
     } else {
       this.loadExploreView();
     }
+
+    this.renderGlobalAnnouncementBanner();
 
     // Scroll handling:
     // If it's a page reload or refresh, restore previous scroll position!
@@ -9141,7 +10703,1248 @@ class TwibbonApp {
       setTimeout(() => toast.remove(), 250);
     }, 2800);
   }
+
+  // =========================================================
+  // GLOBAL ANNOUNCEMENT BANNER
+  // =========================================================
+  renderGlobalAnnouncementBanner() {
+    try {
+      const bannerEl = document.getElementById('globalAnnouncementBar');
+      if (typeof AdminService === 'undefined') return;
+      const settings = AdminService.getSystemSettings();
+      const isDismissed = sessionStorage.getItem('tra_announcement_dismissed') === 'true';
+
+      if (!settings || !settings.announcementEnabled || isDismissed) {
+        if (bannerEl) bannerEl.remove();
+        return;
+      }
+
+      const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+      const text = (isKm ? settings.announcementTextKm : settings.announcementTextEn) || settings.announcementTextKm || '';
+      if (!text.trim()) {
+        if (bannerEl) bannerEl.remove();
+        return;
+      }
+
+      const link = settings.announcementLink ? SecurityUtils.sanitizeUrl(settings.announcementLink) : '';
+      const type = settings.announcementType || 'info';
+
+      let container = bannerEl;
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'globalAnnouncementBar';
+        const navbar = document.querySelector('.navbar');
+        if (navbar && navbar.parentNode) {
+          navbar.parentNode.insertBefore(container, navbar);
+        } else {
+          document.body.prepend(container);
+        }
+      }
+
+      container.className = `global-announcement-bar banner-type-${type}`;
+      container.innerHTML = `
+        <div class="announcement-content-wrap">
+          <span class="announcement-icon-badge">📢</span>
+          <span class="announcement-text-msg">${SecurityUtils.cleanText(text, 250)}</span>
+          ${link ? `<a href="${link}" class="announcement-action-link">${isKm ? 'ស្វែងយល់បន្ថែម' : 'Learn More'} &rarr;</a>` : ''}
+          <button class="announcement-close-btn" onclick="app.dismissAnnouncement()" title="Close">&times;</button>
+        </div>
+      `;
+    } catch (e) {
+      console.warn("Announcement banner notice:", e);
+    }
+  }
+
+  dismissAnnouncement() {
+    sessionStorage.setItem('tra_announcement_dismissed', 'true');
+    const bannerEl = document.getElementById('globalAnnouncementBar');
+    if (bannerEl) bannerEl.remove();
+  }
+
+  // =========================================================
+  // VIEW 5: SUPER ADMIN DASHBOARD (MASTER CONTROL PANEL)
+  // =========================================================
+  async loadAdminView(subTab = null) {
+    this.currentView = 'admin';
+    const container = document.getElementById('appContent');
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+
+    if (subTab) {
+      this.adminActiveTab = subTab;
+    } else if (!this.adminActiveTab) {
+      this.adminActiveTab = 'overview';
+    }
+
+    const user = AuthService ? AuthService.currentUser : null;
+
+    // 1. Auth Guard: Check if logged in
+    if (!user) {
+      container.innerHTML = `
+        <div class="container section" style="max-width: 580px; margin: 3rem auto;">
+          <div class="admin-auth-gate-card">
+            <div class="admin-auth-gate-icon">🔐</div>
+            <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;">${t('adminDashboard')}</h2>
+            <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.5rem;">
+              ${isKm ? 'សូមចូលគណនីជា Super Admin ដើម្បីគ្រប់គ្រងគេហទំព័រ Tra Frames ទាំងមូល។' : 'Please log in with an authorized Super Admin account to access this management dashboard.'}
+            </p>
+            <button class="btn btn-primary" onclick="app.openAuthModal(() => app.loadAdminView())" style="padding: 0.75rem 1.75rem; font-size: 1rem;">
+              ${Icons.logIn} <span>${t('signIn')}</span>
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // 2. Role Guard: Check if Super Admin
+    if (!AdminService.isSuperAdmin(user)) {
+      container.innerHTML = `
+        <div class="container section" style="max-width: 620px; margin: 3rem auto;">
+          <div class="admin-denied-card">
+            <div class="admin-denied-icon">🚫</div>
+            <h2 style="font-size: 1.45rem; font-weight: 800; color: #ef4444; margin-bottom: 0.5rem;">${t('adminAccessDeniedTitle')}</h2>
+            <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.25rem;">
+              ${t('adminAccessDeniedDesc')}
+            </p>
+            <div class="admin-logged-info">
+              <span>${t('adminLoggedInAs')} <strong>${SecurityUtils.escapeHtml(user.email)}</strong></span>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap;">
+              <button class="btn btn-primary" onclick="app.navigateTo('explore')">
+                ${Icons.compass || '🧭'} <span>${t('adminReturnHome')}</span>
+              </button>
+              <button class="btn btn-outline" onclick="app.handleSignOut()">
+                ${Icons.logOut} <span>${t('signOut')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // 3. Render Loading Placeholder while fetching comprehensive data
+    container.innerHTML = `
+      <div class="container section" style="padding: 3rem 1rem; text-align: center;">
+        <div class="loading-spinner" style="margin: 0 auto 1rem auto;"></div>
+        <h3 style="font-weight: 700; color: var(--text-primary);">${isKm ? 'កំពុងទាញយកទិន្នន័យ Admin ពី Cloud Firestore...' : 'Loading Super Admin platform data from Cloud Firestore...'}</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">${isKm ? 'សូមរង់ចាំបន្តិច...' : 'Please wait a moment...'}</p>
+      </div>
+    `;
+
+    // 4. Fetch All Platform Data concurrently
+    try {
+      const [campaigns, users] = await Promise.all([
+        AdminService.fetchAllCampaignsAdmin(),
+        AdminService.fetchUsersList()
+      ]);
+      const metrics = AdminService.getPlatformMetrics(campaigns, users);
+      const settings = AdminService.getSystemSettings();
+
+      this.adminData = { campaigns, users, metrics, settings };
+      this.renderAdminMainLayout(container, isKm, user);
+    } catch (err) {
+      console.error("Failed to load admin data:", err);
+      container.innerHTML = `
+        <div class="container section" style="text-align: center; padding: 3rem 1rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+          <h3 style="color: #ef4444;">Error Loading Admin Dashboard</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">${SecurityUtils.escapeHtml(err.message)}</p>
+          <button class="btn btn-primary" onclick="app.loadAdminView()">🔄 Retry</button>
+        </div>
+      `;
+    }
+  }
+
+  renderAdminMainLayout(container, isKm, user) {
+    const { campaigns, users, metrics, settings } = this.adminData;
+    const activeTab = this.adminActiveTab || 'overview';
+
+    container.innerHTML = `
+      <div class="admin-wrapper container">
+        <!-- Top Admin Banner Header -->
+        <div class="admin-top-banner">
+          <div class="admin-banner-left">
+            <div class="admin-badge-pill">
+              <span class="admin-pulse-dot"></span>
+              <span>SUPER ADMIN PLATFORM CONTROL</span>
+            </div>
+            <h1 class="admin-main-title">👑 ${t('adminDashboard')}</h1>
+            <p class="admin-main-subtitle">${t('adminSubtitle')}</p>
+            <div class="admin-user-tag">
+              <span>👤 ${SecurityUtils.escapeHtml(user.email)}</span>
+              <span class="admin-tag-role">MASTER ADMIN</span>
+            </div>
+          </div>
+          <div class="admin-banner-actions">
+            <button class="btn btn-primary" onclick="app.openAdminCreateModal()">
+              ${Icons.plus} <span>${t('adminCreateNew')}</span>
+            </button>
+            <button class="btn btn-outline" onclick="app.handleAdminExportBackup()" title="Download Backup">
+              ${Icons.download} <span>Backup (.json)</span>
+            </button>
+            <button class="btn btn-secondary" onclick="app.loadAdminView()" title="Refresh Data">
+              🔄 <span>${t('adminRefreshData')}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Admin Navigation Tabs -->
+        <div class="admin-nav-tabs">
+          <button class="admin-tab-item ${activeTab === 'overview' ? 'active' : ''}" onclick="app.switchAdminTab('overview')">
+            <span class="admin-tab-icon">📊</span>
+            <span>${t('adminOverview')}</span>
+          </button>
+          <button class="admin-tab-item ${activeTab === 'campaigns' ? 'active' : ''}" onclick="app.switchAdminTab('campaigns')">
+            <span class="admin-tab-icon">🖼️</span>
+            <span>${t('adminCampaigns')}</span>
+            <span class="admin-tab-counter">${campaigns.length}</span>
+          </button>
+          <button class="admin-tab-item ${activeTab === 'users' ? 'active' : ''}" onclick="app.switchAdminTab('users')">
+            <span class="admin-tab-icon">👥</span>
+            <span>${t('adminUsers')}</span>
+            <span class="admin-tab-counter">${users.length}</span>
+          </button>
+          <button class="admin-tab-item ${activeTab === 'settings' ? 'active' : ''}" onclick="app.switchAdminTab('settings')">
+            <span class="admin-tab-icon">📢</span>
+            <span>${t('adminSettings')}</span>
+          </button>
+          <button class="admin-tab-item ${activeTab === 'backup' ? 'active' : ''}" onclick="app.switchAdminTab('backup')">
+            <span class="admin-tab-icon">💾</span>
+            <span>${t('adminBackup')}</span>
+          </button>
+        </div>
+
+        <!-- Tab Content Container -->
+        <div class="admin-tab-content-wrap" id="adminTabContentWrap">
+          ${this.getAdminTabHtml(activeTab, isKm)}
+        </div>
+      </div>
+    `;
+
+    // Attach Tab-specific listeners
+    this.initAdminTabListeners(activeTab, isKm);
+  }
+
+  switchAdminTab(tabName) {
+    this.adminActiveTab = tabName;
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    
+    // Update tab active classes
+    document.querySelectorAll('.admin-tab-item').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    const clickedBtn = Array.from(document.querySelectorAll('.admin-tab-item')).find(b => b.onclick && b.onclick.toString().includes(tabName));
+    if (clickedBtn) clickedBtn.classList.add('active');
+
+    const contentWrap = document.getElementById('adminTabContentWrap');
+    if (contentWrap) {
+      contentWrap.innerHTML = this.getAdminTabHtml(tabName, isKm);
+      this.initAdminTabListeners(tabName, isKm);
+    }
+  }
+
+  getAdminTabHtml(tabName, isKm) {
+    const { campaigns, users, metrics, settings } = this.adminData;
+    switch (tabName) {
+      case 'campaigns':
+        return this.renderAdminCampaignsTab(campaigns, isKm);
+      case 'users':
+        return this.renderAdminUsersTab(users, isKm);
+      case 'settings':
+        return this.renderAdminSettingsTab(settings, isKm);
+      case 'backup':
+        return this.renderAdminBackupTab(isKm);
+      case 'overview':
+      default:
+        return this.renderAdminOverviewTab(campaigns, users, metrics, isKm);
+    }
+  }
+
+  // =========================================================
+  // TAB 1: OVERVIEW & ANALYTICS
+  // =========================================================
+  renderAdminOverviewTab(campaigns, users, metrics, isKm) {
+    const cloudCount = campaigns.filter(c => c._source === 'cloud').length;
+    const localCount = campaigns.filter(c => c._source === 'local').length;
+    const presetCount = campaigns.filter(c => c._source === 'preset' || c.isPreset).length;
+    const verifiedUsersCount = users.filter(u => u.verified).length;
+
+    const catKey = 'cat' + (metrics.topCategory ? (metrics.topCategory[0].toUpperCase() + metrics.topCategory.slice(1)) : 'Celebration');
+    const topCatName = t(catKey) || metrics.topCategory;
+
+    return `
+      <!-- KPI Stats Grid -->
+      <div class="admin-kpi-grid">
+        <div class="admin-kpi-card card-kpi-blue">
+          <div class="admin-kpi-header">
+            <span class="admin-kpi-title">${t('adminTotalCampaigns')}</span>
+            <span class="admin-kpi-icon">🖼️</span>
+          </div>
+          <div class="admin-kpi-value">${metrics.totalCampaigns}</div>
+          <div class="admin-kpi-subtext">
+            <span>Cloud: <strong>${cloudCount}</strong></span> • <span>Local: <strong>${localCount}</strong></span> • <span>Preset: <strong>${presetCount}</strong></span>
+          </div>
+        </div>
+
+        <div class="admin-kpi-card card-kpi-cyan">
+          <div class="admin-kpi-header">
+            <span class="admin-kpi-title">${t('adminTotalSupporters')}</span>
+            <span class="admin-kpi-icon">👥</span>
+          </div>
+          <div class="admin-kpi-value">${metrics.totalSupporters.toLocaleString()}</div>
+          <div class="admin-kpi-subtext">
+            ${isKm ? 'ការចូលរួមបង្កើតរូបថតគាំទ្រសរុប' : 'Total frame generation interactions'}
+          </div>
+        </div>
+
+        <div class="admin-kpi-card card-kpi-indigo">
+          <div class="admin-kpi-header">
+            <span class="admin-kpi-title">${t('adminTotalUsers')}</span>
+            <span class="admin-kpi-icon">👤</span>
+          </div>
+          <div class="admin-kpi-value">${metrics.totalUsers}</div>
+          <div class="admin-kpi-subtext">
+            <span>✅ ${isKm ? 'បានផ្ទៀងផ្ទាត់' : 'Verified'}: <strong>${verifiedUsersCount}</strong></span>
+          </div>
+        </div>
+
+        <div class="admin-kpi-card card-kpi-purple">
+          <div class="admin-kpi-header">
+            <span class="admin-kpi-title">${t('adminTopCategory')}</span>
+            <span class="admin-kpi-icon">🌟</span>
+          </div>
+          <div class="admin-kpi-value" style="font-size: 1.5rem; text-transform: capitalize;">${topCatName}</div>
+          <div class="admin-kpi-subtext">
+            ${isKm ? 'ប្រភេទដែលមានសកម្មភាពច្រើនជាងគេ' : 'Highest engagement category'}
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-Column Analytics Layout -->
+      <div class="admin-analytics-row">
+        <!-- Left: Category Distribution Chart -->
+        <div class="admin-card admin-chart-card">
+          <div class="admin-card-header">
+            <h3 class="admin-card-title">📊 ${t('adminCategoryDistribution')}</h3>
+          </div>
+          <div class="admin-cat-bars-list">
+            ${Object.entries(metrics.categoryCounts).map(([cat, count]) => {
+              const catLabel = t('cat' + cat[0].toUpperCase() + cat.slice(1)) || cat;
+              const pct = metrics.totalCampaigns > 0 ? Math.round((count / metrics.totalCampaigns) * 100) : 0;
+              return `
+                <div class="admin-cat-bar-item">
+                  <div class="admin-cat-bar-label">
+                    <span>${catLabel}</span>
+                    <span class="admin-cat-bar-count"><strong>${count}</strong> (${pct}%)</span>
+                  </div>
+                  <div class="admin-progress-track">
+                    <div class="admin-progress-fill cat-color-${cat}" style="width: ${Math.max(4, pct)}%;"></div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Right: Top 5 Most Popular Campaigns -->
+        <div class="admin-card admin-top-list-card">
+          <div class="admin-card-header">
+            <h3 class="admin-card-title">🔥 ${t('adminTopCampaigns')}</h3>
+          </div>
+          <div class="admin-top-campaigns-list">
+            ${metrics.topCampaigns.length === 0 ? `
+              <div style="padding: 1.5rem; text-align: center; color: var(--text-muted);">No campaigns yet.</div>
+            ` : metrics.topCampaigns.map((c, index) => {
+              const title = (isKm ? c.titleKm : c.titleEn) || c.titleKm || c.titleEn || 'Untitled';
+              const supporters = (parseInt(c.supporters, 10) || 0).toLocaleString();
+              const slug = c.slug || c.id;
+              const frameUrl = SecurityUtils.sanitizeUrl(c.frameUrl);
+              return `
+                <div class="admin-top-camp-item">
+                  <div class="admin-top-rank rank-${index + 1}">#${index + 1}</div>
+                  <div class="admin-top-thumb-wrap">
+                    <img src="${SAMPLE_AVATARS[0]}" class="admin-thumb-bg" />
+                    <img src="${frameUrl}" class="admin-thumb-frame" />
+                  </div>
+                  <div class="admin-top-info">
+                    <a href="#campaign/${slug}" class="admin-top-name">${SecurityUtils.cleanText(title, 45)}</a>
+                    <span class="admin-top-sub">👥 ${supporters} ${t('supporters')}</span>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" onclick="app.navigateTo('campaign/${slug}')">
+                    ${Icons.camera}
+                  </button>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Platform Activity / Campaigns -->
+      <div class="admin-card" style="margin-top: 1.5rem;">
+        <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="admin-card-title">⏱️ ${t('adminRecentCampaigns')}</h3>
+          <button class="btn btn-outline btn-sm" onclick="app.switchAdminTab('campaigns')">
+            ${isKm ? 'មើលទាំងអស់' : 'View All'} &rarr;
+          </button>
+        </div>
+        <div class="admin-recent-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>${isKm ? 'ស៊ុម' : 'Frame'}</th>
+                <th>${isKm ? 'ចំណងជើង' : 'Title'}</th>
+                <th>${isKm ? 'ប្រភេទ' : 'Category'}</th>
+                <th>${isKm ? 'អ្នកបង្កើត' : 'Creator'}</th>
+                <th>${isKm ? 'អ្នកគាំទ្រ' : 'Supporters'}</th>
+                <th>${isKm ? 'កាលបរិច្ឆេទ' : 'Date'}</th>
+                <th>${isKm ? 'សកម្មភាព' : 'Action'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${metrics.recentCampaigns.map(c => {
+                const title = (isKm ? c.titleKm : c.titleEn) || c.titleKm || c.titleEn || 'Untitled';
+                const catLabel = t('cat' + (c.category ? c.category[0].toUpperCase() + c.category.slice(1) : 'Celebration')) || c.category;
+                const slug = c.slug || c.id;
+                const date = (c.createdAt || '').split('T')[0] || '2026';
+                const supporters = (parseInt(c.supporters, 10) || 0).toLocaleString();
+                const frameUrl = SecurityUtils.sanitizeUrl(c.frameUrl);
+                return `
+                  <tr>
+                    <td>
+                      <div class="admin-mini-thumb">
+                        <img src="${SAMPLE_AVATARS[0]}" class="admin-thumb-bg" />
+                        <img src="${frameUrl}" class="admin-thumb-frame" />
+                      </div>
+                    </td>
+                    <td>
+                      <strong>${SecurityUtils.cleanText(title, 40)}</strong>
+                      <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">/${SecurityUtils.escapeHtml(slug)}</div>
+                    </td>
+                    <td><span class="admin-cat-badge cat-color-${c.category || 'celebration'}">${catLabel}</span></td>
+                    <td>${SecurityUtils.cleanText(c.creator || c.creatorEmail || 'Admin', 25)}</td>
+                    <td><strong>${supporters}</strong></td>
+                    <td>${date}</td>
+                    <td>
+                      <div style="display: flex; gap: 0.35rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="app.navigateTo('campaign/${slug}')" title="View">👁️</button>
+                        <button class="btn btn-outline btn-sm" onclick="app.openAdminEditCampaignModal('${c.id || c.slug}')" title="Edit">✏️</button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  // =========================================================
+  // TAB 2: CAMPAIGNS MANAGEMENT (FULL CRUD)
+  // =========================================================
+  renderAdminCampaignsTab(campaigns, isKm) {
+    return `
+      <div class="admin-card">
+        <!-- Filter and Search Toolbar -->
+        <div class="admin-toolbar">
+          <div class="admin-search-wrap">
+            <span class="admin-search-icon">${Icons.search}</span>
+            <input type="text" id="adminCampSearchInput" class="form-input admin-search-input" placeholder="${t('adminSearchPlaceholder')}" />
+          </div>
+
+          <div class="admin-filters-wrap">
+            <select id="adminCampCatSelect" class="form-select admin-filter-select">
+              <option value="all">${t('adminFilterCategory')}</option>
+              <option value="education">${t('catEducation')}</option>
+              <option value="culture">${t('catCulture')}</option>
+              <option value="charity">${t('catCharity')}</option>
+              <option value="sports">${t('catSports')}</option>
+              <option value="tech">${t('catTech')}</option>
+              <option value="celebration">${t('catCelebration')}</option>
+            </select>
+
+            <select id="adminCampSourceSelect" class="form-select admin-filter-select">
+              <option value="all">${t('adminAllSources')}</option>
+              <option value="cloud">${t('adminSourceCloud')}</option>
+              <option value="local">${t('adminSourceLocal')}</option>
+              <option value="preset">${t('adminSourcePreset')}</option>
+            </select>
+
+            <button class="btn btn-primary" onclick="app.openAdminCreateModal()">
+              ${Icons.plus} <span>${t('adminCreateNew')}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Summary Counter -->
+        <div class="admin-table-meta-bar">
+          <span id="adminTableCountLabel">${isKm ? `បង្ហាញយុទ្ធនាការសរុបចំនួន ${campaigns.length}` : `Showing all ${campaigns.length} campaigns`}</span>
+        </div>
+
+        <!-- Campaigns Data Table Container -->
+        <div class="admin-table-responsive" id="adminCampTableContainer">
+          ${this.buildCampaignsTableHtml(campaigns, isKm)}
+        </div>
+      </div>
+    `;
+  }
+
+  buildCampaignsTableHtml(campaigns, isKm) {
+    if (!campaigns || campaigns.length === 0) {
+      return `
+        <div style="padding: 3rem 1rem; text-align: center; color: var(--text-muted);">
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
+          <p>${isKm ? 'មិនមានយុទ្ធនាការដែលត្រូវនឹងការស្វែងរកទេ' : 'No campaigns matched your search criteria.'}</p>
+        </div>
+      `;
+    }
+
+    return `
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th style="width: 60px;">${isKm ? 'ស៊ុម' : 'Frame'}</th>
+            <th>${isKm ? 'ព័ត៌មានយុទ្ធនាការ (Title & Slug)' : 'Campaign (Title & Slug)'}</th>
+            <th>${isKm ? 'ប្រភេទ' : 'Category'}</th>
+            <th>${isKm ? 'អ្នកបង្កើត (Creator)' : 'Creator'}</th>
+            <th style="text-align: right;">${isKm ? 'អ្នកគាំទ្រ' : 'Supporters'}</th>
+            <th>${isKm ? 'ប្រភព' : 'Source'}</th>
+            <th>${isKm ? 'កាលបរិច្ឆេទ' : 'Date'}</th>
+            <th style="text-align: center; width: 140px;">${isKm ? 'សកម្មភាព' : 'Actions'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${campaigns.map(c => {
+            const titleKm = c.titleKm || '';
+            const titleEn = c.titleEn || '';
+            const displayTitle = (isKm ? titleKm : titleEn) || titleKm || titleEn || 'Untitled';
+            const catLabel = t('cat' + (c.category ? c.category[0].toUpperCase() + c.category.slice(1) : 'Celebration')) || c.category;
+            const slug = c.slug || c.id;
+            const supporters = (parseInt(c.supporters, 10) || 0).toLocaleString();
+            const date = (c.createdAt || '').split('T')[0] || '2026';
+            const frameUrl = SecurityUtils.sanitizeUrl(c.frameUrl);
+            const source = c._source || (c.isPreset ? 'preset' : 'cloud');
+            const safeCampId = SecurityUtils.escapeHtml(c.id || c.slug);
+            const safeTitleEscaped = SecurityUtils.escapeHtml(displayTitle).replace(/'/g, "\\'");
+
+            let sourceBadge = `<span class="badge-source badge-cloud">Cloud</span>`;
+            if (source === 'local') sourceBadge = `<span class="badge-source badge-local">Local</span>`;
+            if (source === 'preset') sourceBadge = `<span class="badge-source badge-preset">Preset</span>`;
+
+            return `
+              <tr id="adminRow_${safeCampId}">
+                <td>
+                  <div class="admin-table-thumb" onclick="app.navigateTo('campaign/${slug}')" title="Click to view">
+                    <img src="${SAMPLE_AVATARS[0]}" class="admin-thumb-bg" />
+                    <img src="${frameUrl}" class="admin-thumb-frame" />
+                  </div>
+                </td>
+                <td>
+                  <div class="admin-camp-cell-title">
+                    <a href="#campaign/${slug}" class="admin-link-title" title="${SecurityUtils.escapeHtml(displayTitle)}">
+                      ${SecurityUtils.cleanText(displayTitle, 50)}
+                    </a>
+                    <div class="admin-slug-tag">/${SecurityUtils.escapeHtml(slug)}</div>
+                  </div>
+                </td>
+                <td>
+                  <span class="admin-cat-badge cat-color-${c.category || 'celebration'}">${catLabel}</span>
+                </td>
+                <td>
+                  <div class="admin-creator-cell">
+                    <span class="admin-creator-name">${SecurityUtils.cleanText(c.creator || 'Admin', 30)}</span>
+                    <span class="admin-creator-email">${SecurityUtils.escapeHtml(c.creatorEmail || '')}</span>
+                  </div>
+                </td>
+                <td style="text-align: right;">
+                  <span class="admin-supporter-pill">${supporters}</span>
+                </td>
+                <td>${sourceBadge}</td>
+                <td style="font-size: 0.82rem; color: var(--text-muted);">${date}</td>
+                <td>
+                  <div class="admin-actions-group">
+                    <button class="btn-action-icon btn-action-view" onclick="app.navigateTo('campaign/${slug}')" title="${isKm ? 'មើលស៊ុម' : 'Preview'}">
+                      👁️
+                    </button>
+                    <button class="btn-action-icon btn-action-edit" onclick="app.openAdminEditCampaignModal('${safeCampId}')" title="${isKm ? 'កែប្រែ' : 'Edit'}">
+                      ✏️
+                    </button>
+                    <button class="btn-action-icon btn-action-delete" onclick="app.handleAdminDeleteCampaign('${safeCampId}', '${safeTitleEscaped}')" title="${isKm ? 'លុប' : 'Delete'}">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // =========================================================
+  // TAB 3: USER MANAGEMENT
+  // =========================================================
+  renderAdminUsersTab(users, isKm) {
+    return `
+      <div class="admin-card">
+        <div class="admin-toolbar">
+          <div class="admin-search-wrap">
+            <span class="admin-search-icon">${Icons.search}</span>
+            <input type="text" id="adminUserSearchInput" class="form-input admin-search-input" placeholder="${isKm ? 'ស្វែងរកតាម Email, ឈ្មោះ, ឬ UID...' : 'Search by email, name, or UID...'}" />
+          </div>
+          <div class="admin-filters-wrap">
+            <button class="btn btn-secondary" onclick="app.loadAdminView('users')">
+              🔄 <span>${isKm ? 'ផ្ទុកទិន្នន័យឡើងវិញ' : 'Refresh Users'}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="admin-table-meta-bar">
+          <span id="adminUserCountLabel">${isKm ? `អ្នកប្រើប្រាស់សរុបចំនួន ${users.length} នាក់` : `Total registered accounts: ${users.length}`}</span>
+        </div>
+
+        <div class="admin-table-responsive" id="adminUserTableContainer">
+          ${this.buildUsersTableHtml(users, isKm)}
+        </div>
+      </div>
+    `;
+  }
+
+  buildUsersTableHtml(users, isKm) {
+    if (!users || users.length === 0) {
+      return `
+        <div style="padding: 3rem 1rem; text-align: center; color: var(--text-muted);">
+          No users found.
+        </div>
+      `;
+    }
+
+    return `
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>${isKm ? 'អ្នកប្រើប្រាស់' : 'User'}</th>
+            <th>${isKm ? 'អ៊ីមែល (Email)' : 'Email'}</th>
+            <th>UID</th>
+            <th>${isKm ? 'តួនាទី (Role)' : 'Role'}</th>
+            <th>${isKm ? 'ស្ថានភាព OTP' : 'Verification Status'}</th>
+            <th style="text-align: center;">${isKm ? 'យុទ្ធនាការដែលបានបង្កើត' : 'Campaigns'}</th>
+            <th style="text-align: center; width: 140px;">${isKm ? 'សកម្មភាព' : 'Action'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(u => {
+            const initial = SecurityUtils.cleanText(((u.displayName || u.email || 'U')[0] || 'U').toUpperCase(), 1);
+            const isVerified = !!u.verified;
+            const isSuper = !!u.isSuperAdmin;
+            const safeEmail = SecurityUtils.escapeHtml(u.email);
+
+            return `
+              <tr>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <div class="admin-user-avatar-placeholder">${initial}</div>
+                    <strong style="color: var(--text-primary); font-size: 0.9rem;">${SecurityUtils.cleanText(u.displayName || u.email.split('@')[0], 30)}</strong>
+                  </div>
+                </td>
+                <td><a href="mailto:${safeEmail}" style="color: var(--accent-primary); font-size: 0.88rem;">${safeEmail}</a></td>
+                <td style="font-family: monospace; font-size: 0.78rem; color: var(--text-muted);">${SecurityUtils.cleanText(u.uid, 20)}</td>
+                <td>
+                  ${isSuper 
+                    ? `<span class="badge-role badge-role-super">👑 Super Admin</span>` 
+                    : `<span class="badge-role badge-role-member">👤 ${t('adminRoleUser')}</span>`
+                  }
+                </td>
+                <td>
+                  ${isVerified
+                    ? `<span class="badge-verify badge-verify-yes">✅ ${t('adminUserVerified')}</span>`
+                    : `<span class="badge-verify badge-verify-no">⚠️ ${t('adminUserUnverified')}</span>`
+                  }
+                </td>
+                <td style="text-align: center;">
+                  <span class="admin-camp-count-badge">${u.campaignCount || 0}</span>
+                </td>
+                <td style="text-align: center;">
+                  <button class="btn btn-sm ${isVerified ? 'btn-outline' : 'btn-primary'}" onclick="app.handleAdminToggleVerifyUser('${u.email}', ${isVerified})">
+                    ${isVerified ? 'បិទ OTP' : '✅ ផ្ទៀងផ្ទាត់'}
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // =========================================================
+  // TAB 4: SITE SETTINGS & ANNOUNCEMENTS
+  // =========================================================
+  renderAdminSettingsTab(settings, isKm) {
+    const isEnabled = settings && settings.announcementEnabled;
+    const type = (settings && settings.announcementType) || 'info';
+
+    return `
+      <div class="admin-settings-layout">
+        <!-- Announcement Banner Setting Card -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3 class="admin-card-title">📢 ${t('adminAnnouncementBanner')}</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">
+              ${isKm ? 'បង្ហាញសារប្រកាសព័ត៌មានបន្ទាន់ ឬកម្មវិធីពិសេសនៅលើកំពូលគេហទំព័រ Tra Frames ទាំងមូល' : 'Display a global announcement alert banner across the top of all pages.'}
+            </p>
+          </div>
+
+          <form id="adminSettingsForm" onsubmit="event.preventDefault(); app.handleAdminSaveSettings();">
+            <div class="form-group">
+              <label class="admin-switch-wrap">
+                <input type="checkbox" id="settingAnnouncementEnable" ${isEnabled ? 'checked' : ''} onchange="app.updateBannerPreview()" />
+                <span class="admin-switch-slider"></span>
+                <span class="admin-switch-label"><strong>${t('adminBannerEnable')}</strong></span>
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">${t('adminBannerTextKm')}</label>
+              <textarea id="settingAnnouncementKm" class="form-textarea" rows="2" placeholder="សរសេរសារប្រកាសជាភាសាខ្មែរ..." oninput="app.updateBannerPreview()">${SecurityUtils.escapeHtml(settings.announcementTextKm || '')}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">${t('adminBannerTextEn')}</label>
+              <textarea id="settingAnnouncementEn" class="form-textarea" rows="2" placeholder="Write announcement message in English..." oninput="app.updateBannerPreview()">${SecurityUtils.escapeHtml(settings.announcementTextEn || '')}</textarea>
+            </div>
+
+            <div class="admin-form-grid-2">
+              <div class="form-group">
+                <label class="form-label">${t('adminBannerLink')}</label>
+                <input type="text" id="settingAnnouncementLink" class="form-input" placeholder="#explore ឬតំណភ្ជាប់ URL..." value="${SecurityUtils.escapeHtml(settings.announcementLink || '')}" oninput="app.updateBannerPreview()" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${t('adminBannerType')}</label>
+                <select id="settingAnnouncementType" class="form-select" onchange="app.updateBannerPreview()">
+                  <option value="info" ${type === 'info' ? 'selected' : ''}>${t('adminBannerTypeInfo')}</option>
+                  <option value="success" ${type === 'success' ? 'selected' : ''}>${t('adminBannerTypeSuccess')}</option>
+                  <option value="warning" ${type === 'warning' ? 'selected' : ''}>${t('adminBannerTypeWarning')}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Live Banner Preview -->
+            <div style="margin: 1.25rem 0;">
+              <label class="form-label" style="margin-bottom: 0.5rem;">👁️ ${t('adminBannerPreview')}:</label>
+              <div id="adminLiveBannerPreviewBox" class="global-announcement-bar banner-type-${type}">
+                <div class="announcement-content-wrap">
+                  <span class="announcement-icon-badge">📢</span>
+                  <span class="announcement-text-msg" id="previewMsgText">${isKm ? (settings.announcementTextKm || 'សារគំរូ') : (settings.announcementTextEn || 'Sample Message')}</span>
+                  <span class="announcement-action-link">&rarr;</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+              <button type="submit" class="btn btn-primary" id="btnSaveAdminSettings">
+                ${Icons.check} <span>${t('adminSaveSettings')}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Maintenance Mode Card -->
+        <div class="admin-card" style="margin-top: 1.5rem;">
+          <div class="admin-card-header">
+            <h3 class="admin-card-title">🛠️ ${t('adminMaintenanceMode')}</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">
+              ${isKm ? 'បើកដំណើរការពេលត្រូវការកែលម្អប្រព័ន្ធ ឬរៀបចំទិន្នន័យឡើងវិញ' : 'Temporarily display maintenance notification to regular visitors.'}
+            </p>
+          </div>
+          <label class="admin-switch-wrap" style="margin-top: 0.5rem;">
+            <input type="checkbox" id="settingMaintenanceMode" ${settings && settings.maintenanceMode ? 'checked' : ''} onchange="app.handleAdminSaveSettings()" />
+            <span class="admin-switch-slider"></span>
+            <span class="admin-switch-label"><strong>${isKm ? 'បើកដំណើរការ Maintenance Mode' : 'Enable Maintenance Mode'}</strong></span>
+          </label>
+        </div>
+      </div>
+    `;
+  }
+
+  updateBannerPreview() {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const textKm = document.getElementById('settingAnnouncementKm')?.value || '';
+    const textEn = document.getElementById('settingAnnouncementEn')?.value || '';
+    const type = document.getElementById('settingAnnouncementType')?.value || 'info';
+    const previewBox = document.getElementById('adminLiveBannerPreviewBox');
+    const msgText = document.getElementById('previewMsgText');
+
+    if (previewBox) {
+      previewBox.className = `global-announcement-bar banner-type-${type}`;
+    }
+    if (msgText) {
+      msgText.textContent = (isKm ? textKm : textEn) || textKm || textEn || 'Sample Preview Message';
+    }
+  }
+
+  // =========================================================
+  // TAB 5: BACKUP & DATA TOOLS
+  // =========================================================
+  renderAdminBackupTab(isKm) {
+    return `
+      <div class="admin-backup-grid">
+        <!-- 1-Click Backup Card -->
+        <div class="admin-card">
+          <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">📥</div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${t('adminExportBackup')}</h3>
+          <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem;">
+            ${isKm 
+              ? 'ទាញយកទិន្នន័យយុទ្ធនាការស៊ុមទាំងអស់ រួមទាំងបញ្ជីអ្នកប្រើប្រាស់ និងការកំណត់ប្រព័ន្ធ មកទុកលើកុំព្យូទ័រជាឯកសារ .json ដោយសុវត្ថិភាព។' 
+              : 'Download complete snapshot of all campaigns, users metadata, and platform settings as a standalone .json backup file.'}
+          </p>
+          <button class="btn btn-primary" onclick="app.handleAdminExportBackup()" style="width: 100%;">
+            ${Icons.download} <span>${isKm ? 'ទាញយក JSON Backup ឥឡូវនេះ' : 'Download JSON Backup'}</span>
+          </button>
+        </div>
+
+        <!-- Restore Backup Card -->
+        <div class="admin-card">
+          <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">📤</div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${t('adminImportBackup')}</h3>
+          <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem;">
+            ${isKm 
+              ? 'បញ្ចូលឯកសារ JSON Backup ដើម្បីស្តារឡើងវិញនូវរាល់យុទ្ធនាការ ឬការកំណត់ដែលបានបម្រុងទុកពីមុនមក។' 
+              : 'Restore campaigns and platform configuration from a previously exported JSON backup file.'}
+          </p>
+          <input type="file" id="adminImportFileInput" accept=".json" style="display: none;" onchange="app.handleAdminImportBackup(this)" />
+          <button class="btn btn-secondary" onclick="document.getElementById('adminImportFileInput').click()" style="width: 100%;">
+            ${Icons.upload} <span>${isKm ? 'ជ្រើសរើស File Backup (.json)' : 'Select Backup File (.json)'}</span>
+          </button>
+        </div>
+
+        <!-- System Cache Purge Card -->
+        <div class="admin-card">
+          <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">🧹</div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${t('adminPurgeCache')}</h3>
+          <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem;">
+            ${isKm 
+              ? 'សម្អាត Local Memory Cache និងទាញយកទិន្នន័យស្រស់បំផុតពី Cloud Firestore ដើម្បីធានាភាពសុក្រឹត។' 
+              : 'Purge local in-memory cache and force re-synchronization with latest Cloud Firestore documents.'}
+          </p>
+          <button class="btn btn-outline" onclick="app.handleAdminPurgeCache()" style="width: 100%;">
+            🔄 <span>${isKm ? 'សម្អាត Cache និង Sync ឡើងវិញ' : 'Purge Cache & Sync'}</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // =========================================================
+  // ADMIN TAB LISTENERS (FILTERING & SEARCH)
+  // =========================================================
+  initAdminTabListeners(activeTab, isKm) {
+    if (activeTab === 'campaigns') {
+      const searchInput = document.getElementById('adminCampSearchInput');
+      const catSelect = document.getElementById('adminCampCatSelect');
+      const sourceSelect = document.getElementById('adminCampSourceSelect');
+      const tableContainer = document.getElementById('adminCampTableContainer');
+      const countLabel = document.getElementById('adminTableCountLabel');
+
+      const applyFilters = () => {
+        const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+        const selectedCat = catSelect ? catSelect.value : 'all';
+        const selectedSource = sourceSelect ? sourceSelect.value : 'all';
+
+        const filtered = this.adminData.campaigns.filter(c => {
+          const matchCat = (selectedCat === 'all') || (c.category === selectedCat);
+          const cSource = c._source || (c.isPreset ? 'preset' : 'cloud');
+          const matchSource = (selectedSource === 'all') || (cSource === selectedSource);
+
+          let matchQuery = true;
+          if (query) {
+            const titleKm = (c.titleKm || '').toLowerCase();
+            const titleEn = (c.titleEn || '').toLowerCase();
+            const slug = (c.slug || '').toLowerCase();
+            const creator = (c.creator || '').toLowerCase();
+            const email = (c.creatorEmail || '').toLowerCase();
+            matchQuery = titleKm.includes(query) || titleEn.includes(query) || slug.includes(query) || creator.includes(query) || email.includes(query);
+          }
+
+          return matchCat && matchSource && matchQuery;
+        });
+
+        if (tableContainer) {
+          tableContainer.innerHTML = this.buildCampaignsTableHtml(filtered, isKm);
+        }
+        if (countLabel) {
+          countLabel.textContent = isKm 
+            ? `បង្ហាញ ${filtered.length} នៃ ${this.adminData.campaigns.length} យុទ្ធនាការ` 
+            : `Showing ${filtered.length} of ${this.adminData.campaigns.length} campaigns`;
+        }
+      };
+
+      if (searchInput) searchInput.addEventListener('input', applyFilters);
+      if (catSelect) catSelect.addEventListener('change', applyFilters);
+      if (sourceSelect) sourceSelect.addEventListener('change', applyFilters);
+    } else if (activeTab === 'users') {
+      const userSearch = document.getElementById('adminUserSearchInput');
+      const userTableContainer = document.getElementById('adminUserTableContainer');
+      const userCountLabel = document.getElementById('adminUserCountLabel');
+
+      if (userSearch) {
+        userSearch.addEventListener('input', () => {
+          const q = userSearch.value.toLowerCase().trim();
+          const filtered = this.adminData.users.filter(u => {
+            const email = (u.email || '').toLowerCase();
+            const name = (u.displayName || '').toLowerCase();
+            const uid = (u.uid || '').toLowerCase();
+            return !q || email.includes(q) || name.includes(q) || uid.includes(q);
+          });
+
+          if (userTableContainer) {
+            userTableContainer.innerHTML = this.buildUsersTableHtml(filtered, isKm);
+          }
+          if (userCountLabel) {
+            userCountLabel.textContent = isKm 
+              ? `បង្ហាញ ${filtered.length} នៃ ${this.adminData.users.length} នាក់` 
+              : `Showing ${filtered.length} of ${this.adminData.users.length} users`;
+          }
+        });
+      }
+    }
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: EDIT CAMPAIGN MODAL
+  // =========================================================
+  openAdminEditCampaignModal(campaignId) {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const camp = this.adminData.campaigns.find(c => c.id === campaignId || c.slug === campaignId);
+    if (!camp) {
+      this.showToast("Campaign not found", "error");
+      return;
+    }
+
+    const existing = document.getElementById('adminEditModalOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'adminEditModalOverlay';
+
+    const safeFrameUrl = SecurityUtils.sanitizeUrl(camp.frameUrl);
+    const cat = camp.category || 'celebration';
+
+    overlay.innerHTML = `
+      <div class="modal-card admin-modal-edit-card" style="max-width: 780px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+          <div>
+            <h3 style="font-weight: 800; font-size: 1.25rem;">✏️ ${t('adminEditCampaign')}</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">${t('adminEditCampaignSubtitle')}</p>
+          </div>
+          <button class="modal-close-btn" onclick="document.getElementById('adminEditModalOverlay').remove()">&times;</button>
+        </div>
+
+        <form id="adminEditForm" onsubmit="event.preventDefault(); app.handleAdminSaveCampaignEdit('${camp.id || camp.slug}')">
+          <div class="admin-edit-layout">
+            <!-- Left: Frame Preview -->
+            <div class="admin-edit-preview-col">
+              <label class="form-label">🖼️ ${isKm ? 'រូបភាពស៊ុមបច្ចុប្បន្ន' : 'Current Frame'}</label>
+              <div class="admin-edit-frame-preview-box">
+                <img src="${SAMPLE_AVATARS[0]}" class="admin-thumb-bg" />
+                <img src="${safeFrameUrl}" class="admin-thumb-frame" id="adminEditFramePreviewImg" />
+              </div>
+              <div style="margin-top: 0.75rem;">
+                <label class="form-label" style="font-size: 0.78rem;">${isKm ? 'ប្តូររូបភាពស៊ុមថ្មី (PNG ថ្លា)' : 'Replace Frame (PNG)'}</label>
+                <input type="file" id="adminEditFrameFileInput" accept="image/png,image/webp" class="form-input" style="font-size: 0.8rem; padding: 0.35rem;" />
+              </div>
+            </div>
+
+            <!-- Right: Metadata Form -->
+            <div class="admin-edit-fields-col">
+              <div class="form-group">
+                <label class="form-label">${t('fieldTitle')} (Khmer) *</label>
+                <input type="text" id="editCampTitleKm" class="form-input" value="${SecurityUtils.escapeHtml(camp.titleKm || '')}" required />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${t('fieldTitle')} (English) *</label>
+                <input type="text" id="editCampTitleEn" class="form-input" value="${SecurityUtils.escapeHtml(camp.titleEn || '')}" required />
+              </div>
+
+              <div class="admin-form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">${t('fieldSlug')} *</label>
+                  <input type="text" id="editCampSlug" class="form-input" value="${SecurityUtils.escapeHtml(camp.slug || '')}" required />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">${t('fieldCategory')} *</label>
+                  <select id="editCampCategory" class="form-select">
+                    <option value="education" ${cat === 'education' ? 'selected' : ''}>${t('catEducation')}</option>
+                    <option value="culture" ${cat === 'culture' ? 'selected' : ''}>${t('catCulture')}</option>
+                    <option value="charity" ${cat === 'charity' ? 'selected' : ''}>${t('catCharity')}</option>
+                    <option value="sports" ${cat === 'sports' ? 'selected' : ''}>${t('catSports')}</option>
+                    <option value="tech" ${cat === 'tech' ? 'selected' : ''}>${t('catTech')}</option>
+                    <option value="celebration" ${cat === 'celebration' ? 'selected' : ''}>${t('catCelebration')}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="admin-form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">${isKm ? 'ចំនួនអ្នកគាំទ្រ (Supporters)' : 'Supporters Count'} *</label>
+                  <input type="number" id="editCampSupporters" class="form-input" value="${camp.supporters || 1}" min="1" required />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">${isKm ? 'ឈ្មោះអ្នកបង្កើត' : 'Creator Name'}</label>
+                  <input type="text" id="editCampCreator" class="form-input" value="${SecurityUtils.escapeHtml(camp.creator || '')}" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${isKm ? 'អ៊ីមែលអ្នកបង្កើត' : 'Creator Email'}</label>
+                <input type="email" id="editCampCreatorEmail" class="form-input" value="${SecurityUtils.escapeHtml(camp.creatorEmail || '')}" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${t('fieldDesc')} (Khmer)</label>
+                <textarea id="editCampDescKm" class="form-textarea" rows="2">${SecurityUtils.escapeHtml(camp.descriptionKm || '')}</textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${t('fieldDesc')} (English)</label>
+                <textarea id="editCampDescEn" class="form-textarea" rows="2">${SecurityUtils.escapeHtml(camp.descriptionEn || '')}</textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">${t('fieldCaption')}</label>
+                <textarea id="editCampCaptionKm" class="form-textarea" rows="2">${SecurityUtils.escapeHtml(camp.captionKm || camp.captionEn || '')}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('adminEditModalOverlay').remove()">
+              ${t('adminCancel')}
+            </button>
+            <button type="submit" class="btn btn-primary" id="btnAdminSaveEdit">
+              ${Icons.check} <span>${t('adminSaveCampaignChanges')}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Handle frame file change preview
+    const fileInput = document.getElementById('adminEditFrameFileInput');
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const previewImg = document.getElementById('adminEditFramePreviewImg');
+            if (previewImg) previewImg.src = evt.target.result;
+            overlay._newFrameDataUrl = evt.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+  }
+
+  async handleAdminSaveCampaignEdit(campaignId) {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const overlay = document.getElementById('adminEditModalOverlay');
+    const saveBtn = document.getElementById('btnAdminSaveEdit');
+
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<span>⏳ ${isKm ? 'កំពុងរក្សាទុក...' : 'Saving...'}</span>`;
+    }
+
+    try {
+      const titleKm = document.getElementById('editCampTitleKm').value.trim();
+      const titleEn = document.getElementById('editCampTitleEn').value.trim();
+      const slug = document.getElementById('editCampSlug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+      const category = document.getElementById('editCampCategory').value;
+      const supporters = parseInt(document.getElementById('editCampSupporters').value, 10) || 1;
+      const creator = document.getElementById('editCampCreator').value.trim();
+      const creatorEmail = document.getElementById('editCampCreatorEmail').value.trim();
+      const descriptionKm = document.getElementById('editCampDescKm').value.trim();
+      const descriptionEn = document.getElementById('editCampDescEn').value.trim();
+      const captionKm = document.getElementById('editCampCaptionKm').value.trim();
+
+      const updatePayload = {
+        titleKm,
+        titleEn,
+        slug,
+        category,
+        supporters,
+        creator,
+        creatorEmail,
+        descriptionKm,
+        descriptionEn,
+        captionKm,
+        captionEn: captionKm
+      };
+
+      if (overlay && overlay._newFrameDataUrl) {
+        updatePayload.frameUrl = overlay._newFrameDataUrl;
+      }
+
+      await AdminService.adminUpdateCampaign(campaignId, updatePayload);
+
+      this.showToast(t('adminCampaignUpdated'), 'success');
+      if (overlay) overlay.remove();
+
+      // Refresh admin data
+      await this.loadAdminView('campaigns');
+    } catch (err) {
+      console.error("Admin save edit error:", err);
+      this.showToast("Error updating campaign: " + (err.message || ''), 'error');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = `${Icons.check} <span>${t('adminSaveCampaignChanges')}</span>`;
+      }
+    }
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: DELETE CAMPAIGN
+  // =========================================================
+  async handleAdminDeleteCampaign(campaignId, title) {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const confirmMsg = `${t('adminDeleteCampaignConfirm')}\n\n• Campaign: "${title || campaignId}"`;
+    
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await AdminService.adminDeleteCampaign(campaignId);
+      this.showToast(t('adminCampaignDeleted'), 'success');
+
+      // Refresh table
+      await this.loadAdminView('campaigns');
+    } catch (err) {
+      console.error("Admin delete error:", err);
+      this.showToast("Error deleting campaign: " + (err.message || ''), 'error');
+    }
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: CREATE CAMPAIGN DIRECTLY
+  // =========================================================
+  openAdminCreateModal() {
+    // Super Admin can easily jump to #create
+    this.navigateTo('create');
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: EXPORT & IMPORT BACKUP
+  // =========================================================
+  async handleAdminExportBackup() {
+    try {
+      this.showToast("Preparing backup JSON...", "info");
+      await AdminService.exportDatabaseBackup();
+      this.showToast("Backup exported successfully!", "success");
+    } catch (err) {
+      this.showToast("Backup export failed: " + err.message, "error");
+    }
+  }
+
+  async handleAdminImportBackup(fileInput) {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    if (!window.confirm(t('adminRestoreConfirm'))) {
+      fileInput.value = '';
+      return;
+    }
+
+    try {
+      this.showToast("Reading backup file...", "info");
+      const text = await file.text();
+      const jsonData = JSON.parse(text);
+      const res = await AdminService.importDatabaseBackup(jsonData);
+      this.showToast(t('adminRestoreSuccess') + ` (${res.restoredCampaigns} campaigns)`, "success");
+      fileInput.value = '';
+      await this.loadAdminView('backup');
+    } catch (err) {
+      console.error("Backup import error:", err);
+      this.showToast("Import failed: " + (err.message || ''), "error");
+      fileInput.value = '';
+    }
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: PURGE SYSTEM CACHE
+  // =========================================================
+  async handleAdminPurgeCache() {
+    if (CampaignService._memoryCache) {
+      CampaignService._memoryCache.clear();
+    }
+    this.showToast(t('adminPurgeSuccess'), "success");
+    await this.loadAdminView(this.adminActiveTab || 'overview');
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: SAVE SETTINGS
+  // =========================================================
+  async handleAdminSaveSettings() {
+    const saveBtn = document.getElementById('btnSaveAdminSettings');
+    if (saveBtn) saveBtn.disabled = true;
+
+    try {
+      const enabled = document.getElementById('settingAnnouncementEnable')?.checked || false;
+      const textKm = document.getElementById('settingAnnouncementKm')?.value.trim() || '';
+      const textEn = document.getElementById('settingAnnouncementEn')?.value.trim() || '';
+      const link = document.getElementById('settingAnnouncementLink')?.value.trim() || '';
+      const type = document.getElementById('settingAnnouncementType')?.value || 'info';
+      const maintenance = document.getElementById('settingMaintenanceMode')?.checked || false;
+
+      const newSettings = {
+        announcementEnabled: enabled,
+        announcementTextKm: textKm,
+        announcementTextEn: textEn,
+        announcementLink: link,
+        announcementType: type,
+        maintenanceMode: maintenance
+      };
+
+      await AdminService.saveSystemSettings(newSettings);
+      this.showToast(t('adminSettingsSaved'), 'success');
+
+      // Update active announcement banner immediately
+      sessionStorage.removeItem('tra_announcement_dismissed');
+      this.renderGlobalAnnouncementBanner();
+    } catch (err) {
+      this.showToast("Error saving settings: " + (err.message || ''), 'error');
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+    }
+  }
+
+  // =========================================================
+  // ADMIN ACTIONS: TOGGLE USER VERIFICATION
+  // =========================================================
+  async handleAdminToggleVerifyUser(email, currentStatus) {
+    try {
+      const newStatus = !currentStatus;
+      await AdminService.updateUserStatus(email, newStatus);
+      this.showToast(t('adminUserStatusUpdated'), 'success');
+      await this.loadAdminView('users');
+    } catch (err) {
+      this.showToast("Error updating user: " + (err.message || ''), 'error');
+    }
+  }
 }
+
 
 // Global App Instance
 let app;
