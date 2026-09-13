@@ -231,18 +231,29 @@ class TwibbonApp {
       `;
     } else {
       const initial = SecurityUtils.cleanText(((user.displayName || user.email || 'U').trim()[0] || 'U').toUpperCase(), 1).replace(/[^A-Z0-9]/g, 'U');
-      const displayName = SecurityUtils.escapeHtml(user.displayName || user.email.split('@')[0]);
-      const hasValidPhoto = !!(user.photoURL && user.photoURL !== '#' && user.photoURL !== 'about:blank');
-      const safePhotoUrl = hasValidPhoto ? SecurityUtils.sanitizeUrl(user.photoURL) : '';
+      const safeDisplayName = SecurityUtils.escapeHtml(user.displayName || (user.email ? user.email.split('@')[0] : 'User'));
+      let userPhoto = user.photoURL || '';
+      if ((!userPhoto || userPhoto === '#' || userPhoto === 'about:blank') && user.uid) {
+        try {
+          const raw = localStorage.getItem("tra_user_profile_" + user.uid) || 
+                      (user.email ? localStorage.getItem("tra_user_profile_" + user.email.toLowerCase()) : null);
+          if (raw) {
+            const sp = JSON.parse(raw);
+            if (sp && sp.photoURL) userPhoto = sp.photoURL;
+          }
+        } catch (e) {}
+      }
+      const hasValidPhoto = !!(userPhoto && userPhoto !== '#' && userPhoto !== 'about:blank');
+      const safePhotoUrl = hasValidPhoto ? SecurityUtils.sanitizeUrl(userPhoto) : '';
       container.innerHTML = `
         <div class="user-profile-badge" id="userProfileBadge" onclick="app.toggleUserDropdown(event)">
           <div class="user-avatar-wrap">
             ${safePhotoUrl 
-              ? `<img src="${safePhotoUrl}" class="user-avatar-img" alt="${displayName}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" /><div class="user-avatar-placeholder" style="display:none;">${initial}</div>`
+              ? `<img src="${safePhotoUrl}" class="user-avatar-img" alt="${safeDisplayName}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" /><div class="user-avatar-placeholder" style="display:none;">${initial}</div>`
               : `<div class="user-avatar-placeholder">${initial}</div>`
             }
           </div>
-          <span class="user-name-text">${displayName}</span>
+          <span class="user-name-text">${safeDisplayName}</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
           
           <div class="user-dropdown" id="userDropdownMenu" style="display: none;">
@@ -337,6 +348,16 @@ class TwibbonApp {
     let currentPhotoURL = (user && user.photoURL) || '';
     if (currentPhotoURL === '#' || currentPhotoURL === 'about:blank') {
       currentPhotoURL = '';
+    }
+    if (!currentPhotoURL && user && user.uid) {
+      try {
+        const raw = localStorage.getItem("tra_user_profile_" + user.uid) || 
+                    (user.email ? localStorage.getItem("tra_user_profile_" + user.email.toLowerCase()) : null);
+        if (raw) {
+          const sp = JSON.parse(raw);
+          if (sp && sp.photoURL) currentPhotoURL = sp.photoURL;
+        }
+      } catch (e) {}
     }
     let selectedAvatarDataUrl = currentPhotoURL ? SecurityUtils.sanitizeUrl(currentPhotoURL) : '';
     const isLocal = !!(user && user.isLocal);
@@ -3947,7 +3968,17 @@ class TwibbonApp {
     const userName = (user && (user.displayName || user.email?.split('@')[0])) || 'Creator';
     const userEmail = (user && user.email) || '';
     const userInitial = userName.charAt(0).toUpperCase();
-    const rawPhoto = user && user.photoURL ? user.photoURL : null;
+    let rawPhoto = user && user.photoURL ? user.photoURL : null;
+    if ((!rawPhoto || rawPhoto === '#' || rawPhoto === 'about:blank') && user && user.uid) {
+      try {
+        const raw = localStorage.getItem("tra_user_profile_" + user.uid) || 
+                    (user.email ? localStorage.getItem("tra_user_profile_" + user.email.toLowerCase()) : null);
+        if (raw) {
+          const sp = JSON.parse(raw);
+          if (sp && sp.photoURL) rawPhoto = sp.photoURL;
+        }
+      } catch (e) {}
+    }
     const hasCreatorPhoto = !!(rawPhoto && rawPhoto !== '#' && rawPhoto !== 'about:blank');
     const userPhoto = hasCreatorPhoto ? SecurityUtils.sanitizeUrl(rawPhoto) : null;
     const totalSupporters = myCampaigns.reduce((sum, c) => sum + (c.supporters || 0), 0);
