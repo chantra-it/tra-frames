@@ -61,6 +61,12 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // Users Profile Collection (Stores custom avatar, display name, preferences)
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
     // Admins Collection
     match /admins/{adminId} {
       allow read: if isAuthenticated();
