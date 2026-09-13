@@ -410,14 +410,14 @@ class TwibbonApp {
             
             <div class="profile-avatar-actions">
               <input type="file" id="profileAvatarFileInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" />
-              <button type="button" class="btn btn-outline btn-sm" id="btnSelectCustomAvatar">
-                ${Icons.upload} <span>${t('uploadAvatar')}</span>
-              </button>
-              ${selectedAvatarDataUrl ? `
-                <button type="button" class="btn btn-secondary btn-sm" id="btnRemoveAvatar">
+              <div class="profile-avatar-btns-row">
+                <button type="button" class="btn btn-outline btn-sm" id="btnSelectCustomAvatar">
+                  ${Icons.upload} <span>${t('uploadAvatar')}</span>
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnRemoveAvatar" style="display: ${selectedAvatarDataUrl ? 'inline-flex' : 'none'};">
                   ${Icons.trash} <span>${t('removeAvatar')}</span>
                 </button>
-              ` : ''}
+              </div>
               <div class="profile-avatar-hint">${t('avatarHint')}</div>
             </div>
           </div>
@@ -630,6 +630,10 @@ class TwibbonApp {
       overlay.querySelectorAll('.profile-preset-item').forEach((item, idx) => {
         item.classList.toggle('active', AVATAR_PRESETS[idx] === url);
       });
+      const btnRemove = overlay.querySelector('#btnRemoveAvatar');
+      if (btnRemove) {
+        btnRemove.style.display = url ? 'inline-flex' : 'none';
+      }
     };
 
     // --- Avatar Custom Upload Event ---
