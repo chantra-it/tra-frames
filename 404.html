@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <title>Tra Frames</title>
+  <!-- Fallback Open Graph Tags -->
+  <meta property="og:title" content="Tra Frames - Campaign Photo Frame Platform">
+  <meta property="og:description" content="កម្មវិធីបង្កើត និងរចនាស៊ុមរូបថតគាំទ្រយុទ្ធនាការយ៉ាងរហ័ស និងស្រស់ស្អាត">
+  <meta property="og:image" content="https://frame.tra4me.com/og-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://frame.tra4me.com/og-preview.png">
+  <script>
+    // Intelligent SPA Deep-Link Router
+    const path = window.location.pathname;
+    const match = path.match(/\/(?:c|campaign)\/([^\/]+)/);
+    if (match && match[1]) {
+      window.location.replace('/#campaign/' + decodeURIComponent(match[1]));
+    } else {
+      window.location.replace('/');
+    }
+  </script>
+</head>
+<body style="margin:0; background:#070c18; color:#fff; font-family:system-ui, sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; text-align:center;">
+  <div>
+    <h2 style="font-size:1.4rem; margin-bottom:0.5rem;">កំពុងផ្ទុក Tra Frames...</h2>
+    <p style="color:#94a3b8; font-size:0.9rem;">Loading requested campaign frame...</p>
+  </div>
+</body>
+</html>
