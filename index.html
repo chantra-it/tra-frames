@@ -1391,6 +1391,53 @@ html, body {
   color: var(--text-muted);
 }
 
+/* Upload Progress Elements */
+.upload-progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-card);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.upload-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary) 0%, #38bdf8 100%);
+  border-radius: var(--radius-full);
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.45);
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: progressShimmer 1.4s infinite;
+}
+
+@keyframes progressShimmer {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(200%); }
+}
+
+.upload-spin-icon {
+  display: inline-block;
+  animation: spinSlow 1.5s linear infinite;
+}
+
+@keyframes spinSlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* Sample Avatars */
 .sample-avatars-row {
   display: flex;
@@ -6690,6 +6737,8 @@ const translations = {
     dragDropPhoto: "ចុចដើម្បីជ្រើសរូបថត (ឬទាញរូបទម្លាក់)",
     photoTip: "ទំហំអតិបរមា 10MB • គាំទ្រ JPG, PNG, WebP",
     photoUploadSuccess: "បានបញ្ចូលរូបថតដោយជោគជ័យ!",
+    uploadingPhoto: "កំពុងបញ្ចូលរូបថត...",
+    renderingPhoto: "កំពុងបង្ហាញក្នុងស៊ុម...",
     imageTooLarge: "រូបភាពមានទំហំធំពេក (អតិបរមា 10MB)! សូមជ្រើសរើសរូបភាពដែលមានទំហំតូចជាងនេះ។",
     invalidImageType: "ប្រភេទឯកសារមិនត្រឹមត្រូវ! អនុញ្ញាតតែរូបភាព JPG, PNG, និង WebP ប៉ុណ្ណោះ។",
     useSamplePhoto: "រូបគំរូ",
@@ -7034,6 +7083,8 @@ const translations = {
     dragDropPhoto: "Click to upload photo (or drag & drop)",
     photoTip: "Max size 10MB • Supports JPG, PNG, WebP",
     photoUploadSuccess: "Photo uploaded successfully!",
+    uploadingPhoto: "Uploading photo...",
+    renderingPhoto: "Rendering into frame...",
     imageTooLarge: "Image file too large (max 10MB)! Please select a smaller file.",
     invalidImageType: "Invalid file type! Only JPG, PNG, and WebP images are allowed.",
     useSamplePhoto: "Sample",
@@ -10768,7 +10819,7 @@ class CanvasStudio {
     });
   }
 
-  setUserPhoto(sourceUrlOrFile, isCustom = true) {
+  setUserPhoto(sourceUrlOrFile, isCustom = true, onProgress = null) {
     return new Promise((resolve, reject) => {
       if (typeof sourceUrlOrFile === 'string') {
         const img = new Image();
@@ -10787,6 +10838,7 @@ class CanvasStudio {
           }
           this.render();
           if (this.onPhotoLoaded) this.onPhotoLoaded();
+          if (typeof onProgress === 'function') onProgress(100);
           resolve();
         };
         img.onerror = reject;
@@ -10799,8 +10851,16 @@ class CanvasStudio {
             return;
           }
         }
+        if (typeof onProgress === 'function') onProgress(5);
         const reader = new FileReader();
+        reader.onprogress = (e) => {
+          if (e.lengthComputable && typeof onProgress === 'function') {
+            const pct = Math.min(85, Math.max(5, Math.round((e.loaded / e.total) * 85)));
+            onProgress(pct);
+          }
+        };
         reader.onload = (e) => {
+          if (typeof onProgress === 'function') onProgress(90);
           const img = new Image();
           img.onload = () => {
             this.userImage = img;
@@ -10809,6 +10869,7 @@ class CanvasStudio {
             this.markDirty();
             this.render();
             if (this.onPhotoLoaded) this.onPhotoLoaded();
+            if (typeof onProgress === 'function') onProgress(100);
             resolve();
           };
           img.onerror = () => {
@@ -14562,10 +14623,27 @@ class TwibbonApp {
           <div class="studio-upload-section">
             <input type="file" id="photoFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display: none;" />
             <div class="photo-dropzone" id="photoDropzone" title="${t('photoTip')}">
-              <div class="dropzone-icon">${Icons.camera}</div>
-              <div class="dropzone-text">
-                <span class="dropzone-main-text">${t('choosePhoto')}</span>
-                <span class="dropzone-sub-text">📌 ${t('photoTip')}</span>
+              <!-- Default state -->
+              <div class="dropzone-idle" id="dropzoneIdle" style="display: flex; align-items: center; gap: 0.8rem; width: 100%; justify-content: center;">
+                <div class="dropzone-icon">${Icons.camera}</div>
+                <div class="dropzone-text">
+                  <span class="dropzone-main-text">${t('choosePhoto')}</span>
+                  <span class="dropzone-sub-text">📌 ${t('photoTip')}</span>
+                </div>
+              </div>
+
+              <!-- Uploading progress state -->
+              <div class="dropzone-progress-wrap" id="dropzoneProgress" style="display: none; width: 100%; flex-direction: column; gap: 0.55rem; padding: 0.15rem 0.4rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                  <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                    <span class="upload-spin-icon">⏳</span>
+                    <span id="dropzoneStatusText">${t('uploadingPhoto')}</span>
+                  </span>
+                  <span id="dropzonePercent" style="font-size: 0.95rem; font-weight: 800; color: var(--accent-primary); font-family: monospace;">0%</span>
+                </div>
+                <div class="upload-progress-bar-bg">
+                  <div class="upload-progress-bar-fill" id="dropzoneProgressBar" style="width: 0%;"></div>
+                </div>
               </div>
             </div>
 
@@ -14746,14 +14824,49 @@ class TwibbonApp {
         return;
       }
 
+      const idleEl = document.getElementById('dropzoneIdle');
+      const progressEl = document.getElementById('dropzoneProgress');
+      const percentEl = document.getElementById('dropzonePercent');
+      const barEl = document.getElementById('dropzoneProgressBar');
+      const statusTextEl = document.getElementById('dropzoneStatusText');
+
+      const setProgress = (percent, text) => {
+        if (idleEl) idleEl.style.display = 'none';
+        if (progressEl) progressEl.style.display = 'flex';
+        if (percentEl) percentEl.textContent = `${percent}%`;
+        if (barEl) barEl.style.width = `${percent}%`;
+        if (statusTextEl && text) statusTextEl.textContent = text;
+      };
+
+      const resetProgress = () => {
+        setTimeout(() => {
+          if (progressEl) progressEl.style.display = 'none';
+          if (idleEl) idleEl.style.display = 'flex';
+          if (percentEl) percentEl.textContent = '0%';
+          if (barEl) barEl.style.width = '0%';
+        }, 800);
+      };
+
+      setProgress(8, t('uploadingPhoto'));
+
       try {
-        await this.activeStudio.setUserPhoto(file, true);
+        await this.activeStudio.setUserPhoto(file, true, (pct) => {
+          let msg = t('uploadingPhoto');
+          if (pct >= 90 && pct < 100) {
+            msg = t('renderingPhoto');
+          } else if (pct >= 100) {
+            msg = t('photoUploadSuccess');
+          }
+          setProgress(pct, msg);
+        });
+        setProgress(100, t('photoUploadSuccess'));
         this.showToast(t('photoUploadSuccess'), 'success');
       } catch (err) {
         console.error("Studio photo load error:", err);
         this.showToast(err.message || (isKm ? 'មិនអាចបញ្ចូលរូបថតបានទេ!' : 'Failed to load photo!'), 'error');
       } finally {
         fileInput.value = '';
+        resetProgress();
       }
     };
 
