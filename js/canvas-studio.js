@@ -103,7 +103,7 @@ class CanvasStudio {
         img.src = sourceUrlOrFile;
       } else if (sourceUrlOrFile instanceof File || sourceUrlOrFile instanceof Blob) {
         if (typeof SecurityUtils !== 'undefined' && sourceUrlOrFile instanceof File) {
-          const check = SecurityUtils.validateImageFile(sourceUrlOrFile);
+          const check = SecurityUtils.validateImageFile(sourceUrlOrFile, 10);
           if (!check.valid) {
             reject(new Error(check.error));
             return;
@@ -121,10 +121,16 @@ class CanvasStudio {
             if (this.onPhotoLoaded) this.onPhotoLoaded();
             resolve();
           };
-          img.onerror = reject;
+          img.onerror = () => {
+            const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+            reject(new Error(isKm ? 'មិនអាចបើករូបភាពនេះបានទេ សូមសាកល្បងរូបភាពផ្សេង។' : 'Failed to decode image. Please try another file.'));
+          };
           img.src = e.target.result;
         };
-        reader.onerror = reject;
+        reader.onerror = () => {
+          const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+          reject(new Error(isKm ? 'មានបញ្ហាក្នុងការអានឯកសាររូបភាព។' : 'Failed to read file.'));
+        };
         reader.readAsDataURL(sourceUrlOrFile);
       }
     });
