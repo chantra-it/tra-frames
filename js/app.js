@@ -439,7 +439,7 @@ class TwibbonApp {
             </div>
             
             <div class="profile-avatar-actions">
-              <input type="file" id="profileAvatarFileInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" />
+              <input type="file" id="profileAvatarFileInput" accept="image/*, .heic, .HEIC, .heif, .HEIF" style="display:none;" />
               <div class="profile-avatar-btns-row">
                 <button type="button" class="btn btn-outline btn-sm" id="btnSelectCustomAvatar">
                   ${Icons.upload} <span>${t('uploadAvatar')}</span>
@@ -2165,7 +2165,7 @@ class TwibbonApp {
 
           <!-- Step 1: Upload Photo Dropzone (Directly under Canvas for instant access) -->
           <div class="studio-upload-section">
-            <input type="file" id="photoFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display: none;" />
+            <input type="file" id="photoFileInput" accept="image/*, .heic, .HEIC, .heif, .HEIF" style="display: none;" />
             <div class="photo-dropzone" id="photoDropzone" title="${t('photoTip')}">
               <!-- Default state -->
               <div class="dropzone-idle" id="dropzoneIdle" style="display: flex; align-items: center; gap: 0.8rem; width: 100%; justify-content: center;">
@@ -2394,12 +2394,16 @@ class TwibbonApp {
       setProgress(8, t('uploadingPhoto'));
 
       try {
-        await this.activeStudio.setUserPhoto(file, true, (pct) => {
-          let msg = t('uploadingPhoto');
-          if (pct >= 90 && pct < 100) {
-            msg = t('renderingPhoto');
-          } else if (pct >= 100) {
-            msg = t('photoUploadSuccess');
+        await this.activeStudio.setUserPhoto(file, true, (pct, customMsg) => {
+          let msg = customMsg;
+          if (!msg) {
+            if (pct >= 90 && pct < 100) {
+              msg = t('renderingPhoto');
+            } else if (pct >= 100) {
+              msg = t('photoUploadSuccess');
+            } else {
+              msg = t('uploadingPhoto');
+            }
           }
           setProgress(pct, msg);
         });
@@ -3384,8 +3388,8 @@ class TwibbonApp {
               <div class="designer-logo-preview" id="designerLogoThumb">🖼️</div>
               <div style="flex:1;">
                 <label class="designer-logo-btn" for="designerLogoInput">
-                  📁 ${isKm ? 'ជ្រើសរើសរូប PNG' : 'Choose PNG Logo'}
-                  <input type="file" id="designerLogoInput" accept="image/png,image/jpeg,image/webp" style="display:none;" />
+                  📁 ${isKm ? 'ជ្រើសរើសរូប Logo' : 'Choose Logo'}
+                  <input type="file" id="designerLogoInput" accept="image/*, .heic, .HEIC, .heif, .HEIF" style="display:none;" />
                 </label>
               </div>
               <button type="button" class="designer-logo-remove" id="btnRemoveLogo" style="display:none;">${t('delete')}</button>
