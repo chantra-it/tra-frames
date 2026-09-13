@@ -1,6 +1,27 @@
 // High-Performance Interactive HTML5 Canvas Studio for Twibbon Framing
 
 class CanvasStudio {
+  static loadHeicConverter() {
+    if (typeof window.heic2any === 'function') return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const existing = document.querySelector('script[src*="heic2any"]');
+      if (existing) {
+        if (typeof window.heic2any === 'function') return resolve(true);
+        existing.addEventListener('load', () => resolve(typeof window.heic2any === 'function'));
+        existing.addEventListener('error', () => resolve(false));
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+      script.onload = () => resolve(typeof window.heic2any === 'function');
+      script.onerror = (e) => {
+        console.warn('Could not load heic2any from CDN:', e);
+        resolve(false);
+      };
+      document.head.appendChild(script);
+    });
+  }
+
   constructor(canvasElement, options = {}) {
     this.canvas = canvasElement;
     this.ctx = canvasElement.getContext('2d');
@@ -110,38 +131,77 @@ class CanvasStudio {
             return;
           }
         }
-        if (typeof onProgress === 'function') onProgress(5);
-        const reader = new FileReader();
-        reader.onprogress = (e) => {
-          if (e.lengthComputable && typeof onProgress === 'function') {
-            const pct = Math.min(85, Math.max(5, Math.round((e.loaded / e.total) * 85)));
-            onProgress(pct);
+
+        const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+        let processBlob = sourceUrlOrFile;
+        const fileName = (sourceUrlOrFile.name || '').toLowerCase();
+        const fileType = (sourceUrlOrFile.type || '').toLowerCase();
+        const isHeic = fileType.includes('heic') || fileType.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif');
+
+        const proceedWithBlob = (blobToRead, startPct = 5, spanPct = 80) => {
+          const reader = new FileReader();
+          reader.onprogress = (e) => {
+            if (e.lengthComputable && typeof onProgress === 'function') {
+              const pct = Math.min(85, Math.max(startPct, startPct + Math.round((e.loaded / e.total) * spanPct)));
+              onProgress(pct);
+            }
+          };
+          reader.onload = (e) => {
+            if (typeof onProgress === 'function') onProgress(90);
+            const img = new Image();
+            img.onload = () => {
+              this.userImage = img;
+              this.fitPhotoToCanvas();
+              this.isCustomUserPhoto = true;
+              this.markDirty();
+              this.render();
+              if (this.onPhotoLoaded) this.onPhotoLoaded();
+              if (typeof onProgress === 'function') onProgress(100);
+              resolve();
+            };
+            img.onerror = () => {
+              reject(new Error(isKm ? 'មិនអាចបើករូបភាពនេះបានទេ សូមសាកល្បងរូបភាពផ្សេង។' : 'Failed to decode image. Please try another file.'));
+            };
+            img.src = e.target.result;
+          };
+          reader.onerror = () => {
+            reject(new Error(isKm ? 'មានបញ្ហាក្នុងការអានឯកសាររូបភាព។' : 'Failed to read file.'));
+          };
+          reader.readAsDataURL(blobToRead);
+        };
+
+        if (isHeic) {
+          const heicMsg = typeof t === 'function' ? t('convertingHeic') : (isKm ? 'កំពុងបម្លែងរូបថត iPhone (HEIC)...' : 'Converting iPhone photo (HEIC)...');
+          if (typeof onProgress === 'function') {
+            onProgress(15, heicMsg);
           }
-        };
-        reader.onload = (e) => {
-          if (typeof onProgress === 'function') onProgress(90);
-          const img = new Image();
-          img.onload = () => {
-            this.userImage = img;
-            this.fitPhotoToCanvas();
-            this.isCustomUserPhoto = true;
-            this.markDirty();
-            this.render();
-            if (this.onPhotoLoaded) this.onPhotoLoaded();
-            if (typeof onProgress === 'function') onProgress(100);
-            resolve();
-          };
-          img.onerror = () => {
-            const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
-            reject(new Error(isKm ? 'មិនអាចបើករូបភាពនេះបានទេ សូមសាកល្បងរូបភាពផ្សេង។' : 'Failed to decode image. Please try another file.'));
-          };
-          img.src = e.target.result;
-        };
-        reader.onerror = () => {
-          const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
-          reject(new Error(isKm ? 'មានបញ្ហាក្នុងការអានឯកសាររូបភាព។' : 'Failed to read file.'));
-        };
-        reader.readAsDataURL(sourceUrlOrFile);
+          CanvasStudio.loadHeicConverter().then(async () => {
+            if (typeof window.heic2any === 'function') {
+              try {
+                if (typeof onProgress === 'function') {
+                  onProgress(25, heicMsg);
+                }
+                const converted = await window.heic2any({
+                  blob: sourceUrlOrFile,
+                  toType: 'image/jpeg',
+                  quality: 0.92
+                });
+                processBlob = Array.isArray(converted) ? converted[0] : converted;
+              } catch (convErr) {
+                console.warn('heic2any conversion fallback to native decode:', convErr);
+              }
+            }
+            if (typeof onProgress === 'function') {
+              onProgress(45);
+            }
+            proceedWithBlob(processBlob, 45, 40);
+          }).catch(() => {
+            proceedWithBlob(sourceUrlOrFile, 15, 70);
+          });
+        } else {
+          if (typeof onProgress === 'function') onProgress(5);
+          proceedWithBlob(sourceUrlOrFile, 5, 80);
+        }
       }
     });
   }
