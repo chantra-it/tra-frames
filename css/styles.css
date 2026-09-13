@@ -6168,3 +6168,53 @@ html, body {
     justify-content: center;
   }
 }
+
+/* =========================================================
+   PREMIUM LOADING SPINNER (វិល)
+   ========================================================= */
+.loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3.5px solid rgba(37, 99, 235, 0.16);
+  border-top-color: var(--accent-primary, #2563eb);
+  border-radius: 50%;
+  animation: traSpin 0.75s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  display: inline-block;
+  box-sizing: border-box;
+}
+
+.loading-spinner-lg {
+  width: 50px;
+  height: 50px;
+  border-width: 4px;
+}
+
+.loading-spinner-sm {
+  width: 22px;
+  height: 22px;
+  border-width: 2.5px;
+}
+
+@keyframes traSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 1rem;
+  text-align: center;
+  gap: 1.15rem;
+  min-height: 280px;
+  width: 100%;
+}
+
+.loading-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary, #4a5568);
+  letter-spacing: 0.01em;
+}
