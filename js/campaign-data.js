@@ -92,13 +92,25 @@ const SecurityUtils = {
           : `File size exceeds ${maxMb}MB limit (${actualMb}MB). Please upload an image under ${maxMb}MB.` 
       };
     }
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml'];
-    if (file.type && !allowedTypes.includes(file.type.toLowerCase())) {
+    const allowedTypes = [
+      'image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml',
+      'image/gif', 'image/avif', 'image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'
+    ];
+    const allowedExtensions = [
+      '.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.avif', '.heic', '.heif'
+    ];
+
+    const fileType = (file.type || '').toLowerCase();
+    const fileName = (file.name || '').toLowerCase();
+    const hasValidExt = allowedExtensions.some(ext => fileName.endsWith(ext));
+    const hasValidType = fileType ? allowedTypes.includes(fileType) : false;
+
+    if (!hasValidType && !hasValidExt) {
       return { 
         valid: false, 
         error: isKm 
-          ? 'ប្រភេទឯកសារមិនត្រឹមត្រូវ! អនុញ្ញាតតែរូបភាព JPG, PNG, WebP ឬ SVG ប៉ុណ្ណោះ។' 
-          : 'Invalid file type. Only JPG, PNG, WebP, and SVG images are allowed.' 
+          ? 'ប្រភេទឯកសារមិនត្រឹមត្រូវ! អនុញ្ញាតតែរូបភាព JPG, PNG, WebP, HEIC (iPhone), AVIF ឬ SVG ប៉ុណ្ណោះ។' 
+          : 'Invalid file type. Only JPG, PNG, WebP, HEIC (iPhone), AVIF, and SVG images are allowed.' 
       };
     }
     return { valid: true };
