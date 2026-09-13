@@ -1221,6 +1221,183 @@ const AuthService = {
     }
   },
 
+  async compressAvatar(dataUrl, maxDim = 256) {
+    if (!dataUrl || typeof dataUrl !== 'string') return '';
+    if (!dataUrl.startsWith('data:image')) return dataUrl;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = maxDim;
+          canvas.height = maxDim;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, maxDim, maxDim);
+
+          // Center crop to square
+          const minSide = Math.min(img.width, img.height);
+          const sx = (img.width - minSide) / 2;
+          const sy = (img.height - minSide) / 2;
+          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, maxDim, maxDim);
+
+          // Try WebP first, fallback to PNG
+          let resUrl = '';
+          try {
+            resUrl = canvas.toDataURL('image/webp', 0.85);
+            if (resUrl && resUrl.startsWith('data:image/webp') && resUrl.length < 50000) {
+              return resolve(resUrl);
+            }
+          } catch (e) {}
+          resUrl = canvas.toDataURL('image/png');
+          resolve(resUrl);
+        } catch (e) {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  },
+
+  async updateProfile({ displayName, photoURL }) {
+    if (!this.currentUser) throw new Error("No user currently logged in");
+    
+    const cleanName = displayName !== undefined ? SecurityUtils.cleanText(displayName.trim(), 50) : this.currentUser.displayName;
+    if (displayName !== undefined && !cleanName) {
+      throw new Error("Display name cannot be empty");
+    }
+
+    let finalPhoto = this.currentUser.photoURL || '';
+    if (photoURL !== undefined) {
+      if (photoURL && photoURL.startsWith('data:image')) {
+        finalPhoto = await this.compressAvatar(photoURL, 256);
+      } else {
+        finalPhoto = SecurityUtils.sanitizeUrl(photoURL || '');
+      }
+    }
+
+    // 1. Firebase Auth user update
+    const auth = initFirebaseAuth();
+    if (auth && auth.currentUser && !this.currentUser.isLocal) {
+      try {
+        await auth.currentUser.updateProfile({
+          displayName: cleanName,
+          photoURL: finalPhoto
+        });
+      } catch (authErr) {
+        console.warn("Firebase updateProfile notice:", authErr);
+      }
+    }
+
+    // 2. Local accounts list update if local user
+    if (this.currentUser.isLocal || (this.currentUser.uid && this.currentUser.uid.startsWith('local-'))) {
+      const accounts = this.getLocalAccounts();
+      const idx = accounts.findIndex(a => a.uid === this.currentUser.uid || (a.email && a.email.toLowerCase() === (this.currentUser.email || '').toLowerCase()));
+      if (idx >= 0) {
+        accounts[idx].displayName = cleanName;
+        accounts[idx].photoURL = finalPhoto;
+        try { localStorage.setItem("tra_local_accounts", JSON.stringify(accounts)); } catch (e) {}
+      }
+    }
+
+    // 3. Update active current user in session & localStorage
+    this.currentUser = {
+      ...this.currentUser,
+      displayName: cleanName,
+      photoURL: finalPhoto
+    };
+    try {
+      localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser));
+    } catch (e) {}
+
+    // 4. Also sync updated creator name to user's local campaigns so their cards reflect their new name
+    try {
+      const storedCampaigns = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (storedCampaigns) {
+        let campaigns = JSON.parse(storedCampaigns);
+        let changed = false;
+        campaigns = campaigns.map(c => {
+          if (c.creatorUid === this.currentUser.uid || (c.creatorEmail && c.creatorEmail.toLowerCase() === (this.currentUser.email || '').toLowerCase())) {
+            c.creator = cleanName;
+            changed = true;
+          }
+          return c;
+        });
+        if (changed) {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(campaigns));
+        }
+      }
+    } catch (e) {}
+
+    this.notifyListeners();
+    return this.currentUser;
+  },
+
+  async changePassword(oldPassword, newPassword) {
+    if (!this.currentUser) throw new Error("No user currently logged in");
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+      const err = new Error("New password must be at least 6 characters");
+      err.code = 'auth/weak-password';
+      throw err;
+    }
+
+    const auth = initFirebaseAuth();
+    if (auth && auth.currentUser && !this.currentUser.isLocal) {
+      try {
+        if (oldPassword && this.currentUser.email && typeof firebase !== 'undefined' && firebase.auth && firebase.auth.EmailAuthProvider) {
+          try {
+            const credential = firebase.auth.EmailAuthProvider.credential(this.currentUser.email, oldPassword);
+            await auth.currentUser.reauthenticateWithCredential(credential);
+          } catch (reauthErr) {
+            console.warn("Re-auth notice:", reauthErr);
+            if (reauthErr.code === 'auth/wrong-password' || reauthErr.code === 'auth/invalid-credential') {
+              const err = new Error("Current password is incorrect");
+              err.code = 'auth/wrong-password';
+              throw err;
+            }
+          }
+        }
+        await auth.currentUser.updatePassword(newPassword);
+        return true;
+      } catch (err) {
+        if (err.code === 'auth/requires-recent-login') {
+          const friendlyErr = new Error("Please log in again before changing your password.");
+          friendlyErr.code = 'auth/requires-recent-login';
+          throw friendlyErr;
+        }
+        if (err.code !== 'auth/operation-not-allowed') {
+          throw err;
+        }
+      }
+    }
+
+    // Local account password change
+    const accounts = this.getLocalAccounts();
+    const found = accounts.find(a => a.uid === this.currentUser.uid || (a.email && a.email.toLowerCase() === (this.currentUser.email || '').toLowerCase()));
+    if (!found) {
+      throw new Error("Account record not found");
+    }
+
+    if (oldPassword) {
+      const expectedOldHash = await SecurityUtils.hashPassword(oldPassword, found.uid);
+      const isMatch = (found.passwordHash === expectedOldHash) || (found.passwordHash === btoa(encodeURIComponent(oldPassword)));
+      if (!isMatch) {
+        const err = new Error("Current password is incorrect");
+        err.code = 'auth/wrong-password';
+        throw err;
+      }
+    }
+
+    const newHash = await SecurityUtils.hashPassword(newPassword, found.uid);
+    found.passwordHash = newHash;
+    try {
+      localStorage.setItem("tra_local_accounts", JSON.stringify(accounts));
+    } catch (e) {}
+
+    return true;
+  },
+
   async logout() {
     this.currentUser = null;
     try {
