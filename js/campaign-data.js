@@ -793,6 +793,17 @@ const AuthService = {
         if (this.currentUser && (this.currentUser.photoURL === '#' || this.currentUser.photoURL === 'about:blank')) {
           this.currentUser.photoURL = '';
         }
+        // Restore custom avatar/profile from dedicated cache if photoURL is missing
+        if (this.currentUser && !this.currentUser.photoURL) {
+          const profileKey = "tra_user_profile_" + this.currentUser.uid;
+          const emailKey = this.currentUser.email ? ("tra_user_profile_" + this.currentUser.email.toLowerCase()) : null;
+          const raw = localStorage.getItem(profileKey) || (emailKey ? localStorage.getItem(emailKey) : null);
+          if (raw) {
+            const p = JSON.parse(raw);
+            if (p && p.photoURL) this.currentUser.photoURL = p.photoURL;
+            if (p && p.displayName) this.currentUser.displayName = p.displayName;
+          }
+        }
         this.notifyListeners();
       }
     } catch (e) {}
@@ -815,18 +826,40 @@ const AuthService = {
           } catch (e) {}
         }
 
+        // Restore custom profile / avatar from local dedicated cache first!
+        // This prevents Firebase Auth's empty/null photoURL from erasing the user's chosen avatar on refresh!
         let userPhoto = user.photoURL || '';
+        let userDisplayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Creator');
+
+        try {
+          const profileKey = "tra_user_profile_" + user.uid;
+          const emailKey = user.email ? ("tra_user_profile_" + user.email.toLowerCase()) : null;
+          const savedProfileRaw = localStorage.getItem(profileKey) || (emailKey ? localStorage.getItem(emailKey) : null);
+          if (savedProfileRaw) {
+            const savedProfile = JSON.parse(savedProfileRaw);
+            if (savedProfile) {
+              if (savedProfile.photoURL) userPhoto = savedProfile.photoURL;
+              if (savedProfile.displayName) userDisplayName = savedProfile.displayName;
+            }
+          }
+        } catch (e) {}
+
         if (userPhoto === '#' || userPhoto === 'about:blank') userPhoto = '';
+
         this.currentUser = {
           uid: user.uid,
           email: user.email || '',
-          displayName: SecurityUtils.cleanText(user.displayName || (user.email ? user.email.split('@')[0] : 'Creator'), 50),
+          displayName: SecurityUtils.cleanText(userDisplayName, 50),
           photoURL: SecurityUtils.sanitizeUrl(userPhoto),
           emailVerified: isVerified,
           isLocal: false
         };
 
-        // Check or sync verified status in Firestore
+        try {
+          localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser));
+        } catch (e) {}
+
+        // Check or sync verified status & profile document in Firestore
         const db = initFirestore();
         if (db) {
           if (!this.currentUser.emailVerified) {
@@ -845,11 +878,33 @@ const AuthService = {
               method: "email_otp_4digits"
             }, { merge: true }).catch(() => {});
           }
-        }
 
-        try {
-          localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser));
-        } catch (e) {}
+          // Fetch cloud profile from Firestore (restores custom avatar across multiple devices/browsers)
+          db.collection("users").doc(user.uid).get().then(doc => {
+            if (doc.exists && this.currentUser && this.currentUser.uid === user.uid) {
+              const data = doc.data();
+              if (data) {
+                let changed = false;
+                if (data.photoURL && data.photoURL !== this.currentUser.photoURL) {
+                  this.currentUser.photoURL = SecurityUtils.sanitizeUrl(data.photoURL);
+                  changed = true;
+                }
+                if (data.displayName && data.displayName !== this.currentUser.displayName) {
+                  this.currentUser.displayName = SecurityUtils.cleanText(data.displayName, 50);
+                  changed = true;
+                }
+                if (changed) {
+                  try {
+                    localStorage.setItem("tra_user_profile_" + user.uid, JSON.stringify(data));
+                    if (user.email) localStorage.setItem("tra_user_profile_" + user.email.toLowerCase(), JSON.stringify(data));
+                    localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser));
+                  } catch (e) {}
+                  this.notifyListeners();
+                }
+              }
+            }
+          }).catch(() => {});
+        }
       } else {
         // When Firebase Auth has no user or during cold start / custom domain,
         // preserve the locally persisted active user if present!
@@ -857,6 +912,16 @@ const AuthService = {
           const activeStored = localStorage.getItem("tra_active_user");
           if (activeStored) {
             this.currentUser = JSON.parse(activeStored);
+            if (this.currentUser && (!this.currentUser.photoURL || this.currentUser.photoURL === '#' || this.currentUser.photoURL === 'about:blank')) {
+              const profileKey = "tra_user_profile_" + this.currentUser.uid;
+              const emailKey = this.currentUser.email ? ("tra_user_profile_" + this.currentUser.email.toLowerCase()) : null;
+              const raw = localStorage.getItem(profileKey) || (emailKey ? localStorage.getItem(emailKey) : null);
+              if (raw) {
+                const p = JSON.parse(raw);
+                if (p && p.photoURL) this.currentUser.photoURL = p.photoURL;
+                if (p && p.displayName) this.currentUser.displayName = p.displayName;
+              }
+            }
           } else {
             this.currentUser = null;
           }
@@ -973,11 +1038,23 @@ const AuthService = {
     try {
       const result = await auth.signInWithPopup(provider);
       if (result.user) {
+        let googlePhoto = result.user.photoURL || '';
+        let googleName = result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator');
+        try {
+          const raw = localStorage.getItem("tra_user_profile_" + result.user.uid) || 
+                      (result.user.email ? localStorage.getItem("tra_user_profile_" + result.user.email.toLowerCase()) : null);
+          if (raw) {
+            const p = JSON.parse(raw);
+            if (p && p.photoURL) googlePhoto = p.photoURL;
+            if (p && p.displayName) googleName = p.displayName;
+          }
+        } catch (e) {}
+
         this.currentUser = {
           uid: result.user.uid,
           email: result.user.email || '',
-          displayName: SecurityUtils.cleanText(result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'), 50),
-          photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
+          displayName: SecurityUtils.cleanText(googleName, 50),
+          photoURL: SecurityUtils.sanitizeUrl(googlePhoto),
           emailVerified: true,
           isLocal: false
         };
@@ -1025,11 +1102,23 @@ const AuthService = {
             }
           }
 
+          let emailPhoto = result.user.photoURL || '';
+          let emailName = result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator');
+          try {
+            const raw = localStorage.getItem("tra_user_profile_" + result.user.uid) || 
+                        (result.user.email ? localStorage.getItem("tra_user_profile_" + result.user.email.toLowerCase()) : null);
+            if (raw) {
+              const p = JSON.parse(raw);
+              if (p && p.photoURL) emailPhoto = p.photoURL;
+              if (p && p.displayName) emailName = p.displayName;
+            }
+          } catch (e) {}
+
           this.currentUser = {
             uid: result.user.uid,
             email: result.user.email,
-            displayName: SecurityUtils.cleanText(result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'Creator'), 50),
-            photoURL: SecurityUtils.sanitizeUrl(result.user.photoURL || ''),
+            displayName: SecurityUtils.cleanText(emailName, 50),
+            photoURL: SecurityUtils.sanitizeUrl(emailPhoto),
             emailVerified: verified,
             isLocal: false
           };
@@ -1234,6 +1323,7 @@ const AuthService = {
   async compressAvatar(dataUrl, maxDim = 256) {
     if (!dataUrl || typeof dataUrl !== 'string') return '';
     if (!dataUrl.startsWith('data:image')) return dataUrl;
+    if (dataUrl.startsWith('data:image/svg')) return dataUrl;
     return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -1288,20 +1378,31 @@ const AuthService = {
       }
     }
 
-    // 1. Firebase Auth user update
-    const auth = initFirebaseAuth();
-    if (auth && auth.currentUser && !this.currentUser.isLocal) {
-      try {
-        await auth.currentUser.updateProfile({
-          displayName: cleanName,
-          photoURL: finalPhoto
-        });
-      } catch (authErr) {
-        console.warn("Firebase updateProfile notice:", authErr);
+    // 1. Immediately update dedicated user profile in localStorage by UID and Email (instant, resilient, synchronous)
+    try {
+      const profileData = {
+        uid: this.currentUser.uid,
+        displayName: cleanName,
+        photoURL: finalPhoto || '',
+        updatedAt: Date.now()
+      };
+      localStorage.setItem("tra_user_profile_" + this.currentUser.uid, JSON.stringify(profileData));
+      if (this.currentUser.email) {
+        localStorage.setItem("tra_user_profile_" + this.currentUser.email.toLowerCase(), JSON.stringify(profileData));
       }
-    }
+    } catch (e) {}
 
-    // 2. Local accounts list update if local user
+    // 2. Immediately update active current user in session & localStorage
+    this.currentUser = {
+      ...this.currentUser,
+      displayName: cleanName,
+      photoURL: finalPhoto
+    };
+    try {
+      localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser));
+    } catch (e) {}
+
+    // 3. Update local accounts list if local user
     if (this.currentUser.isLocal || (this.currentUser.uid && this.currentUser.uid.startsWith('local-'))) {
       const accounts = this.getLocalAccounts();
       const idx = accounts.findIndex(a => a.uid === this.currentUser.uid || (a.email && a.email.toLowerCase() === (this.currentUser.email || '').toLowerCase()));
@@ -1312,17 +1413,7 @@ const AuthService = {
       }
     }
 
-    // 3. Update active current user in session & localStorage
-    this.currentUser = {
-      ...this.currentUser,
-      displayName: cleanName,
-      photoURL: finalPhoto
-    };
-    try {
-      localStorage.setItem("tra_active_user", JSON.stringify(this.currentUser));
-    } catch (e) {}
-
-    // 4. Also sync updated creator name to user's local campaigns so their cards reflect their new name
+    // 4. Sync updated creator name to user's local campaigns
     try {
       const storedCampaigns = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (storedCampaigns) {
@@ -1341,7 +1432,40 @@ const AuthService = {
       }
     } catch (e) {}
 
+    // 5. Notify all auth listeners immediately
     this.notifyListeners();
+
+    // 6. Cloud Sync: Firebase Auth user update
+    const auth = initFirebaseAuth();
+    if (auth && auth.currentUser && !this.currentUser.isLocal) {
+      try {
+        const updatePayload = { displayName: cleanName };
+        // Firebase Auth ONLY accepts valid HTTP/HTTPS URLs up to 2048 chars for photoURL.
+        if (finalPhoto && /^https?:\/\//i.test(finalPhoto) && finalPhoto.length <= 2048) {
+          updatePayload.photoURL = finalPhoto;
+        }
+        await auth.currentUser.updateProfile(updatePayload);
+      } catch (authErr) {
+        console.warn("Firebase updateProfile notice:", authErr);
+      }
+    }
+
+    // 7. Cloud Sync: Firestore user document persistence (cloud sync across devices)
+    const db = initFirestore();
+    if (db && this.currentUser.uid && !this.currentUser.isLocal) {
+      try {
+        await db.collection("users").doc(this.currentUser.uid).set({
+          uid: this.currentUser.uid,
+          email: (this.currentUser.email || '').toLowerCase(),
+          displayName: cleanName,
+          photoURL: finalPhoto || '',
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (dbErr) {
+        console.warn("Firestore user profile save notice:", dbErr);
+      }
+    }
+
     return this.currentUser;
   },
 
