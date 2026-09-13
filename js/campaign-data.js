@@ -1914,7 +1914,7 @@ const CampaignService = {
       const cloudStatusEl = document.getElementById('cloudSyncStatus');
       if (cloudStatusEl) {
         const isKm = getLanguage() === 'km';
-        cloudStatusEl.innerHTML = `☁️ ${isKm ? 'បាន Sync ឡើង Cloud Firestore រួចរាល់ • អាចចែករំលែកបាន' : 'Synced to Cloud Firestore • Shareable Worldwide'}`;
+        cloudStatusEl.innerHTML = `☁️ ${isKm ? 'បាន Sync ឡើង Cloud រួចរាល់ • អាចចែករំលែកបាន' : 'Synced to Cloud • Shareable Worldwide'}`;
         cloudStatusEl.style.color = '#10b981';
       }
       return true;
