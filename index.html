@@ -3775,11 +3775,14 @@ html, body {
 
   /* Modal */
   .modal-card {
-    padding: 1.35rem;
-    margin: 0.75rem;
+    padding: 1.35rem 1.15rem;
+    margin: 0 auto;
+    max-width: 100%;
+    width: 100%;
     max-height: 92vh;
     overflow-y: auto;
     border-radius: var(--radius-lg);
+    box-sizing: border-box;
   }
 
   /* Toast — full width on mobile */
@@ -5260,17 +5263,20 @@ html, body {
    ========================================================= */
 
 .modal-profile-card {
-  width: 100%;
-  max-width: 540px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl, 24px);
-  padding: 1.75rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  position: relative;
-  max-height: 90vh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  display: block !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-xl, 24px) !important;
+  padding: 1.75rem 1.6rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  position: relative !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  box-sizing: border-box !important;
+  margin: 0 auto !important;
 }
 
 .profile-modal-header {
@@ -5278,7 +5284,8 @@ html, body {
   align-items: center;
   gap: 0.85rem;
   margin-bottom: 1.25rem;
-  padding-right: 2rem;
+  padding-right: 2.5rem;
+  flex-shrink: 0;
 }
 
 .profile-header-icon {
@@ -5310,26 +5317,40 @@ html, body {
 /* ── Pill Navigation Tabs ── */
 .profile-nav-tabs {
   display: flex;
+  flex-shrink: 0;
+  min-height: 40px;
   background: var(--bg-secondary);
-  padding: 0.3rem;
+  padding: 0.28rem;
   border-radius: var(--radius-lg, 16px);
-  gap: 0.35rem;
-  margin-bottom: 1.5rem;
+  gap: 0.28rem;
+  margin-bottom: 1.35rem;
   border: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
+}
+
+.profile-nav-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .profile-nav-tab {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-shrink: 0;
+  min-height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  padding: 0.55rem 0.65rem;
+  gap: 0.4rem;
+  padding: 0.52rem 0.55rem;
   border-radius: var(--radius-md, 12px);
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -5356,11 +5377,11 @@ html, body {
 .profile-avatar-section {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  padding: 1rem;
+  gap: 1.15rem;
+  padding: 1rem 1.1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-lg, 16px);
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.15rem;
   border: 1px solid var(--border-subtle);
 }
 
@@ -5370,8 +5391,8 @@ html, body {
 }
 
 .profile-avatar-preview-circle {
-  width: 76px;
-  height: 76px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   overflow: hidden;
   background: linear-gradient(135deg, var(--accent-primary), #8b5cf6);
@@ -5386,24 +5407,26 @@ html, body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .profile-avatar-preview-circle span {
   font-size: 1.85rem;
   font-weight: 800;
   color: #ffffff;
+  line-height: 1;
 }
 
 .profile-avatar-badge-btn {
   position: absolute;
   bottom: -2px;
   right: -2px;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--accent-primary);
   color: #ffffff;
-  border: 2.5px solid var(--bg-card);
+  border: 2px solid var(--bg-card);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5426,19 +5449,34 @@ html, body {
 .profile-avatar-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
   flex: 1;
+  min-width: 0;
+}
+
+.profile-avatar-btns-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.profile-avatar-btns-row .btn {
+  padding: 0.42rem 0.75rem !important;
+  font-size: 0.8rem !important;
+  min-height: 34px !important;
+  border-radius: var(--radius-md, 10px) !important;
 }
 
 .profile-avatar-hint {
-  font-size: 0.76rem;
+  font-size: 0.73rem;
   color: var(--text-muted);
   line-height: 1.35;
 }
 
 /* ── Avatar Presets Grid ── */
 .profile-presets-section {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.15rem;
 }
 
 .profile-field-label {
@@ -5446,7 +5484,7 @@ html, body {
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--text-secondary);
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.5rem;
 }
 
 .profile-presets-grid {
@@ -5479,12 +5517,12 @@ html, body {
 }
 
 .profile-preset-item:hover {
-  transform: scale(1.15);
+  transform: scale(1.12);
 }
 
 .profile-preset-item.active {
   border-color: var(--accent-primary);
-  transform: scale(1.15);
+  transform: scale(1.12);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
@@ -5505,7 +5543,7 @@ html, body {
 
 .profile-info-label {
   display: block;
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -5552,7 +5590,7 @@ html, body {
 .profile-password-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.95rem;
 }
 
 .profile-input-pwd-wrap {
@@ -5710,25 +5748,252 @@ html, body {
 
 /* ── Mobile Viewports ── */
 @media (max-width: 520px) {
-  .modal-profile-card {
-    padding: 1.25rem 1rem;
+  .modal-overlay {
+    padding: 0.75rem 0.5rem !important;
+    align-items: center !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
   }
+
+  .modal-profile-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1.25rem 0.95rem 1.35rem !important;
+    border-radius: 20px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    max-height: 93vh !important;
+  }
+
+  .profile-modal-header {
+    gap: 0.65rem;
+    margin-bottom: 0.95rem;
+    padding-right: 2.35rem;
+  }
+
+  .profile-header-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .profile-header-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .profile-modal-title {
+    font-size: 1.12rem;
+  }
+
+  .profile-modal-subtitle {
+    font-size: 0.76rem;
+  }
+
+  .auth-clean-close-btn {
+    top: 0.85rem;
+    right: 0.85rem;
+    width: 30px;
+    height: 30px;
+    font-size: 1.25rem;
+  }
+
+  /* Tabs */
+  .profile-nav-tabs {
+    padding: 0.22rem;
+    gap: 0.22rem;
+    margin-bottom: 1rem;
+    border-radius: 14px;
+  }
+
+  .profile-nav-tab {
+    padding: 0.44rem 0.4rem;
+    font-size: 0.75rem;
+    gap: 0.25rem;
+    border-radius: 10px;
+    flex: 1 0 auto;
+  }
+
+  .profile-nav-tab svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Avatar Section */
+  .profile-avatar-section {
+    padding: 0.75rem 0.85rem;
+    gap: 0.85rem;
+    margin-bottom: 0.95rem;
+    border-radius: 16px;
+  }
+
+  .profile-avatar-preview-circle {
+    width: 64px;
+    height: 64px;
+  }
+
+  .profile-avatar-preview-circle span {
+    font-size: 1.55rem;
+  }
+
+  .profile-avatar-badge-btn {
+    width: 24px;
+    height: 24px;
+  }
+
+  .profile-avatar-badge-btn svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .profile-avatar-actions {
+    gap: 0.35rem;
+  }
+
+  .profile-avatar-btns-row .btn {
+    padding: 0.38rem 0.65rem !important;
+    font-size: 0.76rem !important;
+    min-height: 32px !important;
+  }
+
+  .profile-avatar-hint {
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+
+  /* Presets */
+  .profile-presets-section {
+    margin-bottom: 0.95rem;
+  }
+
   .profile-presets-grid {
     grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
   }
+
+  .profile-preset-item {
+    max-width: 48px;
+    margin: 0 auto;
+  }
+
+  /* Form & Inputs */
+  .profile-fields-container .form-group {
+    margin-bottom: 0.75rem;
+  }
+
+  .modal-profile-card .form-input {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.9rem;
+    border-radius: 12px;
+  }
+
+  /* Info Cards */
   .profile-info-grid {
     grid-template-columns: 1fr;
+    gap: 0.55rem;
+    margin-top: 0.75rem;
   }
+
+  .profile-info-card {
+    padding: 0.65rem 0.75rem;
+  }
+
+  /* Save Action */
+  .profile-modal-actions {
+    margin-top: 1rem;
+  }
+
+  #btnSaveProfileInfo {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+    min-height: 42px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Password Tab */
+  .profile-password-form {
+    gap: 0.8rem;
+  }
+
+  .profile-input-pwd-wrap .auth-pwd-toggle {
+    width: 32px;
+    height: 32px;
+    right: 0.35rem;
+  }
+
+  .profile-google-notice {
+    padding: 1.5rem 1rem;
+    border-radius: 16px;
+  }
+
+  .profile-google-icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Settings Tab */
+  .settings-list-group {
+    gap: 0.7rem;
+  }
+
   .settings-card-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.75rem;
+    padding: 0.85rem 0.95rem;
+    gap: 0.7rem;
+    border-radius: 16px;
   }
+
+  .settings-card-title {
+    font-size: 0.88rem;
+  }
+
+  .settings-card-desc {
+    font-size: 0.74rem;
+  }
+
   .settings-segmented-control {
     width: 100%;
+    gap: 0.2rem;
+    padding: 0.2rem;
   }
+
   .settings-segment-btn {
     flex: 1;
+    justify-content: center;
+    padding: 0.42rem 0.35rem;
+    font-size: 0.76rem;
+    gap: 0.25rem;
+  }
+
+  .settings-segment-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .modal-overlay {
+    padding: 0.5rem 0.35rem !important;
+  }
+
+  .modal-profile-card {
+    padding: 1.15rem 0.8rem 1.25rem !important;
+    border-radius: 18px !important;
+  }
+
+  .profile-avatar-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-avatar-actions {
+    align-items: center;
+  }
+
+  .profile-avatar-btns-row {
     justify-content: center;
   }
 }
@@ -11889,14 +12154,14 @@ class TwibbonApp {
             
             <div class="profile-avatar-actions">
               <input type="file" id="profileAvatarFileInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" />
-              <button type="button" class="btn btn-outline btn-sm" id="btnSelectCustomAvatar">
-                ${Icons.upload} <span>${t('uploadAvatar')}</span>
-              </button>
-              ${selectedAvatarDataUrl ? `
-                <button type="button" class="btn btn-secondary btn-sm" id="btnRemoveAvatar">
+              <div class="profile-avatar-btns-row">
+                <button type="button" class="btn btn-outline btn-sm" id="btnSelectCustomAvatar">
+                  ${Icons.upload} <span>${t('uploadAvatar')}</span>
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnRemoveAvatar" style="display: ${selectedAvatarDataUrl ? 'inline-flex' : 'none'};">
                   ${Icons.trash} <span>${t('removeAvatar')}</span>
                 </button>
-              ` : ''}
+              </div>
               <div class="profile-avatar-hint">${t('avatarHint')}</div>
             </div>
           </div>
@@ -12109,6 +12374,10 @@ class TwibbonApp {
       overlay.querySelectorAll('.profile-preset-item').forEach((item, idx) => {
         item.classList.toggle('active', AVATAR_PRESETS[idx] === url);
       });
+      const btnRemove = overlay.querySelector('#btnRemoveAvatar');
+      if (btnRemove) {
+        btnRemove.style.display = url ? 'inline-flex' : 'none';
+      }
     };
 
     // --- Avatar Custom Upload Event ---
