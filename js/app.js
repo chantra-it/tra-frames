@@ -246,7 +246,7 @@ class TwibbonApp {
       const hasValidPhoto = !!(userPhoto && userPhoto !== '#' && userPhoto !== 'about:blank');
       const safePhotoUrl = hasValidPhoto ? SecurityUtils.sanitizeUrl(userPhoto) : '';
       container.innerHTML = `
-        <div class="user-profile-badge" id="userProfileBadge" onclick="app.toggleUserDropdown(event)">
+        <div class="user-profile-badge" id="userProfileBadge" onclick="app.toggleUserDropdown(event)" title="${safeDisplayName}">
           <div class="user-avatar-wrap">
             ${safePhotoUrl 
               ? `<img src="${safePhotoUrl}" class="user-avatar-img" alt="${safeDisplayName}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" /><div class="user-avatar-placeholder" style="display:none;">${initial}</div>`
@@ -257,8 +257,9 @@ class TwibbonApp {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
           
           <div class="user-dropdown" id="userDropdownMenu" style="display: none;">
-            <div style="padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--border-color); font-size: 0.78rem; color: var(--text-muted); word-break: break-all;">
-              ${SecurityUtils.escapeHtml(user.email)}
+            <div style="padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-weight: 700; font-size: 0.88rem; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${safeDisplayName}</span>
+              <span style="font-size: 0.76rem; color: var(--text-muted); word-break: break-all;">${SecurityUtils.escapeHtml(user.email)}</span>
             </div>
             ${(typeof AdminService !== 'undefined' && AdminService.isSuperAdmin(user)) ? `
             <button class="user-dropdown-item admin-dropdown-btn" onclick="app.navigateTo('admin')" style="background: rgba(37, 99, 235, 0.08); color: var(--accent-primary); font-weight: 700; border-left: 3px solid var(--accent-primary);">
