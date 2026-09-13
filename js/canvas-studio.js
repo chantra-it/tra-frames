@@ -78,7 +78,7 @@ class CanvasStudio {
     });
   }
 
-  setUserPhoto(sourceUrlOrFile, isCustom = true) {
+  setUserPhoto(sourceUrlOrFile, isCustom = true, onProgress = null) {
     return new Promise((resolve, reject) => {
       if (typeof sourceUrlOrFile === 'string') {
         const img = new Image();
@@ -97,6 +97,7 @@ class CanvasStudio {
           }
           this.render();
           if (this.onPhotoLoaded) this.onPhotoLoaded();
+          if (typeof onProgress === 'function') onProgress(100);
           resolve();
         };
         img.onerror = reject;
@@ -109,8 +110,16 @@ class CanvasStudio {
             return;
           }
         }
+        if (typeof onProgress === 'function') onProgress(5);
         const reader = new FileReader();
+        reader.onprogress = (e) => {
+          if (e.lengthComputable && typeof onProgress === 'function') {
+            const pct = Math.min(85, Math.max(5, Math.round((e.loaded / e.total) * 85)));
+            onProgress(pct);
+          }
+        };
         reader.onload = (e) => {
+          if (typeof onProgress === 'function') onProgress(90);
           const img = new Image();
           img.onload = () => {
             this.userImage = img;
@@ -119,6 +128,7 @@ class CanvasStudio {
             this.markDirty();
             this.render();
             if (this.onPhotoLoaded) this.onPhotoLoaded();
+            if (typeof onProgress === 'function') onProgress(100);
             resolve();
           };
           img.onerror = () => {
