@@ -30,7 +30,7 @@
   <meta name="twitter:image:alt" content="Tra Frames - Next-Gen Campaign Photo Frame Platform">
 
   <!-- Comprehensive Security Hardening Meta Tags -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://firestore.googleapis.com https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.qrserver.com https://api.emailjs.com; frame-src 'self' https://tra-frames.firebaseapp.com https://accounts.google.com https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; worker-src 'self' blob:; connect-src 'self' blob: https://firestore.googleapis.com https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.qrserver.com https://api.emailjs.com; frame-src 'self' https://tra-frames.firebaseapp.com https://accounts.google.com https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self';">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
   <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(), payment=(), usb=()">
@@ -6633,6 +6633,9 @@ html, body {
 
   <!-- EmailJS Delivery SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+  <!-- HEIC (iPhone Photo) Decoder SDK -->
+  <script defer src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script>
     window.EMAILJS_CONFIG = {
       serviceId: "service_u9birxn",
@@ -6735,12 +6738,13 @@ const translations = {
     copyCaption: "ចម្លង Caption",
     choosePhoto: "ជ្រើសរើសរូបថតផ្ទាល់ខ្លួន",
     dragDropPhoto: "ចុចដើម្បីជ្រើសរូបថត (ឬទាញរូបទម្លាក់)",
-    photoTip: "ទំហំអតិបរមា 10MB • គាំទ្រ JPG, PNG, WebP",
+    photoTip: "ទំហំអតិបរមា 10MB • គាំទ្រ JPG, PNG, WebP, HEIC (iPhone), AVIF",
     photoUploadSuccess: "បានបញ្ចូលរូបថតដោយជោគជ័យ!",
     uploadingPhoto: "កំពុងបញ្ចូលរូបថត...",
+    convertingHeic: "កំពុងបម្លែងរូបថត iPhone (HEIC)...",
     renderingPhoto: "កំពុងបង្ហាញក្នុងស៊ុម...",
     imageTooLarge: "រូបភាពមានទំហំធំពេក (អតិបរមា 10MB)! សូមជ្រើសរើសរូបភាពដែលមានទំហំតូចជាងនេះ។",
-    invalidImageType: "ប្រភេទឯកសារមិនត្រឹមត្រូវ! អនុញ្ញាតតែរូបភាព JPG, PNG, និង WebP ប៉ុណ្ណោះ។",
+    invalidImageType: "ប្រភេទឯកសារមិនត្រឹមត្រូវ! អនុញ្ញាតតែរូបភាព JPG, PNG, WebP, HEIC (iPhone), AVIF ឬ SVG ប៉ុណ្ណោះ។",
     useSamplePhoto: "រូបគំរូ",
     zoom: "ពង្រីក",
     rotate: "បង្វិល",
@@ -7081,12 +7085,13 @@ const translations = {
     copyCaption: "Copy Caption",
     choosePhoto: "Choose Personal Photo",
     dragDropPhoto: "Click to upload photo (or drag & drop)",
-    photoTip: "Max size 10MB • Supports JPG, PNG, WebP",
+    photoTip: "Max size 10MB • Supports JPG, PNG, WebP, HEIC (iPhone), AVIF",
     photoUploadSuccess: "Photo uploaded successfully!",
     uploadingPhoto: "Uploading photo...",
+    convertingHeic: "Converting iPhone photo (HEIC)...",
     renderingPhoto: "Rendering into frame...",
     imageTooLarge: "Image file too large (max 10MB)! Please select a smaller file.",
-    invalidImageType: "Invalid file type! Only JPG, PNG, and WebP images are allowed.",
+    invalidImageType: "Invalid file type! Only JPG, PNG, WebP, HEIC (iPhone), AVIF, and SVG images are allowed.",
     useSamplePhoto: "Sample",
     zoom: "Zoom",
     rotate: "Rotate",
@@ -7516,13 +7521,25 @@ const SecurityUtils = {
           : `File size exceeds ${maxMb}MB limit (${actualMb}MB). Please upload an image under ${maxMb}MB.` 
       };
     }
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml'];
-    if (file.type && !allowedTypes.includes(file.type.toLowerCase())) {
+    const allowedTypes = [
+      'image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml',
+      'image/gif', 'image/avif', 'image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'
+    ];
+    const allowedExtensions = [
+      '.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.avif', '.heic', '.heif'
+    ];
+
+    const fileType = (file.type || '').toLowerCase();
+    const fileName = (file.name || '').toLowerCase();
+    const hasValidExt = allowedExtensions.some(ext => fileName.endsWith(ext));
+    const hasValidType = fileType ? allowedTypes.includes(fileType) : false;
+
+    if (!hasValidType && !hasValidExt) {
       return { 
         valid: false, 
         error: isKm 
-          ? 'ប្រភេទឯកសារមិនត្រឹមត្រូវ! អនុញ្ញាតតែរូបភាព JPG, PNG, WebP ឬ SVG ប៉ុណ្ណោះ។' 
-          : 'Invalid file type. Only JPG, PNG, WebP, and SVG images are allowed.' 
+          ? 'ប្រភេទឯកសារមិនត្រឹមត្រូវ! អនុញ្ញាតតែរូបភាព JPG, PNG, WebP, HEIC (iPhone), AVIF ឬ SVG ប៉ុណ្ណោះ។' 
+          : 'Invalid file type. Only JPG, PNG, WebP, HEIC (iPhone), AVIF, and SVG images are allowed.' 
       };
     }
     return { valid: true };
@@ -10742,6 +10759,27 @@ const AdminService = {
 // High-Performance Interactive HTML5 Canvas Studio for Twibbon Framing
 
 class CanvasStudio {
+  static loadHeicConverter() {
+    if (typeof window.heic2any === 'function') return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const existing = document.querySelector('script[src*="heic2any"]');
+      if (existing) {
+        if (typeof window.heic2any === 'function') return resolve(true);
+        existing.addEventListener('load', () => resolve(typeof window.heic2any === 'function'));
+        existing.addEventListener('error', () => resolve(false));
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+      script.onload = () => resolve(typeof window.heic2any === 'function');
+      script.onerror = (e) => {
+        console.warn('Could not load heic2any from CDN:', e);
+        resolve(false);
+      };
+      document.head.appendChild(script);
+    });
+  }
+
   constructor(canvasElement, options = {}) {
     this.canvas = canvasElement;
     this.ctx = canvasElement.getContext('2d');
@@ -10851,38 +10889,77 @@ class CanvasStudio {
             return;
           }
         }
-        if (typeof onProgress === 'function') onProgress(5);
-        const reader = new FileReader();
-        reader.onprogress = (e) => {
-          if (e.lengthComputable && typeof onProgress === 'function') {
-            const pct = Math.min(85, Math.max(5, Math.round((e.loaded / e.total) * 85)));
-            onProgress(pct);
+
+        const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+        let processBlob = sourceUrlOrFile;
+        const fileName = (sourceUrlOrFile.name || '').toLowerCase();
+        const fileType = (sourceUrlOrFile.type || '').toLowerCase();
+        const isHeic = fileType.includes('heic') || fileType.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif');
+
+        const proceedWithBlob = (blobToRead, startPct = 5, spanPct = 80) => {
+          const reader = new FileReader();
+          reader.onprogress = (e) => {
+            if (e.lengthComputable && typeof onProgress === 'function') {
+              const pct = Math.min(85, Math.max(startPct, startPct + Math.round((e.loaded / e.total) * spanPct)));
+              onProgress(pct);
+            }
+          };
+          reader.onload = (e) => {
+            if (typeof onProgress === 'function') onProgress(90);
+            const img = new Image();
+            img.onload = () => {
+              this.userImage = img;
+              this.fitPhotoToCanvas();
+              this.isCustomUserPhoto = true;
+              this.markDirty();
+              this.render();
+              if (this.onPhotoLoaded) this.onPhotoLoaded();
+              if (typeof onProgress === 'function') onProgress(100);
+              resolve();
+            };
+            img.onerror = () => {
+              reject(new Error(isKm ? 'មិនអាចបើករូបភាពនេះបានទេ សូមសាកល្បងរូបភាពផ្សេង។' : 'Failed to decode image. Please try another file.'));
+            };
+            img.src = e.target.result;
+          };
+          reader.onerror = () => {
+            reject(new Error(isKm ? 'មានបញ្ហាក្នុងការអានឯកសាររូបភាព។' : 'Failed to read file.'));
+          };
+          reader.readAsDataURL(blobToRead);
+        };
+
+        if (isHeic) {
+          const heicMsg = typeof t === 'function' ? t('convertingHeic') : (isKm ? 'កំពុងបម្លែងរូបថត iPhone (HEIC)...' : 'Converting iPhone photo (HEIC)...');
+          if (typeof onProgress === 'function') {
+            onProgress(15, heicMsg);
           }
-        };
-        reader.onload = (e) => {
-          if (typeof onProgress === 'function') onProgress(90);
-          const img = new Image();
-          img.onload = () => {
-            this.userImage = img;
-            this.fitPhotoToCanvas();
-            this.isCustomUserPhoto = true;
-            this.markDirty();
-            this.render();
-            if (this.onPhotoLoaded) this.onPhotoLoaded();
-            if (typeof onProgress === 'function') onProgress(100);
-            resolve();
-          };
-          img.onerror = () => {
-            const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
-            reject(new Error(isKm ? 'មិនអាចបើករូបភាពនេះបានទេ សូមសាកល្បងរូបភាពផ្សេង។' : 'Failed to decode image. Please try another file.'));
-          };
-          img.src = e.target.result;
-        };
-        reader.onerror = () => {
-          const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
-          reject(new Error(isKm ? 'មានបញ្ហាក្នុងការអានឯកសាររូបភាព។' : 'Failed to read file.'));
-        };
-        reader.readAsDataURL(sourceUrlOrFile);
+          CanvasStudio.loadHeicConverter().then(async () => {
+            if (typeof window.heic2any === 'function') {
+              try {
+                if (typeof onProgress === 'function') {
+                  onProgress(25, heicMsg);
+                }
+                const converted = await window.heic2any({
+                  blob: sourceUrlOrFile,
+                  toType: 'image/jpeg',
+                  quality: 0.92
+                });
+                processBlob = Array.isArray(converted) ? converted[0] : converted;
+              } catch (convErr) {
+                console.warn('heic2any conversion fallback to native decode:', convErr);
+              }
+            }
+            if (typeof onProgress === 'function') {
+              onProgress(45);
+            }
+            proceedWithBlob(processBlob, 45, 40);
+          }).catch(() => {
+            proceedWithBlob(sourceUrlOrFile, 15, 70);
+          });
+        } else {
+          if (typeof onProgress === 'function') onProgress(5);
+          proceedWithBlob(sourceUrlOrFile, 5, 80);
+        }
       }
     });
   }
@@ -12895,7 +12972,7 @@ class TwibbonApp {
             </div>
             
             <div class="profile-avatar-actions">
-              <input type="file" id="profileAvatarFileInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" />
+              <input type="file" id="profileAvatarFileInput" accept="image/*, .heic, .HEIC, .heif, .HEIF" style="display:none;" />
               <div class="profile-avatar-btns-row">
                 <button type="button" class="btn btn-outline btn-sm" id="btnSelectCustomAvatar">
                   ${Icons.upload} <span>${t('uploadAvatar')}</span>
@@ -14621,7 +14698,7 @@ class TwibbonApp {
 
           <!-- Step 1: Upload Photo Dropzone (Directly under Canvas for instant access) -->
           <div class="studio-upload-section">
-            <input type="file" id="photoFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display: none;" />
+            <input type="file" id="photoFileInput" accept="image/*, .heic, .HEIC, .heif, .HEIF" style="display: none;" />
             <div class="photo-dropzone" id="photoDropzone" title="${t('photoTip')}">
               <!-- Default state -->
               <div class="dropzone-idle" id="dropzoneIdle" style="display: flex; align-items: center; gap: 0.8rem; width: 100%; justify-content: center;">
@@ -14850,12 +14927,16 @@ class TwibbonApp {
       setProgress(8, t('uploadingPhoto'));
 
       try {
-        await this.activeStudio.setUserPhoto(file, true, (pct) => {
-          let msg = t('uploadingPhoto');
-          if (pct >= 90 && pct < 100) {
-            msg = t('renderingPhoto');
-          } else if (pct >= 100) {
-            msg = t('photoUploadSuccess');
+        await this.activeStudio.setUserPhoto(file, true, (pct, customMsg) => {
+          let msg = customMsg;
+          if (!msg) {
+            if (pct >= 90 && pct < 100) {
+              msg = t('renderingPhoto');
+            } else if (pct >= 100) {
+              msg = t('photoUploadSuccess');
+            } else {
+              msg = t('uploadingPhoto');
+            }
           }
           setProgress(pct, msg);
         });
@@ -15840,8 +15921,8 @@ class TwibbonApp {
               <div class="designer-logo-preview" id="designerLogoThumb">🖼️</div>
               <div style="flex:1;">
                 <label class="designer-logo-btn" for="designerLogoInput">
-                  📁 ${isKm ? 'ជ្រើសរើសរូប PNG' : 'Choose PNG Logo'}
-                  <input type="file" id="designerLogoInput" accept="image/png,image/jpeg,image/webp" style="display:none;" />
+                  📁 ${isKm ? 'ជ្រើសរើសរូប Logo' : 'Choose Logo'}
+                  <input type="file" id="designerLogoInput" accept="image/*, .heic, .HEIC, .heif, .HEIF" style="display:none;" />
                 </label>
               </div>
               <button type="button" class="designer-logo-remove" id="btnRemoveLogo" style="display:none;">${t('delete')}</button>
