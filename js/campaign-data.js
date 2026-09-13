@@ -74,15 +74,32 @@ const SecurityUtils = {
     return '';
   },
 
-  validateImageFile(file) {
-    if (!file) return { valid: false, error: 'No file selected.' };
-    const maxSizeBytes = 5 * 1024 * 1024; // 5 MB
-    if (file.size > maxSizeBytes) {
-      return { valid: false, error: 'File size exceeds 5MB limit. Please upload a smaller image.' };
+  validateImageFile(file, maxMb = 10) {
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    if (!file) {
+      return { 
+        valid: false, 
+        error: isKm ? 'សូមជ្រើសរើសឯកសាររូបភាពជាមុនសិន។' : 'No file selected.' 
+      };
     }
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-    if (!allowedTypes.includes(file.type.toLowerCase())) {
-      return { valid: false, error: 'Invalid file type. Only PNG, JPG, and WebP images are allowed.' };
+    const maxSizeBytes = maxMb * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      const actualMb = (file.size / (1024 * 1024)).toFixed(1);
+      return { 
+        valid: false, 
+        error: isKm 
+          ? `រូបភាពមានទំហំធំពេក (${actualMb}MB)! ទំហំអតិបរមាអនុញ្ញាតត្រឹម ${maxMb}MB ប៉ុណ្ណោះ។` 
+          : `File size exceeds ${maxMb}MB limit (${actualMb}MB). Please upload an image under ${maxMb}MB.` 
+      };
+    }
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml'];
+    if (file.type && !allowedTypes.includes(file.type.toLowerCase())) {
+      return { 
+        valid: false, 
+        error: isKm 
+          ? 'ប្រភេទឯកសារមិនត្រឹមត្រូវ! អនុញ្ញាតតែរូបភាព JPG, PNG, WebP ឬ SVG ប៉ុណ្ណោះ។' 
+          : 'Invalid file type. Only JPG, PNG, WebP, and SVG images are allowed.' 
+      };
     }
     return { valid: true };
   },
