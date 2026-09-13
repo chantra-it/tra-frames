@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      background: #090e1c;
+      font-family: 'Plus Jakarta Sans', 'Kantumruy Pro', sans-serif;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 40px 70px;
+      position: relative;
+    }
+    .banner-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 80% 30%, rgba(37, 99, 235, 0.35) 0%, transparent 50%),
+                  radial-gradient(circle at 20% 70%, rgba(30, 64, 175, 0.25) 0%, transparent 45%),
+                  #070b16;
+      z-index: 0;
+    }
+    .banner-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: radial-gradient(ellipse at center, black 50%, transparent 85%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 50%, transparent 85%);
+      z-index: 1;
+    }
+    .left-info {
+      position: relative;
+      z-index: 2;
+      width: 530px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .brand-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #93c5fd;
+      background: rgba(37, 99, 235, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      width: fit-content;
+    }
+    .campaign-main-title {
+      font-family: 'Kantumruy Pro', sans-serif;
+      font-size: 40px;
+      font-weight: 800;
+      line-height: 1.25;
+      color: #ffffff;
+      text-shadow: 0 4px 16px rgba(0,0,0,0.6);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .campaign-desc {
+      font-family: 'Kantumruy Pro', sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      color: #94a3b8;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .action-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 14px;
+      width: fit-content;
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45);
+      margin-top: 8px;
+    }
+    .right-frame-preview {
+      position: relative;
+      z-index: 2;
+      width: 520px;
+      height: 520px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .frame-box {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px -10px rgba(0,0,0,0.85), 0 0 40px rgba(37, 99, 235, 0.35);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      background: #0f172a;
+    }
+    .avatar-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .frame-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="banner-bg"></div>
+  <div class="banner-grid"></div>
+
+  <div class="left-info">
+    <div class="brand-tag">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+      TRA FRAMES • CAMPAIGN
+    </div>
+    
+    <div class="campaign-main-title">{{CAMPAIGN_TITLE}}</div>
+    <div class="campaign-desc">{{CAMPAIGN_DESC}}</div>
+
+    <div class="action-badge">
+      <span>✨ ចុចទីនេះដើម្បីពាក់ស៊ុមរូបថត</span>
+    </div>
+  </div>
+
+  <div class="right-frame-preview">
+    <div class="frame-box">
+      <!-- Demo avatar underneath -->
+      <svg class="avatar-layer" viewBox="0 0 600 600" width="600" height="600">
+        <defs>
+          <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#6366f1"/>
+          </linearGradient>
+        </defs>
+        <rect width="600" height="600" fill="url(#bg1)"/>
+        <circle cx="300" cy="240" r="110" fill="#fed7aa"/>
+        <path d="M 190 220 Q 300 120 410 220 Q 380 150 300 140 Q 220 150 190 220 Z" fill="#1e293b"/>
+        <circle cx="260" cy="235" r="10" fill="#1e293b"/>
+        <circle cx="340" cy="235" r="10" fill="#1e293b"/>
+        <path d="M 270 270 Q 300 300 330 270" fill="none" stroke="#1e293b" stroke-width="8" stroke-linecap="round"/>
+        <path d="M 120 540 C 120 400 200 370 300 370 C 400 370 480 400 480 540 Z" fill="#ffffff"/>
+        <path d="M 260 370 L 300 450 L 340 370 Z" fill="#3b82f6"/>
+      </svg>
+      <!-- Real Campaign Frame on top -->
+      <img class="frame-layer" src="{{FRAME_URL}}" alt="Campaign Frame">
+    </div>
+  </div>
+</body>
+</html>
