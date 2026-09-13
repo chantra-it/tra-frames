@@ -259,7 +259,7 @@ class TwibbonApp {
               <span>${t('profile')}</span>
             </button>
             <button class="user-dropdown-item" onclick="app.navigateTo('my-campaigns')">
-              ${Icons.avatar} <span>${t('myCampaigns')}</span>
+              ${Icons.campaigns} <span>${t('myCampaigns')}</span>
             </button>
             <button class="user-dropdown-item" onclick="app.navigateTo('create')">
               ${Icons.plus} <span>${t('createCampaign')}</span>
@@ -3907,7 +3907,7 @@ class TwibbonApp {
     if (typeof AuthService !== 'undefined' && !AuthService.isAuthenticated()) {
       container.innerHTML = `
         <div class="auth-gate-card">
-          <div class="auth-gate-icon">${Icons.avatar}</div>
+          <div class="auth-gate-icon">${Icons.campaigns}</div>
           <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);">${t('myCampaigns')}</h2>
           <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem;">${t('loginRequiredDesc')}</p>
           
