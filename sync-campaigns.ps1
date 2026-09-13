@@ -26,12 +26,10 @@ Write-Host "Found $($res.documents.Count) campaigns in Firestore." -ForegroundCo
 # Ensure directories exist
 $cDir = Join-Path $baseDir "c"
 $previewsDir = Join-Path $baseDir "previews"
-$scratchDir = Join-Path $baseDir "scratch"
 $toolsDir = Join-Path $baseDir "tools"
 
 if (-not (Test-Path $cDir)) { New-Item -ItemType Directory -Path $cDir | Out-Null }
 if (-not (Test-Path $previewsDir)) { New-Item -ItemType Directory -Path $previewsDir | Out-Null }
-if (-not (Test-Path $scratchDir)) { New-Item -ItemType Directory -Path $scratchDir | Out-Null }
 
 $previewTemplate = [System.IO.File]::ReadAllText((Join-Path $toolsDir "campaign-preview-template.html"), [System.Text.Encoding]::UTF8)
 $redirectTemplate = [System.IO.File]::ReadAllText((Join-Path $toolsDir "campaign-redirect-template.html"), [System.Text.Encoding]::UTF8)
@@ -57,7 +55,7 @@ foreach ($doc in $res.documents) {
     $renderHtml = $renderHtml.Replace('{{CAMPAIGN_DESC}}', $safeDesc)
     $renderHtml = $renderHtml.Replace('{{FRAME_URL}}', $frameUrl)
 
-    $tempHtmlPath = Join-Path $scratchDir "render_temp_$slug.html"
+    $tempHtmlPath = Join-Path $env:TEMP "tf_render_temp_$slug.html"
     [System.IO.File]::WriteAllText($tempHtmlPath, $renderHtml, $utf8NoBom)
 
     # 2. Render to previews/$slug.png using Chrome Headless via TEMP path
@@ -104,7 +102,7 @@ foreach ($doc in $res.documents) {
 # 4. Render platform banner for root og-preview.png
 Write-Host "`n----------------------------------------" -ForegroundColor DarkGray
 Write-Host "Rendering root og-preview.png (Platform Banner)..." -ForegroundColor Yellow
-$generalTempHtml = Join-Path $scratchDir "general_banner_temp.html"
+$generalTempHtml = Join-Path $env:TEMP "tf_general_banner_temp.html"
 [System.IO.File]::WriteAllText($generalTempHtml, $platformTemplate, $utf8NoBom)
 
 $generalTempPng = Join-Path $env:TEMP "tf_general_preview.png"
