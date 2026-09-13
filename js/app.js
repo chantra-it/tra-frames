@@ -2167,10 +2167,27 @@ class TwibbonApp {
           <div class="studio-upload-section">
             <input type="file" id="photoFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display: none;" />
             <div class="photo-dropzone" id="photoDropzone" title="${t('photoTip')}">
-              <div class="dropzone-icon">${Icons.camera}</div>
-              <div class="dropzone-text">
-                <span class="dropzone-main-text">${t('choosePhoto')}</span>
-                <span class="dropzone-sub-text">📌 ${t('photoTip')}</span>
+              <!-- Default state -->
+              <div class="dropzone-idle" id="dropzoneIdle" style="display: flex; align-items: center; gap: 0.8rem; width: 100%; justify-content: center;">
+                <div class="dropzone-icon">${Icons.camera}</div>
+                <div class="dropzone-text">
+                  <span class="dropzone-main-text">${t('choosePhoto')}</span>
+                  <span class="dropzone-sub-text">📌 ${t('photoTip')}</span>
+                </div>
+              </div>
+
+              <!-- Uploading progress state -->
+              <div class="dropzone-progress-wrap" id="dropzoneProgress" style="display: none; width: 100%; flex-direction: column; gap: 0.55rem; padding: 0.15rem 0.4rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                  <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                    <span class="upload-spin-icon">⏳</span>
+                    <span id="dropzoneStatusText">${t('uploadingPhoto')}</span>
+                  </span>
+                  <span id="dropzonePercent" style="font-size: 0.95rem; font-weight: 800; color: var(--accent-primary); font-family: monospace;">0%</span>
+                </div>
+                <div class="upload-progress-bar-bg">
+                  <div class="upload-progress-bar-fill" id="dropzoneProgressBar" style="width: 0%;"></div>
+                </div>
               </div>
             </div>
 
@@ -2351,14 +2368,49 @@ class TwibbonApp {
         return;
       }
 
+      const idleEl = document.getElementById('dropzoneIdle');
+      const progressEl = document.getElementById('dropzoneProgress');
+      const percentEl = document.getElementById('dropzonePercent');
+      const barEl = document.getElementById('dropzoneProgressBar');
+      const statusTextEl = document.getElementById('dropzoneStatusText');
+
+      const setProgress = (percent, text) => {
+        if (idleEl) idleEl.style.display = 'none';
+        if (progressEl) progressEl.style.display = 'flex';
+        if (percentEl) percentEl.textContent = `${percent}%`;
+        if (barEl) barEl.style.width = `${percent}%`;
+        if (statusTextEl && text) statusTextEl.textContent = text;
+      };
+
+      const resetProgress = () => {
+        setTimeout(() => {
+          if (progressEl) progressEl.style.display = 'none';
+          if (idleEl) idleEl.style.display = 'flex';
+          if (percentEl) percentEl.textContent = '0%';
+          if (barEl) barEl.style.width = '0%';
+        }, 800);
+      };
+
+      setProgress(8, t('uploadingPhoto'));
+
       try {
-        await this.activeStudio.setUserPhoto(file, true);
+        await this.activeStudio.setUserPhoto(file, true, (pct) => {
+          let msg = t('uploadingPhoto');
+          if (pct >= 90 && pct < 100) {
+            msg = t('renderingPhoto');
+          } else if (pct >= 100) {
+            msg = t('photoUploadSuccess');
+          }
+          setProgress(pct, msg);
+        });
+        setProgress(100, t('photoUploadSuccess'));
         this.showToast(t('photoUploadSuccess'), 'success');
       } catch (err) {
         console.error("Studio photo load error:", err);
         this.showToast(err.message || (isKm ? 'មិនអាចបញ្ចូលរូបថតបានទេ!' : 'Failed to load photo!'), 'error');
       } finally {
         fileInput.value = '';
+        resetProgress();
       }
     };
 
