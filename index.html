@@ -954,20 +954,12 @@ html, body {
 }
 
 /* =========================================================
-   CAMPAIGN CARDS GRID — Mobile-first, 2-col at 500px
+   CAMPAIGN CARDS GRID — Mobile-first, 2 columns on mobile
    ========================================================= */
 .campaign-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);       /* 2-col default (mobile) */
   gap: 1rem;
-}
-
-/* Single col for tiny screens */
-@media (max-width: 420px) {
-  .campaign-grid {
-    grid-template-columns: 1fr;
-    gap: 0.9rem;
-  }
 }
 
 .campaign-card {
@@ -3877,7 +3869,105 @@ html, body {
     font-size: 0.62rem !important;
   }
 
-  .campaign-grid { gap: 0.75rem; }
+  /* Campaign Grid — 2 columns on mobile */
+  .campaign-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+  }
+
+  .campaign-card {
+    border-radius: var(--radius-md) !important;
+  }
+
+  .card-badge-category {
+    top: 0.4rem !important;
+    left: 0.4rem !important;
+    padding: 0.16rem 0.45rem !important;
+    font-size: 0.62rem !important;
+  }
+
+  .card-badge-supporters {
+    bottom: 0.4rem !important;
+    right: 0.4rem !important;
+    padding: 0.16rem 0.45rem !important;
+    font-size: 0.62rem !important;
+    gap: 0.2rem !important;
+  }
+
+  .card-badge-supporters svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  .card-content {
+    padding: 0.55rem 0.5rem !important;
+    gap: 0.25rem !important;
+  }
+
+  .card-title {
+    font-size: 0.82rem !important;
+    line-height: 1.35 !important;
+    margin-bottom: 0.05rem !important;
+  }
+
+  .card-creator {
+    font-size: 0.68rem !important;
+    gap: 0.25rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .card-creator svg {
+    width: 11px !important;
+    height: 11px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .card-description {
+    display: none !important;
+  }
+
+  .card-footer {
+    display: flex !important;
+    gap: 0.3rem !important;
+    padding-top: 0.15rem !important;
+    margin-top: auto !important;
+  }
+
+  .btn-use-frame,
+  .campaign-card .card-footer .btn-primary {
+    min-height: 32px !important;
+    height: 32px !important;
+    padding: 0.25rem 0.4rem !important;
+    font-size: 0.72rem !important;
+    border-radius: var(--radius-xs) !important;
+    gap: 0.25rem !important;
+    white-space: nowrap !important;
+  }
+
+  .btn-use-frame svg,
+  .campaign-card .card-footer .btn-primary svg {
+    width: 12px !important;
+    height: 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .btn-card-share,
+  .campaign-card .card-footer .btn-icon {
+    width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 !important;
+    border-radius: var(--radius-xs) !important;
+    flex-shrink: 0 !important;
+  }
+
+  .btn-card-share svg,
+  .campaign-card .card-footer .btn-icon svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
 
   .btn-download-hero { font-size: 0.98rem; padding: 0.9rem 1.1rem; min-height: 48px; }
 
@@ -3928,7 +4018,82 @@ html, body {
     padding: 1.5px !important;
   }
 
-  .campaign-grid { grid-template-columns: 1fr; gap: 0.7rem; }
+  /* Campaign Grid — 2 columns on tiny screens (≤ 360px, e.g. Galaxy S8+) */
+  .campaign-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.45rem !important;
+  }
+
+  .card-badge-category {
+    top: 0.3rem !important;
+    left: 0.3rem !important;
+    padding: 0.12rem 0.35rem !important;
+    font-size: 0.58rem !important;
+  }
+
+  .card-badge-supporters {
+    bottom: 0.3rem !important;
+    right: 0.3rem !important;
+    padding: 0.12rem 0.35rem !important;
+    font-size: 0.58rem !important;
+    gap: 0.18rem !important;
+  }
+
+  .card-badge-supporters svg {
+    width: 9px !important;
+    height: 9px !important;
+  }
+
+  .card-content {
+    padding: 0.45rem 0.38rem !important;
+    gap: 0.2rem !important;
+  }
+
+  .card-title {
+    font-size: 0.76rem !important;
+    line-height: 1.28 !important;
+  }
+
+  .card-creator {
+    font-size: 0.64rem !important;
+  }
+
+  .card-creator svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  .card-footer {
+    gap: 0.25rem !important;
+  }
+
+  .btn-use-frame,
+  .campaign-card .card-footer .btn-primary {
+    min-height: 30px !important;
+    height: 30px !important;
+    padding: 0.2rem 0.35rem !important;
+    font-size: 0.67rem !important;
+    gap: 0.2rem !important;
+  }
+
+  .btn-use-frame svg,
+  .campaign-card .card-footer .btn-primary svg {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  .btn-card-share,
+  .campaign-card .card-footer .btn-icon {
+    width: 30px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+  }
+
+  .btn-card-share svg,
+  .campaign-card .card-footer .btn-icon svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
 
   .mobile-nav-item { min-width: 44px; padding: 0.4rem 0.5rem; }
 }
@@ -6211,6 +6376,7 @@ const translations = {
     searchPlaceholder: "ស្វែងរកស៊ុម...",
     allCategories: "ទាំងអស់",
     catEducation: "សាលារៀន",
+    catSchool: "សាលារៀន",
     catCulture: "វប្បធម៌",
     catCharity: "សប្បុរសធម៌",
     catSports: "កីឡា",
@@ -6551,6 +6717,7 @@ const translations = {
     searchPlaceholder: "Search frames...",
     allCategories: "All",
     catEducation: "School",
+    catSchool: "School",
     catCulture: "Culture",
     catCharity: "Charity",
     catSports: "Sports",
@@ -15976,11 +16143,11 @@ class TwibbonApp {
                 <div class="card-content">
                   <h3 class="card-title">${safeTitle}</h3>
                   <div class="card-creator">📅 ${safeDate}</div>
-                  <div class="card-footer" style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
-                    <button class="btn btn-primary" style="flex: 1;" onclick="window.location.hash='#campaign/${safeSlug}'">
+                  <div class="card-footer">
+                    <button class="btn btn-primary btn-use-frame" onclick="window.location.hash='#campaign/${safeSlug}'">
                       ${Icons.camera} <span>${t('viewCampaign')}</span>
                     </button>
-                    <button class="btn-icon" style="color: #ef4444;" title="${t('delete')}" onclick="app.deleteUserCampaign(decodeURIComponent('${encodeURIComponent(c.id || '')}'))">
+                    <button class="btn-icon btn-card-share" style="color: #ef4444;" title="${t('delete')}" onclick="app.deleteUserCampaign(decodeURIComponent('${encodeURIComponent(c.id || '')}'))">
                       ${Icons.trash}
                     </button>
                   </div>
