@@ -32,17 +32,22 @@ const SecurityUtils = {
   },
   
   sanitizeUrl(url) {
-    if (!url || typeof url !== 'string') return '#';
+    if (!url || typeof url !== 'string') return '';
     const trimmed = url.trim();
-    // Allow standard https, http, relative paths, hashes, and safe raster data URLs
-    if (/^(https?:\/\/|\/|#|data:image\/(png|jpeg|jpg|webp)[;,])/i.test(trimmed)) {
+    if (!trimmed || trimmed === '#' || trimmed.toLowerCase() === 'about:blank') return '';
+    // Allow standard https, http, relative paths, and safe raster data URLs
+    if (/^(https?:\/\/|\/|data:image\/(png|jpeg|jpg|webp)[;,])/i.test(trimmed)) {
+      return trimmed;
+    }
+    // Allow in-page anchor hash links like #explore or #profile
+    if (trimmed.startsWith('#') && trimmed.length > 1) {
       return trimmed;
     }
     // For SVG data URLs, rigorously sanitize the SVG markup
     if (/^data:image\/svg\+xml/i.test(trimmed)) {
       try {
         const commaIdx = trimmed.indexOf(',');
-        if (commaIdx === -1) return '#';
+        if (commaIdx === -1) return '';
         const meta = trimmed.slice(0, commaIdx).toLowerCase();
         const body = trimmed.slice(commaIdx + 1);
         let svgText = '';
@@ -60,13 +65,13 @@ const SecurityUtils = {
           }
         }
         const cleanSvg = this.sanitizeSvg(svgText);
-        if (!cleanSvg || !cleanSvg.includes('<svg')) return '#';
+        if (!cleanSvg || !cleanSvg.includes('<svg')) return '';
         return `data:image/svg+xml;utf8,${encodeURIComponent(cleanSvg)}`;
       } catch (e) {
-        return '#';
+        return '';
       }
     }
-    return '#';
+    return '';
   },
 
   validateImageFile(file) {
@@ -785,6 +790,9 @@ const AuthService = {
       const activeStored = localStorage.getItem("tra_active_user");
       if (activeStored) {
         this.currentUser = JSON.parse(activeStored);
+        if (this.currentUser && (this.currentUser.photoURL === '#' || this.currentUser.photoURL === 'about:blank')) {
+          this.currentUser.photoURL = '';
+        }
         this.notifyListeners();
       }
     } catch (e) {}
@@ -807,11 +815,13 @@ const AuthService = {
           } catch (e) {}
         }
 
+        let userPhoto = user.photoURL || '';
+        if (userPhoto === '#' || userPhoto === 'about:blank') userPhoto = '';
         this.currentUser = {
           uid: user.uid,
           email: user.email || '',
           displayName: SecurityUtils.cleanText(user.displayName || (user.email ? user.email.split('@')[0] : 'Creator'), 50),
-          photoURL: SecurityUtils.sanitizeUrl(user.photoURL || ''),
+          photoURL: SecurityUtils.sanitizeUrl(userPhoto),
           emailVerified: isVerified,
           isLocal: false
         };
@@ -1268,12 +1278,13 @@ const AuthService = {
       throw new Error("Display name cannot be empty");
     }
 
-    let finalPhoto = this.currentUser.photoURL || '';
+    let finalPhoto = (this.currentUser.photoURL && this.currentUser.photoURL !== '#' && this.currentUser.photoURL !== 'about:blank') ? this.currentUser.photoURL : '';
     if (photoURL !== undefined) {
       if (photoURL && photoURL.startsWith('data:image')) {
         finalPhoto = await this.compressAvatar(photoURL, 256);
       } else {
-        finalPhoto = SecurityUtils.sanitizeUrl(photoURL || '');
+        const clean = (photoURL && photoURL !== '#' && photoURL !== 'about:blank') ? photoURL.trim() : '';
+        finalPhoto = SecurityUtils.sanitizeUrl(clean);
       }
     }
 
