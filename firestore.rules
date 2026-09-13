@@ -20,7 +20,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && (
-        request.auth.token.email in ['haschitra@gmail.com', 'ctpro007@gmail.com'] ||
+        (request.auth.token.email in ['haschitra@gmail.com', 'ctpro007@gmail.com'] && request.auth.token.email_verified == true) ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
@@ -45,11 +45,19 @@ service cloud.firestore {
       // 1. Public Read: anyone can view frames and explore
       allow read: if true;
 
-      // 2. Create: Allow saving campaigns so all creators can share worldwide
-      allow create: if true;
+      // 2. Create: Enforce data schema and size limits
+      allow create: if isValidCampaignData(request.resource.data);
 
-      // 3. Update: Allow updating campaign metadata and supporter count
-      allow update: if true;
+      // 3. Update: Supporter counter increment OR Owner/Admin campaign update
+      allow update: if (
+        // Case A: Increment supporter counter
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['supporters']) &&
+         request.resource.data.supporters is int &&
+         request.resource.data.supporters >= resource.data.supporters)
+        ||
+        // Case B: Owner or Admin update
+        (isAdmin() || (isAuthenticated() && resource.data.creatorUid == request.auth.uid))
+      );
 
       // 4. Delete: Strictly owner or Super Admin
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.creatorUid == request.auth.uid);
@@ -58,7 +66,7 @@ service cloud.firestore {
     // Verified Users Collection (Stores users verified via 4-digit Email OTP)
     match /verified_users/{userId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdmin() || (isAuthenticated() && (request.auth.uid == userId || resource == null || request.resource.data.email == request.auth.token.email));
     }
 
     // Users Profile Collection (Stores custom avatar, display name, preferences)
