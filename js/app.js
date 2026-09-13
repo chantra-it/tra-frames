@@ -2069,10 +2069,9 @@ class TwibbonApp {
     if (!campaign) {
       const isKm = getLanguage() === 'km';
       container.innerHTML = `
-        <div style="text-align: center; padding: 5rem 1rem;">
-          <div style="font-size: 2.8rem; margin-bottom: 1rem;">☁️</div>
-          <h2 style="color: var(--text-primary); font-weight: 800;">${isKm ? 'កំពុងទាញយកយុទ្ធនាការពី Cloud...' : 'Loading campaign from Cloud...'}</h2>
-          <p style="color: var(--text-secondary); margin: 0.5rem 0 1.5rem 0;">${isKm ? 'សូមរង់ចាំមួយភ្លែត ប្រព័ន្ធកំពុងទាញទិន្នន័យពី Cloud Firestore...' : 'Fetching live campaign data from Cloud Firestore...'}</p>
+        <div class="loading-container">
+          <div class="loading-spinner loading-spinner-lg"></div>
+          <div class="loading-text">${isKm ? 'កំពុងផ្ទុកទិន្នន័យ...' : 'Loading...'}</div>
         </div>
       `;
       CampaignService.fetchCloudCampaign(cleanId).then(cloudCampaign => {
@@ -2085,8 +2084,8 @@ class TwibbonApp {
               <h2 style="color: var(--text-primary); font-weight: 800; font-size: 1.4rem;">${isKm ? 'រកមិនឃើញយុទ្ធនាការនេះទេ' : 'Campaign Not Found'}</h2>
               <p style="color: var(--text-secondary); margin: 1rem 0 1.5rem 0; line-height: 1.6; font-size: 0.95rem;">
                 ${isKm 
-                  ? 'យុទ្ធនាការនេះមិនទាន់បាន Upload ឡើង Cloud នៅឡើយទេ ឬត្រូវបានលុប។<br><br>💡 <strong>ប្រសិនបើបងបានបង្កើតវានៅលើទូរស័ព្ទ ឬកុំព្យូទ័រ៖</strong> សូមបើកមើលទំព័រនេះនៅលើឧបករណ៍ដែលបងបានបង្កើត រួចចុច <strong>Share (ចែករំលែក)</strong> ដើម្បីឱ្យប្រព័ន្ធ Upload ឡើង Cloud ជាស្វ័យប្រវត្តិ។' 
-                  : 'The campaign you are looking for has not been synced to Cloud Firestore yet or was removed.<br><br>💡 If you created this on another device, please open it on that device and tap Share to sync it to the Cloud.'}
+                  ? 'យុទ្ធនាការនេះមិនទាន់មាននៅលើប្រព័ន្ធនៅឡើយទេ ឬត្រូវបានលុប។<br><br>💡 <strong>ប្រសិនបើបងបានបង្កើតវានៅលើទូរស័ព្ទ ឬកុំព្យូទ័រ៖</strong> សូមបើកមើលទំព័រនេះនៅលើឧបករណ៍ដែលបងបានបង្កើត រួចចុច <strong>Share (ចែករំលែក)</strong> ដើម្បីឱ្យប្រព័ន្ធ Save ឡើង Cloud ជាស្វ័យប្រវត្តិ។' 
+                  : 'The campaign you are looking for was not found or has been removed.<br><br>💡 If you created this on another device, please open it on that device and tap Share to sync it to the Cloud.'}
               </p>
               <button class="btn btn-primary" onclick="window.location.hash='#explore'">${t('backToHome')}</button>
             </div>
@@ -2285,7 +2284,7 @@ class TwibbonApp {
 
               <!-- Cloud Sync Indicator -->
               <div class="cloud-sync-status" id="cloudSyncStatus">
-                ☁️ ${isKm ? 'បានតភ្ជាប់ Cloud Firestore • អាចបើកលើទូរស័ព្ទបាន' : 'Synced to Cloud Firestore • Accessible on Mobile'}
+                ☁️ ${isKm ? 'បានតភ្ជាប់ Cloud • អាចបើកលើទូរស័ព្ទបាន' : 'Synced to Cloud • Accessible on Mobile'}
               </div>
             </div>
 
@@ -4277,12 +4276,11 @@ class TwibbonApp {
       return;
     }
 
-    // 3. Render Loading Placeholder while fetching comprehensive data
+    // 3. Render Loading Spinner while fetching comprehensive data
     container.innerHTML = `
-      <div class="container section" style="padding: 3rem 1rem; text-align: center;">
-        <div class="loading-spinner" style="margin: 0 auto 1rem auto;"></div>
-        <h3 style="font-weight: 700; color: var(--text-primary);">${isKm ? 'កំពុងទាញយកទិន្នន័យ Admin ពី Cloud Firestore...' : 'Loading Super Admin platform data from Cloud Firestore...'}</h3>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">${isKm ? 'សូមរង់ចាំបន្តិច...' : 'Please wait a moment...'}</p>
+      <div class="loading-container">
+        <div class="loading-spinner loading-spinner-lg"></div>
+        <div class="loading-text">${isKm ? 'កំពុងផ្ទុកទិន្នន័យ...' : 'Loading...'}</div>
       </div>
     `;
 
@@ -5028,8 +5026,8 @@ class TwibbonApp {
           <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${t('adminPurgeCache')}</h3>
           <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem;">
             ${isKm 
-              ? 'សម្អាត Local Memory Cache និងទាញយកទិន្នន័យស្រស់បំផុតពី Cloud Firestore ដើម្បីធានាភាពសុក្រឹត។' 
-              : 'Purge local in-memory cache and force re-synchronization with latest Cloud Firestore documents.'}
+              ? 'សម្អាត Local Memory Cache និងទាញយកទិន្នន័យស្រស់បំផុតពី Cloud ដើម្បីធានាភាពសុក្រឹត។' 
+              : 'Purge local in-memory cache and force re-synchronization with latest Cloud documents.'}
           </p>
           <button class="btn btn-outline" onclick="app.handleAdminPurgeCache()" style="width: 100%;">
             🔄 <span>${isKm ? 'សម្អាត Cache និង Sync ឡើងវិញ' : 'Purge Cache & Sync'}</span>
