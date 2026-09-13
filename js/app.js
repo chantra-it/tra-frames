@@ -1751,11 +1751,6 @@ class TwibbonApp {
               </button>
             </div>
           </div>
-
-          <!-- Bottom Action: Extra Download Button on Mobile -->
-          <button class="btn btn-success btn-download-bottom" id="btnDownloadHDBottom">
-            ${Icons.download} <span>${t('downloadFrame')}</span>
-          </button>
         </div>
       </div>
     `;
@@ -1902,8 +1897,6 @@ class TwibbonApp {
 
     const btnDownloadTop = document.getElementById('btnDownloadHD');
     if (btnDownloadTop) btnDownloadTop.addEventListener('click', handleDownloadHD);
-    const btnDownloadBottom = document.getElementById('btnDownloadHDBottom');
-    if (btnDownloadBottom) btnDownloadBottom.addEventListener('click', handleDownloadHD);
 
     // Copy Caption & Link
     const shareableUrl = this.getShareableLink(campaign);
