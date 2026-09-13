@@ -1673,9 +1673,12 @@ class TwibbonApp {
       ? (CampaignService.normalizeSlug(rawSlug) || rawSlug)
       : encodeURIComponent(rawSlug);
     if (window.location.protocol === 'file:') {
-      return `https://frame.tra4me.com/#campaign/${cleanSlug}`;
+      return `https://frame.tra4me.com/c/${cleanSlug}/`;
     }
-    return `${window.location.origin}${window.location.pathname}#campaign/${cleanSlug}`;
+    const origin = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
+      ? window.location.origin
+      : 'https://frame.tra4me.com';
+    return `${origin}/c/${cleanSlug}/`;
   }
 
   openShareModalById(identifier) {
