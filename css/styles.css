@@ -1347,6 +1347,53 @@ html, body {
   color: var(--text-muted);
 }
 
+/* Upload Progress Elements */
+.upload-progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-card);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.upload-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary) 0%, #38bdf8 100%);
+  border-radius: var(--radius-full);
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.45);
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: progressShimmer 1.4s infinite;
+}
+
+@keyframes progressShimmer {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(200%); }
+}
+
+.upload-spin-icon {
+  display: inline-block;
+  animation: spinSlow 1.5s linear infinite;
+}
+
+@keyframes spinSlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* Sample Avatars */
 .sample-avatars-row {
   display: flex;
