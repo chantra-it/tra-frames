@@ -8032,7 +8032,6 @@ const OtpService = {
     window.dispatchEvent(new CustomEvent('tra_otp_dispatched', {
       detail: { email: cleanEmail, otpCode }
     }));
-    console.log(`%c🔑 [Tra Frames OTP] 4-digit code generated for ${cleanEmail}: ${otpCode}`, "color: #2563eb; font-weight: bold; font-size: 15px;");
   },
 
   async verifyOtp(email, enteredCode) {
