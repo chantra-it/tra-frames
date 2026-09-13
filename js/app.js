@@ -4319,24 +4319,26 @@ class TwibbonApp {
           <div class="admin-banner-left">
             <div class="admin-badge-pill">
               <span class="admin-pulse-dot"></span>
-              <span>SUPER ADMIN PLATFORM CONTROL</span>
+              <span>PLATFORM CONTROL</span>
             </div>
-            <h1 class="admin-main-title">👑 ${t('adminDashboard')}</h1>
+            <div class="admin-header-row">
+              <h1 class="admin-main-title">👑 ${t('adminDashboard')}</h1>
+              <div class="admin-user-tag" title="${SecurityUtils.escapeHtml(user.email)}">
+                <span class="admin-user-email">👤 ${SecurityUtils.escapeHtml(user.email)}</span>
+                <span class="admin-tag-role">ADMIN</span>
+              </div>
+            </div>
             <p class="admin-main-subtitle">${t('adminSubtitle')}</p>
-            <div class="admin-user-tag">
-              <span>👤 ${SecurityUtils.escapeHtml(user.email)}</span>
-              <span class="admin-tag-role">MASTER ADMIN</span>
-            </div>
           </div>
           <div class="admin-banner-actions">
-            <button class="btn btn-primary" onclick="app.openAdminCreateModal()">
+            <button class="btn btn-primary btn-admin-create" onclick="app.openAdminCreateModal()">
               ${Icons.plus} <span>${t('adminCreateNew')}</span>
             </button>
-            <button class="btn btn-outline" onclick="app.handleAdminExportBackup()" title="Download Backup">
-              ${Icons.download} <span>Backup (.json)</span>
-            </button>
-            <button class="btn btn-secondary" onclick="app.loadAdminView()" title="Refresh Data">
+            <button class="btn btn-secondary btn-admin-refresh" onclick="app.loadAdminView()" title="${t('adminRefreshData')}">
               🔄 <span>${t('adminRefreshData')}</span>
+            </button>
+            <button class="btn btn-outline btn-admin-backup" onclick="app.handleAdminExportBackup()" title="Download Backup">
+              ${Icons.download} <span>Backup</span>
             </button>
           </div>
         </div>
@@ -4358,7 +4360,7 @@ class TwibbonApp {
             <span class="admin-tab-counter">${users.length}</span>
           </button>
           <button class="admin-tab-item ${activeTab === 'settings' ? 'active' : ''}" onclick="app.switchAdminTab('settings')">
-            <span class="admin-tab-icon">📢</span>
+            <span class="admin-tab-icon">⚙️</span>
             <span>${t('adminSettings')}</span>
           </button>
           <button class="admin-tab-item ${activeTab === 'backup' ? 'active' : ''}" onclick="app.switchAdminTab('backup')">
