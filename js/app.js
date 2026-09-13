@@ -4069,11 +4069,11 @@ class TwibbonApp {
                 <div class="card-content">
                   <h3 class="card-title">${safeTitle}</h3>
                   <div class="card-creator">📅 ${safeDate}</div>
-                  <div class="card-footer" style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
-                    <button class="btn btn-primary" style="flex: 1;" onclick="window.location.hash='#campaign/${safeSlug}'">
+                  <div class="card-footer">
+                    <button class="btn btn-primary btn-use-frame" onclick="window.location.hash='#campaign/${safeSlug}'">
                       ${Icons.camera} <span>${t('viewCampaign')}</span>
                     </button>
-                    <button class="btn-icon" style="color: #ef4444;" title="${t('delete')}" onclick="app.deleteUserCampaign(decodeURIComponent('${encodeURIComponent(c.id || '')}'))">
+                    <button class="btn-icon btn-card-share" style="color: #ef4444;" title="${t('delete')}" onclick="app.deleteUserCampaign(decodeURIComponent('${encodeURIComponent(c.id || '')}'))">
                       ${Icons.trash}
                     </button>
                   </div>
