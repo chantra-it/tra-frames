@@ -232,11 +232,13 @@ class TwibbonApp {
     } else {
       const initial = SecurityUtils.cleanText(((user.displayName || user.email || 'U').trim()[0] || 'U').toUpperCase(), 1).replace(/[^A-Z0-9]/g, 'U');
       const displayName = SecurityUtils.escapeHtml(user.displayName || user.email.split('@')[0]);
+      const hasValidPhoto = !!(user.photoURL && user.photoURL !== '#' && user.photoURL !== 'about:blank');
+      const safePhotoUrl = hasValidPhoto ? SecurityUtils.sanitizeUrl(user.photoURL) : '';
       container.innerHTML = `
         <div class="user-profile-badge" id="userProfileBadge" onclick="app.toggleUserDropdown(event)">
           <div class="user-avatar-wrap">
-            ${user.photoURL 
-              ? `<img src="${SecurityUtils.sanitizeUrl(user.photoURL)}" class="user-avatar-img" alt="${displayName}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" /><div class="user-avatar-placeholder" style="display:none;">${initial}</div>`
+            ${safePhotoUrl 
+              ? `<img src="${safePhotoUrl}" class="user-avatar-img" alt="${displayName}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" /><div class="user-avatar-placeholder" style="display:none;">${initial}</div>`
               : `<div class="user-avatar-placeholder">${initial}</div>`
             }
           </div>
@@ -333,7 +335,10 @@ class TwibbonApp {
     const displayName = (user && (user.displayName || user.email?.split('@')[0])) || '';
     const email = (user && user.email) || '';
     let currentPhotoURL = (user && user.photoURL) || '';
-    let selectedAvatarDataUrl = currentPhotoURL;
+    if (currentPhotoURL === '#' || currentPhotoURL === 'about:blank') {
+      currentPhotoURL = '';
+    }
+    let selectedAvatarDataUrl = currentPhotoURL ? SecurityUtils.sanitizeUrl(currentPhotoURL) : '';
     const isLocal = !!(user && user.isLocal);
     const isGoogle = !isLocal && !!(user && (
       (user.providerData && user.providerData.some(p => p.providerId === 'google.com')) ||
@@ -397,11 +402,14 @@ class TwibbonApp {
           <div class="profile-avatar-section">
             <div class="profile-avatar-preview-wrap">
               <div class="profile-avatar-preview-circle" id="profileAvatarCircle">
-                ${selectedAvatarDataUrl ? `
-                  <img src="${SecurityUtils.sanitizeUrl(selectedAvatarDataUrl)}" id="profileAvatarImg" alt="${SecurityUtils.escapeHtml(displayName)}" />
-                ` : `
-                  <span id="profileAvatarFallback">${initialLetter}</span>
-                `}
+                <img 
+                  src="${selectedAvatarDataUrl || ''}" 
+                  id="profileAvatarImg" 
+                  alt="Avatar" 
+                  style="display: ${selectedAvatarDataUrl ? 'block' : 'none'}; width: 100%; height: 100%; object-fit: cover;"
+                  onerror="this.style.display='none'; const fb = document.getElementById('profileAvatarFallback'); if(fb) fb.style.display='flex';" 
+                />
+                <span id="profileAvatarFallback" style="display: ${selectedAvatarDataUrl ? 'none' : 'flex'};">${initialLetter}</span>
               </div>
               <button type="button" class="profile-avatar-badge-btn" id="btnTriggerAvatarUpload" title="${t('uploadAvatar')}">
                 ${Icons.camera}
@@ -619,20 +627,33 @@ class TwibbonApp {
 
     // Helper to update avatar preview in modal
     const updateAvatarPreview = (url) => {
+      const cleanUrl = (url && url !== '#' && url !== 'about:blank') ? SecurityUtils.sanitizeUrl(url) : '';
+      selectedAvatarDataUrl = cleanUrl;
       const circle = overlay.querySelector('#profileAvatarCircle');
       if (!circle) return;
-      if (url) {
-        circle.innerHTML = `<img src="${SecurityUtils.sanitizeUrl(url)}" id="profileAvatarImg" alt="Avatar" />`;
+      const img = overlay.querySelector('#profileAvatarImg');
+      const fallback = overlay.querySelector('#profileAvatarFallback');
+      
+      if (cleanUrl) {
+        if (img) {
+          img.src = cleanUrl;
+          img.style.display = 'block';
+        }
+        if (fallback) fallback.style.display = 'none';
       } else {
-        circle.innerHTML = `<span id="profileAvatarFallback">${initialLetter}</span>`;
+        if (img) {
+          img.src = '';
+          img.style.display = 'none';
+        }
+        if (fallback) fallback.style.display = 'flex';
       }
       // Update preset active rings
       overlay.querySelectorAll('.profile-preset-item').forEach((item, idx) => {
-        item.classList.toggle('active', AVATAR_PRESETS[idx] === url);
+        item.classList.toggle('active', AVATAR_PRESETS[idx] === cleanUrl);
       });
       const btnRemove = overlay.querySelector('#btnRemoveAvatar');
       if (btnRemove) {
-        btnRemove.style.display = url ? 'inline-flex' : 'none';
+        btnRemove.style.display = cleanUrl ? 'inline-flex' : 'none';
       }
     };
 
@@ -3926,7 +3947,9 @@ class TwibbonApp {
     const userName = (user && (user.displayName || user.email?.split('@')[0])) || 'Creator';
     const userEmail = (user && user.email) || '';
     const userInitial = userName.charAt(0).toUpperCase();
-    const userPhoto = user && user.photoURL ? user.photoURL : null;
+    const rawPhoto = user && user.photoURL ? user.photoURL : null;
+    const hasCreatorPhoto = !!(rawPhoto && rawPhoto !== '#' && rawPhoto !== 'about:blank');
+    const userPhoto = hasCreatorPhoto ? SecurityUtils.sanitizeUrl(rawPhoto) : null;
     const totalSupporters = myCampaigns.reduce((sum, c) => sum + (c.supporters || 0), 0);
 
     // Sync authentic user campaigns from cloud in background
@@ -3950,7 +3973,8 @@ class TwibbonApp {
       <div class="creator-profile-card">
         <div class="creator-profile-info">
           ${userPhoto ? `
-            <img src="${SecurityUtils.sanitizeUrl(userPhoto)}" class="creator-avatar-circle" style="object-fit: cover;" alt="${SecurityUtils.escapeHtml(userName)}" />
+            <img src="${userPhoto}" class="creator-avatar-circle" style="object-fit: cover;" alt="${SecurityUtils.escapeHtml(userName)}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
+            <div class="creator-avatar-circle" style="display:none;">${userInitial}</div>
           ` : `
             <div class="creator-avatar-circle">${userInitial}</div>
           `}
