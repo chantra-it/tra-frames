@@ -244,7 +244,7 @@ class TwibbonApp {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
           
           <div class="user-dropdown" id="userDropdownMenu" style="display: none;">
-            <div style="padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.78rem; color: var(--text-muted); word-break: break-all;">
+            <div style="padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--border-color); font-size: 0.78rem; color: var(--text-muted); word-break: break-all;">
               ${SecurityUtils.escapeHtml(user.email)}
             </div>
             ${(typeof AdminService !== 'undefined' && AdminService.isSuperAdmin(user)) ? `
@@ -252,12 +252,21 @@ class TwibbonApp {
               👑 <span>${t('adminDashboard')}</span>
             </button>
             ` : ''}
+            <button class="user-dropdown-item" onclick="app.openProfileModal('profile')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>${t('profile')}</span>
+            </button>
             <button class="user-dropdown-item" onclick="app.navigateTo('my-campaigns')">
               ${Icons.avatar} <span>${t('myCampaigns')}</span>
             </button>
             <button class="user-dropdown-item" onclick="app.navigateTo('create')">
               ${Icons.plus} <span>${t('createCampaign')}</span>
             </button>
+            <button class="user-dropdown-item" onclick="app.openProfileModal('settings')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <span>${t('accountSettings')}</span>
+            </button>
+            <div style="border-top: 1px solid var(--border-color); margin: 0.25rem 0;"></div>
             <button class="user-dropdown-item danger" onclick="app.handleSignOut()">
               ${Icons.logOut} <span>${t('signOut')}</span>
             </button>
@@ -296,6 +305,509 @@ class TwibbonApp {
       }
     } catch (err) {
       this.showToast("Error signing out", 'error');
+    }
+  }
+
+  togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    const btn = document.getElementById(`toggle_${inputId}`);
+    if (btn) {
+      btn.innerHTML = isPassword ? Icons.eyeOff : Icons.eye;
+    }
+  }
+
+  openProfileModal(initialTab = 'profile') {
+    if (typeof AuthService === 'undefined' || !AuthService.isAuthenticated()) {
+      this.openAuthModal(() => this.openProfileModal(initialTab));
+      return;
+    }
+
+    const existing = document.getElementById('profileModalOverlay');
+    if (existing) existing.remove();
+
+    const user = AuthService.currentUser;
+    const isKm = getLanguage() === 'km';
+    const displayName = (user && (user.displayName || user.email?.split('@')[0])) || '';
+    const email = (user && user.email) || '';
+    let currentPhotoURL = (user && user.photoURL) || '';
+    let selectedAvatarDataUrl = currentPhotoURL;
+    const isLocal = !!(user && user.isLocal);
+    const isGoogle = !isLocal && !!(user && (
+      (user.providerData && user.providerData.some(p => p.providerId === 'google.com')) ||
+      (user.photoURL && user.photoURL.includes('googleusercontent.com'))
+    ));
+    const isVerified = (typeof AuthService.isEmailVerified === 'function') ? AuthService.isEmailVerified() : true;
+    const initialLetter = SecurityUtils.cleanText(((displayName || email || 'U').trim()[0] || 'U').toUpperCase(), 1);
+
+    const AVATAR_PRESETS = [
+      'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#g1)"/><text x="50" y="66" font-size="44" text-anchor="middle">😎</text></svg>'),
+      'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ec4899"/><stop offset="100%" stop-color="#f43f5e"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#g2)"/><text x="50" y="66" font-size="44" text-anchor="middle">👩‍🎨</text></svg>'),
+      'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#g3)"/><text x="50" y="66" font-size="44" text-anchor="middle">🧑‍💻</text></svg>'),
+      'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#ef4444"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#g4)"/><text x="50" y="66" font-size="44" text-anchor="middle">👑</text></svg>'),
+      'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#g5)"/><text x="50" y="66" font-size="44" text-anchor="middle">🚀</text></svg>'),
+      'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#d946ef"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#g6)"/><text x="50" y="66" font-size="44" text-anchor="middle">✨</text></svg>'),
+      'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f97316"/><stop offset="100%" stop-color="#eab308"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#g7)"/><text x="50" y="66" font-size="44" text-anchor="middle">🐱</text></svg>'),
+      'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g8" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#14b8a6"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#g8)"/><text x="50" y="66" font-size="44" text-anchor="middle">🦊</text></svg>')
+    ];
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'profileModalOverlay';
+    overlay.innerHTML = `
+      <div class="modal-card modal-profile-card">
+        <!-- Close Button -->
+        <button type="button" class="auth-clean-close-btn" id="btnCloseProfileModal">&times;</button>
+
+        <!-- Header -->
+        <div class="profile-modal-header">
+          <div class="profile-header-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="profile-modal-title">${t('accountSettings')}</h3>
+            <p class="profile-modal-subtitle">${t('profileSubtitle')}</p>
+          </div>
+        </div>
+
+        <!-- Pill Navigation Tabs -->
+        <div class="profile-nav-tabs">
+          <button type="button" class="profile-nav-tab" data-tab="profile">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>${t('profile')}</span>
+          </button>
+          <button type="button" class="profile-nav-tab" data-tab="password">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>${t('changePassword')}</span>
+          </button>
+          <button type="button" class="profile-nav-tab" data-tab="settings">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>${t('preferences')}</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: PROFILE INFO -->
+        <div class="profile-tab-content" id="paneProfile" data-tab="profile">
+          <!-- Avatar Preview & Actions -->
+          <div class="profile-avatar-section">
+            <div class="profile-avatar-preview-wrap">
+              <div class="profile-avatar-preview-circle" id="profileAvatarCircle">
+                ${selectedAvatarDataUrl ? `
+                  <img src="${SecurityUtils.sanitizeUrl(selectedAvatarDataUrl)}" id="profileAvatarImg" alt="${SecurityUtils.escapeHtml(displayName)}" />
+                ` : `
+                  <span id="profileAvatarFallback">${initialLetter}</span>
+                `}
+              </div>
+              <button type="button" class="profile-avatar-badge-btn" id="btnTriggerAvatarUpload" title="${t('uploadAvatar')}">
+                ${Icons.camera}
+              </button>
+            </div>
+            
+            <div class="profile-avatar-actions">
+              <input type="file" id="profileAvatarFileInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" />
+              <button type="button" class="btn btn-outline btn-sm" id="btnSelectCustomAvatar">
+                ${Icons.upload} <span>${t('uploadAvatar')}</span>
+              </button>
+              ${selectedAvatarDataUrl ? `
+                <button type="button" class="btn btn-secondary btn-sm" id="btnRemoveAvatar">
+                  ${Icons.trash} <span>${t('removeAvatar')}</span>
+                </button>
+              ` : ''}
+              <div class="profile-avatar-hint">${t('avatarHint')}</div>
+            </div>
+          </div>
+
+          <!-- Avatar Presets Grid -->
+          <div class="profile-presets-section">
+            <label class="profile-field-label">✨ ${t('chooseAvatarPreset')}:</label>
+            <div class="profile-presets-grid" id="avatarPresetsGrid">
+              ${AVATAR_PRESETS.map((preset, idx) => `
+                <button type="button" class="profile-preset-item ${selectedAvatarDataUrl === preset ? 'active' : ''}" data-preset-idx="${idx}">
+                  <img src="${preset}" alt="Avatar Preset ${idx + 1}" />
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Form Fields -->
+          <div class="profile-fields-container">
+            <div class="form-group">
+              <label class="form-label" for="profileInputDisplayName">${t('displayName')} *</label>
+              <input 
+                type="text" 
+                id="profileInputDisplayName" 
+                class="form-input" 
+                value="${SecurityUtils.escapeHtml(displayName)}" 
+                placeholder="${t('displayNamePlaceholder')}" 
+                maxlength="50"
+                required 
+              />
+            </div>
+
+            <div class="profile-info-grid">
+              <div class="profile-info-card">
+                <span class="profile-info-label">${t('email')}</span>
+                <div class="profile-info-val-row">
+                  <span class="profile-info-val">${SecurityUtils.escapeHtml(email || '(None / Local)')}</span>
+                  ${isVerified ? `
+                    <span class="profile-status-badge verified" title="${t('verified')}">✓ ${t('verified')}</span>
+                  ` : `
+                    <span class="profile-status-badge unverified" title="${t('unverified')}">⚠️ ${t('unverified')}</span>
+                  `}
+                </div>
+              </div>
+
+              <div class="profile-info-card">
+                <span class="profile-info-label">${t('accountType')}</span>
+                <span class="profile-info-val">
+                  ${isGoogle ? '🔵 Google Sign-In' : (isLocal ? '💾 ' + t('localAccount') : '✉️ ' + t('emailPasswordAccount'))}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <div class="profile-modal-actions">
+            <button type="button" class="btn btn-primary" id="btnSaveProfileInfo" style="width: 100%; padding: 0.85rem;">
+              <span>${t('saveChanges')}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 2: CHANGE PASSWORD -->
+        <div class="profile-tab-content" id="panePassword" data-tab="password" style="display:none;">
+          ${isGoogle ? `
+            <div class="profile-google-notice">
+              <div class="profile-google-icon">
+                ${Icons.google}
+              </div>
+              <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 0.4rem 0; color: var(--text-primary);">Google Account</h4>
+              <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin: 0 0 1rem 0;">
+                ${t('googleAccountNotice')}
+              </p>
+              <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="font-size: 0.86rem; padding: 0.55rem 1rem;">
+                <span>${t('openGoogleSecurity')} ↗</span>
+              </a>
+            </div>
+          ` : `
+            <form id="formChangePassword" class="profile-password-form">
+              <div class="form-group">
+                <label class="form-label" for="inputCurrentPassword">${t('currentPassword')} *</label>
+                <div class="profile-input-pwd-wrap">
+                  <input type="password" id="inputCurrentPassword" class="form-input" placeholder="${t('currentPasswordPlaceholder')}" required />
+                  <button type="button" class="auth-pwd-toggle" id="toggle_inputCurrentPassword" onclick="app.togglePasswordVisibility('inputCurrentPassword')">
+                    ${Icons.eye}
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="inputNewPassword">${t('newPassword')} *</label>
+                <div class="profile-input-pwd-wrap">
+                  <input type="password" id="inputNewPassword" class="form-input" placeholder="${t('newPasswordPlaceholder')}" minlength="6" required />
+                  <button type="button" class="auth-pwd-toggle" id="toggle_inputNewPassword" onclick="app.togglePasswordVisibility('inputNewPassword')">
+                    ${Icons.eye}
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="inputConfirmPassword">${t('confirmNewPassword')} *</label>
+                <div class="profile-input-pwd-wrap">
+                  <input type="password" id="inputConfirmPassword" class="form-input" placeholder="${t('confirmNewPasswordPlaceholder')}" minlength="6" required />
+                  <button type="button" class="auth-pwd-toggle" id="toggle_inputConfirmPassword" onclick="app.togglePasswordVisibility('inputConfirmPassword')">
+                    ${Icons.eye}
+                  </button>
+                </div>
+              </div>
+
+              <div class="profile-modal-actions" style="margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" id="btnSubmitPassword" style="width: 100%; padding: 0.85rem;">
+                  <span>${t('updatePassword')}</span>
+                </button>
+              </div>
+            </form>
+          `}
+        </div>
+
+        <!-- TAB 3: GENERAL SETTINGS -->
+        <div class="profile-tab-content" id="paneSettings" data-tab="settings" style="display:none;">
+          <div class="settings-list-group">
+            <!-- Theme Preference -->
+            <div class="settings-card-item">
+              <div class="settings-card-text">
+                <span class="settings-card-title">${t('themeTitle')}</span>
+                <span class="settings-card-desc">${isKm ? 'ជ្រើសរើសផ្ទៃមើលពន្លឺ ឬងងឹត' : 'Choose between Light or Dark display'}</span>
+              </div>
+              <div class="settings-segmented-control">
+                <button type="button" class="settings-segment-btn ${this.theme !== 'dark' ? 'active' : ''}" id="btnThemeLight">
+                  ${Icons.sun} <span>${t('themeLight')}</span>
+                </button>
+                <button type="button" class="settings-segment-btn ${this.theme === 'dark' ? 'active' : ''}" id="btnThemeDark">
+                  ${Icons.moon} <span>${t('themeDark')}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Language Preference -->
+            <div class="settings-card-item">
+              <div class="settings-card-text">
+                <span class="settings-card-title">${t('languageTitle')}</span>
+                <span class="settings-card-desc">${isKm ? 'ភាសាបង្ហាញក្នុងកម្មវិធី' : 'System display language'}</span>
+              </div>
+              <div class="settings-segmented-control">
+                <button type="button" class="settings-segment-btn ${getLanguage() === 'km' ? 'active' : ''}" id="btnLangKm">
+                  🇰🇭 <span>ខ្មែរ</span>
+                </button>
+                <button type="button" class="settings-segment-btn ${getLanguage() === 'en' ? 'active' : ''}" id="btnLangEn">
+                  🇬🇧 <span>English</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Sign Out Option -->
+            <div class="settings-card-item" style="border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.03);">
+              <div class="settings-card-text">
+                <span class="settings-card-title" style="color: var(--danger);">${t('signOut')}</span>
+                <span class="settings-card-desc">${isKm ? 'ចាកចេញពីគណនីបច្ចុប្បន្នលើឧបករណ៍នេះ' : 'Sign out from this device'}</span>
+              </div>
+              <button type="button" class="btn btn-danger btn-sm" id="btnProfileSignOut">
+                ${Icons.logOut} <span>${t('signOut')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // --- Tab Switching Logic ---
+    const tabBtns = overlay.querySelectorAll('.profile-nav-tab');
+    const tabPanes = overlay.querySelectorAll('.profile-tab-content');
+    const selectTab = (tabName) => {
+      tabBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
+      });
+      tabPanes.forEach(pane => {
+        const isActive = pane.getAttribute('data-tab') === tabName;
+        pane.style.display = isActive ? 'block' : 'none';
+        pane.classList.toggle('active', isActive);
+      });
+    };
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => selectTab(btn.getAttribute('data-tab')));
+    });
+    selectTab(initialTab);
+
+    // Close Modal Button & Backdrop click
+    const closeModal = () => {
+      overlay.remove();
+      if (window.location.hash === '#profile' || window.location.hash === '#settings') {
+        window.location.hash = '#explore';
+      }
+    };
+    overlay.querySelector('#btnCloseProfileModal').addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal();
+    });
+
+    // Helper to update avatar preview in modal
+    const updateAvatarPreview = (url) => {
+      const circle = overlay.querySelector('#profileAvatarCircle');
+      if (!circle) return;
+      if (url) {
+        circle.innerHTML = `<img src="${SecurityUtils.sanitizeUrl(url)}" id="profileAvatarImg" alt="Avatar" />`;
+      } else {
+        circle.innerHTML = `<span id="profileAvatarFallback">${initialLetter}</span>`;
+      }
+      // Update preset active rings
+      overlay.querySelectorAll('.profile-preset-item').forEach((item, idx) => {
+        item.classList.toggle('active', AVATAR_PRESETS[idx] === url);
+      });
+    };
+
+    // --- Avatar Custom Upload Event ---
+    const fileInput = overlay.querySelector('#profileAvatarFileInput');
+    const triggerUpload = () => fileInput && fileInput.click();
+    overlay.querySelector('#btnTriggerAvatarUpload').addEventListener('click', triggerUpload);
+    overlay.querySelector('#btnSelectCustomAvatar').addEventListener('click', triggerUpload);
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        this.showToast(isKm ? 'ទំហំរូបភាពធំពេក (អតិបរមា 10MB)' : 'Image too large (max 10MB)', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const compressed = await AuthService.compressAvatar(evt.target.result, 256);
+          selectedAvatarDataUrl = compressed;
+          updateAvatarPreview(compressed);
+          this.showToast(isKm ? 'រូបថតត្រូវបានជ្រើសរើស' : 'Avatar selected', 'info');
+        } catch (err) {
+          console.error('Avatar compression notice:', err);
+          selectedAvatarDataUrl = evt.target.result;
+          updateAvatarPreview(selectedAvatarDataUrl);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Remove Avatar
+    const btnRemove = overlay.querySelector('#btnRemoveAvatar');
+    if (btnRemove) {
+      btnRemove.addEventListener('click', () => {
+        selectedAvatarDataUrl = '';
+        updateAvatarPreview('');
+      });
+    }
+
+    // --- Preset Click Events ---
+    overlay.querySelectorAll('.profile-preset-item').forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        const preset = AVATAR_PRESETS[idx];
+        selectedAvatarDataUrl = preset;
+        updateAvatarPreview(preset);
+      });
+    });
+
+    // --- Save Profile Changes Event ---
+    const btnSave = overlay.querySelector('#btnSaveProfileInfo');
+    const inputName = overlay.querySelector('#profileInputDisplayName');
+    btnSave.addEventListener('click', async () => {
+      const newName = inputName ? inputName.value.trim() : '';
+      if (!newName) {
+        this.showToast(isKm ? 'សូមបញ្ចូលឈ្មោះរបស់អ្នក' : 'Please enter your display name', 'error');
+        if (inputName) inputName.focus();
+        return;
+      }
+
+      btnSave.disabled = true;
+      btnSave.innerHTML = `<span>⏳ ${isKm ? 'កំពុងរក្សាទុក...' : 'Saving...'}</span>`;
+
+      try {
+        await AuthService.updateProfile({
+          displayName: newName,
+          photoURL: selectedAvatarDataUrl
+        });
+
+        this.showToast(t('profileUpdated'), 'success');
+        this.updateNavAuth(AuthService.currentUser);
+        if (this.currentView === 'my-campaigns') {
+          this.loadMyCampaignsView();
+        }
+        overlay.remove();
+      } catch (err) {
+        btnSave.disabled = false;
+        btnSave.innerHTML = `<span>${t('saveChanges')}</span>`;
+        this.showToast(err.message || 'Error updating profile', 'error');
+      }
+    });
+
+    // --- Tab 2: Change Password Submit ---
+    const formPwd = overlay.querySelector('#formChangePassword');
+    if (formPwd) {
+      formPwd.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const currentPassInput = overlay.querySelector('#inputCurrentPassword');
+        const newPassInput = overlay.querySelector('#inputNewPassword');
+        const confirmPassInput = overlay.querySelector('#inputConfirmPassword');
+        const btnSubmitPwd = overlay.querySelector('#btnSubmitPassword');
+
+        const currentPass = currentPassInput ? currentPassInput.value : '';
+        const newPass = newPassInput ? newPassInput.value : '';
+        const confirmPass = confirmPassInput ? confirmPassInput.value : '';
+
+        if (!currentPass) {
+          this.showToast(isKm ? 'សូមបញ្ចូលពាក្យសម្ងាត់បច្ចុប្បន្ន' : 'Please enter current password', 'error');
+          if (currentPassInput) currentPassInput.focus();
+          return;
+        }
+        if (!newPass || newPass.length < 6) {
+          this.showToast(isKm ? 'ពាក្យសម្ងាត់ថ្មីត្រូវមានយ៉ាងហោចណាស់ ៦ តួអក្សរ' : 'New password must be at least 6 characters', 'error');
+          if (newPassInput) newPassInput.focus();
+          return;
+        }
+        if (newPass !== confirmPass) {
+          this.showToast(isKm ? 'ពាក្យសម្ងាត់បញ្ជាក់មិនត្រូវគ្នាទេ' : 'Confirm password does not match', 'error');
+          if (confirmPassInput) confirmPassInput.focus();
+          return;
+        }
+
+        btnSubmitPwd.disabled = true;
+        btnSubmitPwd.innerHTML = `<span>⏳ ${isKm ? 'កំពុងប្តូរ...' : 'Updating...'}</span>`;
+
+        try {
+          await AuthService.changePassword(currentPass, newPass);
+          this.showToast(t('passwordUpdated'), 'success');
+          if (currentPassInput) currentPassInput.value = '';
+          if (newPassInput) newPassInput.value = '';
+          if (confirmPassInput) confirmPassInput.value = '';
+          btnSubmitPwd.disabled = false;
+          btnSubmitPwd.innerHTML = `<span>${t('updatePassword')}</span>`;
+        } catch (err) {
+          btnSubmitPwd.disabled = false;
+          btnSubmitPwd.innerHTML = `<span>${t('updatePassword')}</span>`;
+          let msg = err.message || 'Error updating password';
+          if (err.code === 'auth/wrong-password') {
+            msg = isKm ? 'ពាក្យសម្ងាត់បច្ចុប្បន្នមិនត្រឹមត្រូវទេ' : 'Current password is incorrect';
+          } else if (err.code === 'auth/weak-password') {
+            msg = isKm ? 'ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៦ តួអក្សរ' : 'Password must be at least 6 characters';
+          }
+          this.showToast(msg, 'error');
+        }
+      });
+    }
+
+    // --- Tab 3: Settings Preferences ---
+    const btnLight = overlay.querySelector('#btnThemeLight');
+    const btnDark = overlay.querySelector('#btnThemeDark');
+    if (btnLight && btnDark) {
+      btnLight.addEventListener('click', () => {
+        this.setTheme('light');
+        btnLight.classList.add('active');
+        btnDark.classList.remove('active');
+      });
+      btnDark.addEventListener('click', () => {
+        this.setTheme('dark');
+        btnDark.classList.add('active');
+        btnLight.classList.remove('active');
+      });
+    }
+
+    const btnKm = overlay.querySelector('#btnLangKm');
+    const btnEn = overlay.querySelector('#btnLangEn');
+    if (btnKm && btnEn) {
+      btnKm.addEventListener('click', () => {
+        if (getLanguage() !== 'km') {
+          setLanguage('km');
+          overlay.remove();
+          this.openProfileModal('settings');
+        }
+      });
+      btnEn.addEventListener('click', () => {
+        if (getLanguage() !== 'en') {
+          setLanguage('en');
+          overlay.remove();
+          this.openProfileModal('settings');
+        }
+      });
+    }
+
+    const btnProfileSignOut = overlay.querySelector('#btnProfileSignOut');
+    if (btnProfileSignOut) {
+      btnProfileSignOut.addEventListener('click', () => {
+        overlay.remove();
+        this.handleSignOut();
+      });
     }
   }
 
@@ -1239,6 +1751,9 @@ class TwibbonApp {
       this.loadMyCampaignsView();
     } else if (mainRoute === 'admin') {
       this.loadAdminView(param);
+    } else if (mainRoute === 'profile' || mainRoute === 'settings') {
+      this.loadExploreView();
+      this.openProfileModal(mainRoute === 'settings' ? 'settings' : 'profile');
     } else {
       this.loadExploreView();
     }
@@ -3438,6 +3953,10 @@ class TwibbonApp {
           <div class="creator-profile-meta">
             <h2>${SecurityUtils.escapeHtml(userName)}</h2>
             <p>${SecurityUtils.escapeHtml(userEmail)}</p>
+            <button type="button" class="btn-profile-edit-badge" onclick="app.openProfileModal('profile')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              <span>${t('editProfile')}</span>
+            </button>
           </div>
         </div>
         <div class="creator-stats-row">
@@ -5139,11 +5658,20 @@ class TwibbonApp {
 
 
 // Global App Instance
-let app;
-window.addEventListener('DOMContentLoaded', () => {
-  app = new TwibbonApp();
-  window.app = app;
-  setTimeout(() => {
-    CampaignService.syncLocalCampaignsToCloud();
-  }, 1000);
-});
+var app;
+function initApp() {
+  if (!window.app) {
+    app = new TwibbonApp();
+    window.app = app;
+    setTimeout(() => {
+      if (typeof CampaignService !== 'undefined') {
+        CampaignService.syncLocalCampaignsToCloud();
+      }
+    }, 1000);
+  }
+}
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
