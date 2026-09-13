@@ -2165,12 +2165,12 @@ class TwibbonApp {
 
           <!-- Step 1: Upload Photo Dropzone (Directly under Canvas for instant access) -->
           <div class="studio-upload-section">
-            <input type="file" id="photoFileInput" accept="image/*" style="display: none;" />
-            <div class="photo-dropzone" id="photoDropzone">
+            <input type="file" id="photoFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display: none;" />
+            <div class="photo-dropzone" id="photoDropzone" title="${t('photoTip')}">
               <div class="dropzone-icon">${Icons.camera}</div>
               <div class="dropzone-text">
                 <span class="dropzone-main-text">${t('choosePhoto')}</span>
-                <span class="dropzone-sub-text">${t('photoTip')}</span>
+                <span class="dropzone-sub-text">📌 ${t('photoTip')}</span>
               </div>
             </div>
 
@@ -2342,11 +2342,30 @@ class TwibbonApp {
     const dropzone = document.getElementById('photoDropzone');
     const fileInput = document.getElementById('photoFileInput');
 
+    const handleStudioPhotoUpload = async (file) => {
+      if (!file) return;
+      const validation = SecurityUtils.validateImageFile(file, 10);
+      if (!validation.valid) {
+        this.showToast(validation.error, 'error');
+        fileInput.value = '';
+        return;
+      }
+
+      try {
+        await this.activeStudio.setUserPhoto(file, true);
+        this.showToast(t('photoUploadSuccess'), 'success');
+      } catch (err) {
+        console.error("Studio photo load error:", err);
+        this.showToast(err.message || (isKm ? 'មិនអាចបញ្ចូលរូបថតបានទេ!' : 'Failed to load photo!'), 'error');
+      } finally {
+        fileInput.value = '';
+      }
+    };
+
     dropzone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => {
       if (e.target.files && e.target.files[0]) {
-        this.activeStudio.setUserPhoto(e.target.files[0], true);
-        this.showToast(t('choosePhoto') + ' OK!');
+        handleStudioPhotoUpload(e.target.files[0]);
       }
     });
 
@@ -2364,8 +2383,7 @@ class TwibbonApp {
       dropzone.style.borderColor = '#cbd5e1';
       dropzone.style.background = 'var(--bg-secondary)';
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        this.activeStudio.setUserPhoto(e.dataTransfer.files[0]);
-        this.showToast(t('choosePhoto') + ' OK!');
+        handleStudioPhotoUpload(e.dataTransfer.files[0]);
       }
     });
 
@@ -2752,6 +2770,9 @@ class TwibbonApp {
               <button type="button" class="btn btn-outline" onclick="window.location.hash='#designer'">
                 ${Icons.paint} <span>${t('navDesigner')}</span>
               </button>
+              <div style="width: 100%; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">
+                📌 ${t('frameUploadHint')}
+              </div>
             </div>
           </div>
 
@@ -2865,7 +2886,7 @@ class TwibbonApp {
     frameFileInput.addEventListener('change', (e) => {
       if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        const validation = SecurityUtils.validateImageFile(file);
+        const validation = SecurityUtils.validateImageFile(file, 10);
         if (!validation.valid) {
           this.showToast(validation.error, 'error');
           frameFileInput.value = '';
