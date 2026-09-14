@@ -347,7 +347,82 @@ const translations = {
     emailPasswordAccount: "អ៊ីមែល និងពាក្យសម្ងាត់",
     openGoogleSecurity: "បើកការកំណត់សុវត្ថិភាព Google",
     updatePassword: "ធ្វើបច្ចុប្បន្នភាពពាក្យសម្ងាត់",
-    googleAccountNotice: "គណនី Google គ្រប់គ្រងសុវត្ថិភាពពាក្យសម្ងាត់តាមរយៈ Google ដោយផ្ទាល់។"
+    googleAccountNotice: "គណនី Google គ្រប់គ្រងសុវត្ថិភាពពាក្យសម្ងាត់តាមរយៈ Google ដោយផ្ទាល់។",
+
+    // About Us Page Translations (Khmer)
+    navAbout: "អំពីយើង",
+    aboutTitle: "អំពី Tra Frames",
+    aboutSubtitle: "វេទិកាស៊ុមរូបថតយុទ្ធនាការ និងព្រឹត្តិការណ៍សង្គមជំនាន់ថ្មីដំបូងគេនៅកម្ពុជា",
+    aboutHeroBadge: "ជំនាន់ v2.6.0 Pro • បច្ចេកវិទ្យា 2026",
+    aboutStatusLive: "ដំណើរការជាផ្លូវការ (Live & Stable)",
+    
+    // Section 1: What is Tra Frames?
+    aboutWhatIsBadge: "ស្គាល់ពីវេទិកា",
+    aboutWhatIsTitle: "តើ Tra Frames ជាអ្វី?",
+    aboutWhatIsDesc: "Tra Frames គឺជាវេទិកាបច្ចេកវិទ្យាឌីជីថលជំនាន់ថ្មី (Next-Generation Digital Campaign Photo Frame & Social Advocacy Platform) ដំបូងគេបង្អស់នៅប្រទេសកម្ពុជា ដែលផ្តល់លទ្ធភាពជូនសាធារណជនទូទៅ សិស្សានុសិស្ស ស្ថាប័នរដ្ឋ ក្រុមហ៊ុនឯកជន អង្គការសង្គមស៊ីវិល និងសហគមន៍នានា អាចបង្កើត រចនា និងចែករំលែកស៊ុមរូបថតគាំទ្រយុទ្ធនាការសង្គម ពិធីបុណ្យជាតិ-អន្តរជាតិ សកម្មភាពកីឡា និងសប្បុរសធម៌បានយ៉ាងរហ័ស ងាយស្រួល និងឥតគិតថ្លៃ ១០០%។",
+    aboutWhatIsHighlight: "ប្រព័ន្ធដំណើរការផ្ទាល់លើ Browser ដោយមិនទាមទារការដំឡើង App និងមិនត្រូវការជំនាញកាត់តរូបភាពពីមុនឡើយ!",
+
+    // Section 2: Version & Specs
+    aboutVersionBadge: "ព័ត៌មានប្រព័ន្ធ & កំណែប្រែ",
+    aboutVersionTitle: "ប្រព័ន្ធជំនាន់ v2.6.0 Pro (2026 Edition)",
+    aboutVersionDesc: "Tra Frames ត្រូវបានកសាងឡើងដោយបច្ចេកវិទ្យាទំនើបចុងក្រោយបង្អស់ឆ្នាំ 2026 ជាមួយល្បឿន Render លឿនដូចផ្លេកបន្ទោរ និងសុវត្ថិភាពខ្ពស់បំផុត។",
+    aboutSpecVersion: "កំណែប្រែផ្លូវការ",
+    aboutSpecEngine: "ម៉ាស៊ីនកាត់ត (Engine)",
+    aboutSpecEngineVal: "HTML5 Canvas Studio 4K (GPU Accelerated)",
+    aboutSpecImage: "ការគាំទ្ររូបភាព",
+    aboutSpecImageVal: "JPG, PNG, WebP, AVIF & iPhone (HEIC/HEIF)",
+    aboutSpecCompress: "បង្រួមទំហំរូបភាព",
+    aboutSpecCompressVal: "Smart Client Compression (<10MB ស្វ័យប្រវត្តិ)",
+    aboutSpecCloud: "Cloud Database & Auth",
+    aboutSpecCloudVal: "Google Cloud Firebase (Firestore & Auth)",
+    aboutSpecHosting: "ហេដ្ឋារចនាសម្ព័ន្ធ",
+    aboutSpecHostingVal: "Global CDN Edge Cloud ជាមួយ SSL Encryption",
+    aboutSpecDate: "កាលបរិច្ឆេទកំណែប្រែ",
+    aboutSpecDateVal: "ខែកញ្ញា ឆ្នាំ 2026",
+
+    // Section 3: Created By
+    aboutCreatorBadge: "អ្នកបង្កើត & អភិវឌ្ឍន៍",
+    aboutCreatorTitle: "បង្កើតឡើងដោយអ្នកណា?",
+    aboutCreatorName: "Chantra IT / Tra Team",
+    aboutCreatorLead: "ដឹកនាំ និងអភិវឌ្ឍន៍ដោយ លោក សុខ ចិន្តា (Sok Chantra) និងក្រុមការងារ Chantra IT Solutions",
+    aboutCreatorBio: "Chantra IT គឺជាក្រុមអ្នកអភិវឌ្ឍន៍បច្ចេកវិទ្យាខ្មែរ (Cambodian Software Developers) ដែលមានឆន្ទៈខ្ពស់ក្នុងការបង្កើតដំណោះស្រាយឌីជីថលបែបច្នៃប្រឌិត និងមានប្រយោជន៍ដល់សង្គមខ្មែរ តាមរយៈការកសាងកម្មវិធីដែលមានលក្ខណៈស្តង់ដារអន្តរជាតិ ផ្តល់ជូនប្រជាជនកម្ពុជាប្រើប្រាស់ដោយសេរី។",
+    aboutOfficialPortal: "គេហទំព័រផ្លូវការ",
+    aboutDeveloperGithub: "GitHub Repository",
+    aboutContactTelegram: "ឆានែល Telegram",
+
+    // Section 4: Purpose & Vision
+    aboutPurposeBadge: "បេសកកម្ម & ចក្ខុវិស័យ",
+    aboutPurposeTitle: "តើបង្កើតឡើងដើម្បីអ្វី?",
+    aboutPurposeSubtitle: "Tra Frames បង្កើតឡើងដោយឈរលើគោលការណ៍គ្រឹះ ៤ សំខាន់ៗ ដើម្បីបម្រើផលប្រយោជន៍ដល់សង្គមខ្មែរ៖",
+    aboutPurpose1Title: "១. លើកកម្ពស់ស្មារតីសាមគ្គីភាព និងយុទ្ធនាការសង្គម",
+    aboutPurpose1Desc: "ផ្តល់លទ្ធភាពជូនប្រជាជនកម្ពុជាគ្រប់រូប ក្នុងការបង្ហាញសំឡេងគាំទ្រ និងការរួបរួមគ្នាក្នុងបុព្វហេតុសង្គម អនាម័យបរិស្ថាន យុទ្ធនាការអប់រំ កម្មវិធីសប្បុរសធម៌ និងការអបអរពិធីបុណ្យជាតិ តាមរយៈការដាក់ស៊ុម Profile នៅលើបណ្តាញសង្គម។",
+    aboutPurpose2Title: "២. លុបបំបាត់ភាពស្មុគស្មាញ (Zero Design Barrier)",
+    aboutPurpose2Desc: "ពីមុនដើម្បីដាក់ស៊ុមរូបថត ត្រូវចេះ Photoshop ឬរង់ចាំអ្នករចនាជំនាញ។ ប៉ុន្តែជាមួយ Tra Frames នរណាក៏ដោយអាចបញ្ចូលរូបថតផ្ទាល់ខ្លួន តម្រឹម និងទាញយករូបថតស្អាតឥតខ្ចោះបានត្រឹមតែ ៥ វិនាទីប៉ុណ្ណោះ។",
+    aboutPurpose3Title: "៣. ឥតគិតថ្លៃ ១០០% & គ្មាន Watermark បង្ខិតបង្ខំ",
+    aboutPurpose3Desc: "អ្នកប្រើប្រាស់អាចទាញយករូបភាពកម្រិតច្បាស់ខ្ពស់ Ultra-HD ដោយឥតគិតថ្លៃ មិនមានកម្រៃលាក់កំបាំង និងគ្មានការបង្ខំឱ្យជាប់ Watermark ឡើយ។",
+    aboutPurpose4Title: "៤. ការពារឯកជនភាព និងសុវត្ថិភាពរូបថត (Privacy First)",
+    aboutPurpose4Desc: "រូបថតផ្ទាល់ខ្លួនរបស់អ្នកប្រើប្រាស់ត្រូវបានកែសម្រួលលើទូរស័ព្ទ ឬកុំព្យូទ័ររបស់អ្នកដោយផ្ទាល់ (Client-Side In-Memory Processing)។ រូបថតផ្ទាល់ខ្លួនរបស់អ្នក មិនត្រូវបានបង្ហោះ ឬលួចរក្សាទុកនៅលើ Server ឡើយ។",
+
+    // Key Features Matrix
+    aboutFeaturesTitle: "លក្ខណៈពិសេសចម្បងៗនៃ Tra Frames",
+    aboutFeaturesSubtitle: "រចនាឡើងជាមួយមុខងារទំនើបដើម្បីផ្តល់បទពិសោធន៍ដ៏ល្អឥតខ្ចោះ",
+    aboutFeat1Title: "កាត់តលើ Canvas Studio 4K",
+    aboutFeat1Desc: "បច្ចេកវិទ្យាកាត់តផ្ទាល់លើ Canvas ជាមួយ Zoom, Rotate, Flip និង Color Filters ដ៏សម្បូរបែប។",
+    aboutFeat2Title: "គាំទ្ររូបថត iPhone (HEIC)",
+    aboutFeat2Desc: "ស្គាល់ និងបម្លែងឯកសាររូបថតពីទូរស័ព្ទ iPhone (HEIC/HEIF) ដោយស្វ័យប្រវត្តិ មិនបាច់បម្លែងឯកសារមុនឡើយ។",
+    aboutFeat3Title: "បង្រួមទំហំរូបថតឆ្លាតវៃ",
+    aboutFeat3Desc: "រូបថតធំលើស 10MB ត្រូវបានបង្រួមទំហំភ្លាមៗដោយស្វ័យប្រវត្តិ ដោយរក្សាគុណភាពច្បាស់ម៉ត់ Ultra-HD។",
+    aboutFeat4Title: "Frame Designer ពេញលេញ",
+    aboutFeat4Desc: "ឧបករណ៍រចនាស៊ុមក្នុងខ្លួនស្រាប់ អាចបន្ថែម Badge, Header/Footer Ribbon និង Text តាមចិត្ត។",
+    aboutFeat5Title: "ចែករំលែកសង្គមក្នុង ១ ចុច",
+    aboutFeat5Desc: "ភ្ជាប់មកជាមួយ Caption, Hashtags និងប៊ូតុងចែករំលែកទៅ Facebook, Telegram, WhatsApp ភ្លាមៗ។",
+    aboutFeat6Title: "ចំណុចប្រទាក់ពីរភាសា (ខ្មែរ & អង់គ្លេស)",
+    aboutFeat6Desc: "គាំទ្រភាសាខ្មែរពេញលេញជាមួយពុម្ពអក្សរ Kantumruy Pro និងការផ្លាស់ប្តូរភាសារហ័សទាន់ចិត្ត។",
+
+    // Buttons
+    aboutBtnExplore: "រុករកស៊ុមរូបថត",
+    aboutBtnCreate: "បង្កើតយុទ្ធនាការឥឡូវនេះ",
+    aboutBtnDesigner: "បើកផ្ទាំងរចនាស៊ុម"
   },
   en: {
     appName: "Tra Frames",
@@ -696,7 +771,82 @@ const translations = {
     emailPasswordAccount: "Email & Password",
     openGoogleSecurity: "Open Google Security",
     updatePassword: "Update Password",
-    googleAccountNotice: "Google accounts manage passwords directly through Google Security."
+    googleAccountNotice: "Google accounts manage passwords directly through Google Security.",
+
+    // About Us Page Translations (English)
+    navAbout: "About Us",
+    aboutTitle: "About Tra Frames",
+    aboutSubtitle: "The premier next-generation campaign photo frame & social advocacy platform in Cambodia",
+    aboutHeroBadge: "Version v2.6.0 Pro • 2026 Engine",
+    aboutStatusLive: "Official Stable Production (Live)",
+    
+    // Section 1: What is Tra Frames?
+    aboutWhatIsBadge: "Platform Overview",
+    aboutWhatIsTitle: "What is Tra Frames?",
+    aboutWhatIsDesc: "Tra Frames is Cambodia's premier Next-Generation Digital Campaign Photo Frame & Social Advocacy Platform. It empowers individuals, students, public institutions, enterprises, civil society organizations, and communities to design, launch, and share impactful campaign photo frames for social causes, national festivals, sports events, and charity movements quickly, effortlessly, and 100% free.",
+    aboutWhatIsHighlight: "Runs directly in your browser with zero app installation and zero graphic design skills required!",
+
+    // Section 2: Version & Specs
+    aboutVersionBadge: "System Info & Changelog",
+    aboutVersionTitle: "System Version v2.6.0 Pro (2026 Edition)",
+    aboutVersionDesc: "Built with the latest 2026 web technologies featuring lightning-fast rendering speeds, top-tier client privacy, and enterprise security.",
+    aboutSpecVersion: "Official Version",
+    aboutSpecEngine: "Rendering Engine",
+    aboutSpecEngineVal: "HTML5 Canvas Studio 4K (GPU Accelerated)",
+    aboutSpecImage: "Image Support",
+    aboutSpecImageVal: "JPG, PNG, WebP, AVIF & iPhone (HEIC/HEIF)",
+    aboutSpecCompress: "Smart Compression",
+    aboutSpecCompressVal: "Smart Client Compression (Auto <10MB)",
+    aboutSpecCloud: "Cloud Database & Auth",
+    aboutSpecCloudVal: "Google Cloud Firebase (Firestore & Auth)",
+    aboutSpecHosting: "Infrastructure",
+    aboutSpecHostingVal: "Global CDN Edge Cloud with SSL Encryption",
+    aboutSpecDate: "Release Date",
+    aboutSpecDateVal: "September 2026",
+
+    // Section 3: Created By
+    aboutCreatorBadge: "Creator & Developer",
+    aboutCreatorTitle: "Created by Whom?",
+    aboutCreatorName: "Chantra IT / Tra Team",
+    aboutCreatorLead: "Architected and developed by Sok Chantra and the Chantra IT Solutions Team",
+    aboutCreatorBio: "Chantra IT is a passionate team of Cambodian software engineers committed to building world-class, innovative digital solutions that empower Khmer society. Our mission is to democratize digital creative tools for every Cambodian citizen freely and securely.",
+    aboutOfficialPortal: "Official Website",
+    aboutDeveloperGithub: "GitHub Repository",
+    aboutContactTelegram: "Telegram Channel",
+
+    // Section 4: Purpose & Vision
+    aboutPurposeBadge: "Purpose & Vision",
+    aboutPurposeTitle: "Why Was It Created?",
+    aboutPurposeSubtitle: "Tra Frames was established upon four foundational pillars to serve and elevate our community:",
+    aboutPurpose1Title: "1. Empower Social Solidarity & Advocacy Movements",
+    aboutPurpose1Desc: "Enable every Cambodian citizen to unite their voices and show solidarity with social causes, environmental drives, educational campaigns, and cultural heritage celebrations through social media profile frames.",
+    aboutPurpose2Title: "2. Eliminate Design Complexity (Zero Barrier)",
+    aboutPurpose2Desc: "Traditionally, framing photos required Photoshop skills or waiting for graphic designers. With Tra Frames, anyone can upload, align, and export professional photo frames within 5 seconds.",
+    aboutPurpose3Title: "3. 100% Free & Zero Forced Watermarks",
+    aboutPurpose3Desc: "Users enjoy complete freedom to download crystal-clear Ultra-HD photos without hidden paywalls, subscriptions, or intrusive forced brand watermarks.",
+    aboutPurpose4Title: "4. Uncompromising Privacy & Photo Protection",
+    aboutPurpose4Desc: "Your personal photos are processed exclusively inside your device browser (Client-Side In-Memory Rendering). Personal photos are never uploaded or stored on our cloud servers.",
+
+    // Key Features Matrix
+    aboutFeaturesTitle: "Key Features of Tra Frames",
+    aboutFeaturesSubtitle: "Engineered with cutting-edge capabilities for the smoothest user experience",
+    aboutFeat1Title: "Canvas Studio 4K Studio",
+    aboutFeat1Desc: "Interactive real-time canvas editor with Zoom, Rotate, Flip, and dynamic color adjustments.",
+    aboutFeat2Title: "Native iPhone (HEIC) Support",
+    aboutFeat2Desc: "Seamlessly decodes photos directly from Apple iPhone cameras without manual pre-conversion.",
+    aboutFeat3Title: "Intelligent Auto-Compression",
+    aboutFeat3Desc: "Images over 10MB are automatically optimized in-browser preserving crisp Ultra-HD detail.",
+    aboutFeat4Title: "Frame Designer Suite",
+    aboutFeat4Desc: "In-browser design suite to create frames with customizable Badges, Ribbons, and typography.",
+    aboutFeat5Title: "One-Click Social Sharing",
+    aboutFeat5Desc: "Instant campaign sharing with pre-formatted hashtags and captions for Facebook, Telegram, and WhatsApp.",
+    aboutFeat6Title: "Bilingual Khmer-First Interface",
+    aboutFeat6Desc: "Full support for Khmer typography with Kantumruy Pro and seamless language switching.",
+
+    // Buttons
+    aboutBtnExplore: "Explore Frames",
+    aboutBtnCreate: "Create Campaign Now",
+    aboutBtnDesigner: "Open Frame Designer"
   }
 };
 
