@@ -2361,7 +2361,7 @@ class TwibbonApp {
 
     const handleStudioPhotoUpload = async (file) => {
       if (!file) return;
-      const validation = SecurityUtils.validateImageFile(file, 10);
+      const validation = SecurityUtils.validateImageFile(file, 10, true, 50);
       if (!validation.valid) {
         this.showToast(validation.error, 'error');
         fileInput.value = '';
@@ -2391,10 +2391,26 @@ class TwibbonApp {
         }, 800);
       };
 
-      setProgress(8, t('uploadingPhoto'));
+      let uploadFile = file;
+      if (validation.needsCompression) {
+        const oldMb = validation.actualMb;
+        setProgress(10, isKm ? `កំពុងបង្រួមទំហំរូបភាព (${oldMb}MB ➔ ក្រោម 10MB)...` : `Compressing image (${oldMb}MB ➔ under 10MB)...`);
+        try {
+          uploadFile = await SecurityUtils.compressImage(file, 8, (pct, msg) => {
+            setProgress(pct, msg);
+          });
+          const newMb = (uploadFile.size / (1024 * 1024)).toFixed(1);
+          this.showToast(isKm ? `បានបង្រួមទំហំស្វ័យប្រវត្តិ (${oldMb}MB ➔ ${newMb}MB)!` : `Auto-compressed photo (${oldMb}MB ➔ ${newMb}MB)!`, 'info');
+        } catch (compErr) {
+          console.warn("Auto compression error, proceed with original:", compErr);
+          uploadFile = file;
+        }
+      } else {
+        setProgress(8, t('uploadingPhoto'));
+      }
 
       try {
-        await this.activeStudio.setUserPhoto(file, true, (pct, customMsg) => {
+        await this.activeStudio.setUserPhoto(uploadFile, true, (pct, customMsg) => {
           let msg = customMsg;
           if (!msg) {
             if (pct >= 90 && pct < 100) {
@@ -2942,7 +2958,7 @@ class TwibbonApp {
     frameFileInput.addEventListener('change', (e) => {
       if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        const validation = SecurityUtils.validateImageFile(file, 10);
+        const validation = SecurityUtils.validateImageFile(file, 10, true, 50);
         if (!validation.valid) {
           this.showToast(validation.error, 'error');
           frameFileInput.value = '';
@@ -2955,7 +2971,16 @@ class TwibbonApp {
           updateFramePreviews(compressed);
           this.showToast(isKm ? 'បានផ្ទុករូបភាពស៊ុមជោគជ័យ!' : 'Frame uploaded successfully!');
         };
-        reader.readAsDataURL(file);
+        if (validation.needsCompression) {
+          this.showToast(isKm ? `កំពុងបង្រួមទំហំរូបភាព (${validation.actualMb}MB ➔ ក្រោម 10MB)...` : `Compressing frame (${validation.actualMb}MB ➔ under 10MB)...`, 'info');
+          SecurityUtils.compressImage(file, 8).then(compFile => {
+            reader.readAsDataURL(compFile);
+          }).catch(() => {
+            reader.readAsDataURL(file);
+          });
+        } else {
+          reader.readAsDataURL(file);
+        }
       }
     });
 
