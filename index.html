@@ -6738,12 +6738,14 @@ const translations = {
     copyCaption: "ចម្លង Caption",
     choosePhoto: "ជ្រើសរើសរូបថតផ្ទាល់ខ្លួន",
     dragDropPhoto: "ចុចដើម្បីជ្រើសរូបថត (ឬទាញរូបទម្លាក់)",
-    photoTip: "ទំហំអតិបរមា 10MB • គាំទ្រ JPG, PNG, WebP, HEIC (iPhone), AVIF",
+    photoTip: "គាំទ្រ JPG, PNG, WebP, HEIC (iPhone), AVIF • បង្រួមទំហំស្វ័យប្រវត្តិបើលើស 10MB",
     photoUploadSuccess: "បានបញ្ចូលរូបថតដោយជោគជ័យ!",
     uploadingPhoto: "កំពុងបញ្ចូលរូបថត...",
+    compressingPhoto: "កំពុងបង្រួមទំហំរូបភាព...",
+    autoCompressed: "បានបង្រួមទំហំរូបថតដោយស្វ័យប្រវត្តិ!",
     convertingHeic: "កំពុងបម្លែងរូបថត iPhone (HEIC)...",
     renderingPhoto: "កំពុងបង្ហាញក្នុងស៊ុម...",
-    imageTooLarge: "រូបភាពមានទំហំធំពេក (អតិបរមា 10MB)! សូមជ្រើសរើសរូបភាពដែលមានទំហំតូចជាងនេះ។",
+    imageTooLarge: "រូបភាពមានទំហំធំខ្លាំងពេក (អតិបរមា 50MB)! សូមជ្រើសរើសរូបភាពដែលមានទំហំតូចជាងនេះ។",
     invalidImageType: "ប្រភេទឯកសារមិនត្រឹមត្រូវ! អនុញ្ញាតតែរូបភាព JPG, PNG, WebP, HEIC (iPhone), AVIF ឬ SVG ប៉ុណ្ណោះ។",
     useSamplePhoto: "រូបគំរូ",
     zoom: "ពង្រីក",
@@ -7085,12 +7087,14 @@ const translations = {
     copyCaption: "Copy Caption",
     choosePhoto: "Choose Personal Photo",
     dragDropPhoto: "Click to upload photo (or drag & drop)",
-    photoTip: "Max size 10MB • Supports JPG, PNG, WebP, HEIC (iPhone), AVIF",
+    photoTip: "Supports JPG, PNG, WebP, HEIC (iPhone), AVIF • Auto-compresses if over 10MB",
     photoUploadSuccess: "Photo uploaded successfully!",
     uploadingPhoto: "Uploading photo...",
+    compressingPhoto: "Compressing image...",
+    autoCompressed: "Auto-compressed photo successfully!",
     convertingHeic: "Converting iPhone photo (HEIC)...",
     renderingPhoto: "Rendering into frame...",
-    imageTooLarge: "Image file too large (max 10MB)! Please select a smaller file.",
+    imageTooLarge: "Image file too large (max 50MB)! Please select a smaller file.",
     invalidImageType: "Invalid file type! Only JPG, PNG, WebP, HEIC (iPhone), AVIF, and SVG images are allowed.",
     useSamplePhoto: "Sample",
     zoom: "Zoom",
@@ -7503,7 +7507,7 @@ const SecurityUtils = {
     return '';
   },
 
-  validateImageFile(file, maxMb = 10) {
+  validateImageFile(file, maxMb = 10, autoCompress = true, maxHardLimitMb = 50) {
     const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
     if (!file) {
       return { 
@@ -7511,16 +7515,7 @@ const SecurityUtils = {
         error: isKm ? 'សូមជ្រើសរើសឯកសាររូបភាពជាមុនសិន។' : 'No file selected.' 
       };
     }
-    const maxSizeBytes = maxMb * 1024 * 1024;
-    if (file.size > maxSizeBytes) {
-      const actualMb = (file.size / (1024 * 1024)).toFixed(1);
-      return { 
-        valid: false, 
-        error: isKm 
-          ? `រូបភាពមានទំហំធំពេក (${actualMb}MB)! ទំហំអតិបរមាអនុញ្ញាតត្រឹម ${maxMb}MB ប៉ុណ្ណោះ។` 
-          : `File size exceeds ${maxMb}MB limit (${actualMb}MB). Please upload an image under ${maxMb}MB.` 
-      };
-    }
+
     const allowedTypes = [
       'image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml',
       'image/gif', 'image/avif', 'image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'
@@ -7542,7 +7537,147 @@ const SecurityUtils = {
           : 'Invalid file type. Only JPG, PNG, WebP, HEIC (iPhone), AVIF, and SVG images are allowed.' 
       };
     }
-    return { valid: true };
+
+    const maxSizeBytes = maxMb * 1024 * 1024;
+    const maxHardBytes = maxHardLimitMb * 1024 * 1024;
+    const actualMb = (file.size / (1024 * 1024)).toFixed(1);
+
+    if (file.size > maxHardBytes) {
+      return { 
+        valid: false, 
+        error: isKm 
+          ? `រូបភាពមានទំហំធំខ្លាំងពេក (${actualMb}MB)! សូមជ្រើសរើសរូបភាពក្រោម ${maxHardLimitMb}MB ដើម្បីឱ្យប្រព័ន្ធអាចបង្រួមទំហំបាន។` 
+          : `File size too large (${actualMb}MB). Please choose an image under ${maxHardLimitMb}MB so it can be compressed.` 
+      };
+    }
+
+    if (!autoCompress && file.size > maxSizeBytes) {
+      return { 
+        valid: false, 
+        error: isKm 
+          ? `រូបភាពមានទំហំធំពេក (${actualMb}MB)! ទំហំអតិបរមាអនុញ្ញាតត្រឹម ${maxMb}MB ប៉ុណ្ណោះ។` 
+          : `File size exceeds ${maxMb}MB limit (${actualMb}MB). Please upload an image under ${maxMb}MB.` 
+      };
+    }
+
+    const needsCompression = file.size > maxSizeBytes;
+    return { 
+      valid: true, 
+      needsCompression,
+      actualMb,
+      originalSize: file.size
+    };
+  },
+
+  async compressImage(fileOrBlob, targetMaxMb = 8, onProgress = null) {
+    const targetSizeBytes = targetMaxMb * 1024 * 1024;
+    if (!fileOrBlob || fileOrBlob.size <= targetSizeBytes) {
+      return fileOrBlob;
+    }
+
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    const oldMb = (fileOrBlob.size / (1024 * 1024)).toFixed(1);
+    if (typeof onProgress === 'function') {
+      onProgress(10, isKm ? `កំពុងបង្រួមទំហំរូបភាព (${oldMb}MB ➔ ក្រោម 10MB)...` : `Compressing image (${oldMb}MB ➔ under 10MB)...`);
+    }
+
+    let workingBlob = fileOrBlob;
+    const fileName = (fileOrBlob.name || '').toLowerCase();
+    const fileType = (fileOrBlob.type || '').toLowerCase();
+    const isHeic = fileType.includes('heic') || fileType.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif');
+
+    if (isHeic) {
+      if (typeof CanvasStudio !== 'undefined' && CanvasStudio.loadHeicConverter) {
+        await CanvasStudio.loadHeicConverter();
+      }
+      if (typeof window.heic2any === 'function') {
+        try {
+          if (typeof onProgress === 'function') {
+            onProgress(18, isKm ? 'កំពុងបម្លែងរូបថត iPhone (HEIC)...' : 'Converting iPhone photo (HEIC)...');
+          }
+          const converted = await window.heic2any({
+            blob: fileOrBlob,
+            toType: 'image/jpeg',
+            quality: 0.88
+          });
+          workingBlob = Array.isArray(converted) ? converted[0] : converted;
+          if (workingBlob.size <= targetSizeBytes) {
+            return workingBlob;
+          }
+        } catch (e) {
+          console.warn('HEIC decode in compressImage fallback:', e);
+        }
+      }
+    }
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(workingBlob);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        try {
+          let { width, height } = img;
+          const maxDim = 2560; // 2.5K standard provides crisp quality for framing
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          if (typeof onProgress === 'function') {
+            onProgress(25, isKm ? `កំពុងបង្រួមគុណភាពរូបភាព (${oldMb}MB)...` : `Optimizing image resolution...`);
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          let quality = 0.86;
+          const exportMime = (fileOrBlob.type === 'image/png' && !isHeic && fileOrBlob.size < 16 * 1024 * 1024) ? 'image/png' : 'image/jpeg';
+
+          const tryExport = (q) => {
+            canvas.toBlob((blob) => {
+              if (!blob) {
+                resolve(fileOrBlob);
+                return;
+              }
+              if (blob.size <= targetSizeBytes || q <= 0.45) {
+                const newName = (fileOrBlob.name || 'photo.jpg').replace(/\.(heic|heif|png|webp|avif)$/i, '.jpg');
+                const compressedFile = new File([blob], newName, {
+                  type: blob.type,
+                  lastModified: Date.now()
+                });
+                if (typeof onProgress === 'function') {
+                  const newMb = (compressedFile.size / (1024 * 1024)).toFixed(1);
+                  onProgress(35, isKm ? `បានបង្រួមរួចរាល់ (${oldMb}MB ➔ ${newMb}MB)` : `Compressed successfully (${oldMb}MB ➔ ${newMb}MB)`);
+                }
+                resolve(compressedFile);
+              } else {
+                tryExport(Math.max(0.4, q - 0.15));
+              }
+            }, exportMime, q);
+          };
+
+          tryExport(quality);
+        } catch (err) {
+          console.warn('Canvas compression error:', err);
+          resolve(fileOrBlob);
+        }
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(fileOrBlob);
+      };
+
+      img.src = url;
+    });
   },
 
   cleanText(str, maxLength = 200) {
@@ -10883,7 +11018,7 @@ class CanvasStudio {
         img.src = sourceUrlOrFile;
       } else if (sourceUrlOrFile instanceof File || sourceUrlOrFile instanceof Blob) {
         if (typeof SecurityUtils !== 'undefined' && sourceUrlOrFile instanceof File) {
-          const check = SecurityUtils.validateImageFile(sourceUrlOrFile, 10);
+          const check = SecurityUtils.validateImageFile(sourceUrlOrFile, 10, true, 50);
           if (!check.valid) {
             reject(new Error(check.error));
             return;
@@ -10892,8 +11027,19 @@ class CanvasStudio {
 
         const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
         let processBlob = sourceUrlOrFile;
-        const fileName = (sourceUrlOrFile.name || '').toLowerCase();
-        const fileType = (sourceUrlOrFile.type || '').toLowerCase();
+
+        // Auto-compress if size > 10MB
+        if (sourceUrlOrFile.size > 10 * 1024 * 1024 && typeof SecurityUtils !== 'undefined' && SecurityUtils.compressImage) {
+          try {
+            sourceUrlOrFile = await SecurityUtils.compressImage(sourceUrlOrFile, 8, onProgress);
+            processBlob = sourceUrlOrFile;
+          } catch (compErr) {
+            console.warn('Auto compression in setUserPhoto fallback:', compErr);
+          }
+        }
+
+        const fileName = (processBlob.name || sourceUrlOrFile.name || '').toLowerCase();
+        const fileType = (processBlob.type || sourceUrlOrFile.type || '').toLowerCase();
         const isHeic = fileType.includes('heic') || fileType.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif');
 
         const proceedWithBlob = (blobToRead, startPct = 5, spanPct = 80) => {
@@ -14894,7 +15040,7 @@ class TwibbonApp {
 
     const handleStudioPhotoUpload = async (file) => {
       if (!file) return;
-      const validation = SecurityUtils.validateImageFile(file, 10);
+      const validation = SecurityUtils.validateImageFile(file, 10, true, 50);
       if (!validation.valid) {
         this.showToast(validation.error, 'error');
         fileInput.value = '';
@@ -14924,10 +15070,26 @@ class TwibbonApp {
         }, 800);
       };
 
-      setProgress(8, t('uploadingPhoto'));
+      let uploadFile = file;
+      if (validation.needsCompression) {
+        const oldMb = validation.actualMb;
+        setProgress(10, isKm ? `កំពុងបង្រួមទំហំរូបភាព (${oldMb}MB ➔ ក្រោម 10MB)...` : `Compressing image (${oldMb}MB ➔ under 10MB)...`);
+        try {
+          uploadFile = await SecurityUtils.compressImage(file, 8, (pct, msg) => {
+            setProgress(pct, msg);
+          });
+          const newMb = (uploadFile.size / (1024 * 1024)).toFixed(1);
+          this.showToast(isKm ? `បានបង្រួមទំហំស្វ័យប្រវត្តិ (${oldMb}MB ➔ ${newMb}MB)!` : `Auto-compressed photo (${oldMb}MB ➔ ${newMb}MB)!`, 'info');
+        } catch (compErr) {
+          console.warn("Auto compression error, proceed with original:", compErr);
+          uploadFile = file;
+        }
+      } else {
+        setProgress(8, t('uploadingPhoto'));
+      }
 
       try {
-        await this.activeStudio.setUserPhoto(file, true, (pct, customMsg) => {
+        await this.activeStudio.setUserPhoto(uploadFile, true, (pct, customMsg) => {
           let msg = customMsg;
           if (!msg) {
             if (pct >= 90 && pct < 100) {
@@ -15475,7 +15637,7 @@ class TwibbonApp {
     frameFileInput.addEventListener('change', (e) => {
       if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        const validation = SecurityUtils.validateImageFile(file, 10);
+        const validation = SecurityUtils.validateImageFile(file, 10, true, 50);
         if (!validation.valid) {
           this.showToast(validation.error, 'error');
           frameFileInput.value = '';
@@ -15488,7 +15650,16 @@ class TwibbonApp {
           updateFramePreviews(compressed);
           this.showToast(isKm ? 'បានផ្ទុករូបភាពស៊ុមជោគជ័យ!' : 'Frame uploaded successfully!');
         };
-        reader.readAsDataURL(file);
+        if (validation.needsCompression) {
+          this.showToast(isKm ? `កំពុងបង្រួមទំហំរូបភាព (${validation.actualMb}MB ➔ ក្រោម 10MB)...` : `Compressing frame (${validation.actualMb}MB ➔ under 10MB)...`, 'info');
+          SecurityUtils.compressImage(file, 8).then(compFile => {
+            reader.readAsDataURL(compFile);
+          }).catch(() => {
+            reader.readAsDataURL(file);
+          });
+        } else {
+          reader.readAsDataURL(file);
+        }
       }
     });
 
