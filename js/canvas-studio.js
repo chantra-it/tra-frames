@@ -99,9 +99,9 @@ class CanvasStudio {
     });
   }
 
-  setUserPhoto(sourceUrlOrFile, isCustom = true, onProgress = null) {
-    return new Promise((resolve, reject) => {
-      if (typeof sourceUrlOrFile === 'string') {
+  async setUserPhoto(sourceUrlOrFile, isCustom = true, onProgress = null) {
+    if (typeof sourceUrlOrFile === 'string') {
+      return new Promise((resolve, reject) => {
         const img = new Image();
         if (!sourceUrlOrFile.startsWith('data:')) {
           img.crossOrigin = "anonymous";
@@ -123,98 +123,94 @@ class CanvasStudio {
         };
         img.onerror = reject;
         img.src = sourceUrlOrFile;
-      } else if (sourceUrlOrFile instanceof File || sourceUrlOrFile instanceof Blob) {
-        if (typeof SecurityUtils !== 'undefined' && sourceUrlOrFile instanceof File) {
-          const check = SecurityUtils.validateImageFile(sourceUrlOrFile, 10, true, 50);
-          if (!check.valid) {
-            reject(new Error(check.error));
-            return;
-          }
-        }
+      });
+    }
 
-        const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
-        let processBlob = sourceUrlOrFile;
-
-        // Auto-compress if size > 10MB
-        if (sourceUrlOrFile.size > 10 * 1024 * 1024 && typeof SecurityUtils !== 'undefined' && SecurityUtils.compressImage) {
-          try {
-            sourceUrlOrFile = await SecurityUtils.compressImage(sourceUrlOrFile, 8, onProgress);
-            processBlob = sourceUrlOrFile;
-          } catch (compErr) {
-            console.warn('Auto compression in setUserPhoto fallback:', compErr);
-          }
-        }
-
-        const fileName = (processBlob.name || sourceUrlOrFile.name || '').toLowerCase();
-        const fileType = (processBlob.type || sourceUrlOrFile.type || '').toLowerCase();
-        const isHeic = fileType.includes('heic') || fileType.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif');
-
-        const proceedWithBlob = (blobToRead, startPct = 5, spanPct = 80) => {
-          const reader = new FileReader();
-          reader.onprogress = (e) => {
-            if (e.lengthComputable && typeof onProgress === 'function') {
-              const pct = Math.min(85, Math.max(startPct, startPct + Math.round((e.loaded / e.total) * spanPct)));
-              onProgress(pct);
-            }
-          };
-          reader.onload = (e) => {
-            if (typeof onProgress === 'function') onProgress(90);
-            const img = new Image();
-            img.onload = () => {
-              this.userImage = img;
-              this.fitPhotoToCanvas();
-              this.isCustomUserPhoto = true;
-              this.markDirty();
-              this.render();
-              if (this.onPhotoLoaded) this.onPhotoLoaded();
-              if (typeof onProgress === 'function') onProgress(100);
-              resolve();
-            };
-            img.onerror = () => {
-              reject(new Error(isKm ? 'មិនអាចបើករូបភាពនេះបានទេ សូមសាកល្បងរូបភាពផ្សេង។' : 'Failed to decode image. Please try another file.'));
-            };
-            img.src = e.target.result;
-          };
-          reader.onerror = () => {
-            reject(new Error(isKm ? 'មានបញ្ហាក្នុងការអានឯកសាររូបភាព។' : 'Failed to read file.'));
-          };
-          reader.readAsDataURL(blobToRead);
-        };
-
-        if (isHeic) {
-          const heicMsg = typeof t === 'function' ? t('convertingHeic') : (isKm ? 'កំពុងបម្លែងរូបថត iPhone (HEIC)...' : 'Converting iPhone photo (HEIC)...');
-          if (typeof onProgress === 'function') {
-            onProgress(15, heicMsg);
-          }
-          CanvasStudio.loadHeicConverter().then(async () => {
-            if (typeof window.heic2any === 'function') {
-              try {
-                if (typeof onProgress === 'function') {
-                  onProgress(25, heicMsg);
-                }
-                const converted = await window.heic2any({
-                  blob: sourceUrlOrFile,
-                  toType: 'image/jpeg',
-                  quality: 0.92
-                });
-                processBlob = Array.isArray(converted) ? converted[0] : converted;
-              } catch (convErr) {
-                console.warn('heic2any conversion fallback to native decode:', convErr);
-              }
-            }
-            if (typeof onProgress === 'function') {
-              onProgress(45);
-            }
-            proceedWithBlob(processBlob, 45, 40);
-          }).catch(() => {
-            proceedWithBlob(sourceUrlOrFile, 15, 70);
-          });
-        } else {
-          if (typeof onProgress === 'function') onProgress(5);
-          proceedWithBlob(sourceUrlOrFile, 5, 80);
+    if (sourceUrlOrFile instanceof File || sourceUrlOrFile instanceof Blob) {
+      if (typeof SecurityUtils !== 'undefined' && sourceUrlOrFile instanceof File) {
+        const check = SecurityUtils.validateImageFile(sourceUrlOrFile, 10, true, 50);
+        if (!check.valid) {
+          throw new Error(check.error);
         }
       }
-    });
+
+      const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+      let processBlob = sourceUrlOrFile;
+
+      // Auto-compress if size > 10MB
+      if (sourceUrlOrFile.size > 10 * 1024 * 1024 && typeof SecurityUtils !== 'undefined' && SecurityUtils.compressImage) {
+        try {
+          sourceUrlOrFile = await SecurityUtils.compressImage(sourceUrlOrFile, 8, onProgress);
+          processBlob = sourceUrlOrFile;
+        } catch (compErr) {
+          console.warn('Auto compression in setUserPhoto fallback:', compErr);
+        }
+      }
+
+      const fileName = (processBlob.name || sourceUrlOrFile.name || '').toLowerCase();
+      const fileType = (processBlob.type || sourceUrlOrFile.type || '').toLowerCase();
+      const isHeic = fileType.includes('heic') || fileType.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif');
+
+      if (isHeic) {
+        const heicMsg = typeof t === 'function' ? t('convertingHeic') : (isKm ? 'កំពុងបម្លែងរូបថត iPhone (HEIC)...' : 'Converting iPhone photo (HEIC)...');
+        if (typeof onProgress === 'function') {
+          onProgress(15, heicMsg);
+        }
+        await CanvasStudio.loadHeicConverter();
+        if (typeof window.heic2any === 'function') {
+          try {
+            if (typeof onProgress === 'function') {
+              onProgress(25, heicMsg);
+            }
+            const converted = await window.heic2any({
+              blob: sourceUrlOrFile,
+              toType: 'image/jpeg',
+              quality: 0.92
+            });
+            processBlob = Array.isArray(converted) ? converted[0] : converted;
+          } catch (convErr) {
+            console.warn('heic2any conversion fallback to native decode:', convErr);
+          }
+        }
+        if (typeof onProgress === 'function') {
+          onProgress(45);
+        }
+      }
+
+      return new Promise((resolve, reject) => {
+        const startPct = isHeic ? 45 : 5;
+        const spanPct = isHeic ? 40 : 80;
+        const reader = new FileReader();
+        reader.onprogress = (e) => {
+          if (e.lengthComputable && typeof onProgress === 'function') {
+            const pct = Math.min(85, Math.max(startPct, startPct + Math.round((e.loaded / e.total) * spanPct)));
+            onProgress(pct);
+          }
+        };
+        reader.onload = (e) => {
+          if (typeof onProgress === 'function') onProgress(90);
+          const img = new Image();
+          img.onload = () => {
+            this.userImage = img;
+            this.fitPhotoToCanvas();
+            this.isCustomUserPhoto = true;
+            this.markDirty();
+            this.render();
+            if (this.onPhotoLoaded) this.onPhotoLoaded();
+            if (typeof onProgress === 'function') onProgress(100);
+            resolve();
+          };
+          img.onerror = () => {
+            reject(new Error(isKm ? 'មិនអាចបើករូបភាពនេះបានទេ សូមសាកល្បងរូបភាពផ្សេង។' : 'Failed to decode image. Please try another file.'));
+          };
+          img.src = e.target.result;
+        };
+        reader.onerror = () => {
+          reject(new Error(isKm ? 'មានបញ្ហាក្នុងការអានឯកសាររូបភាព។' : 'Failed to read file.'));
+        };
+        reader.readAsDataURL(processBlob);
+      });
+    }
   }
 
   fitPhotoToCanvas() {
