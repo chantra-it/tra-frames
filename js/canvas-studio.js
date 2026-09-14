@@ -125,7 +125,7 @@ class CanvasStudio {
         img.src = sourceUrlOrFile;
       } else if (sourceUrlOrFile instanceof File || sourceUrlOrFile instanceof Blob) {
         if (typeof SecurityUtils !== 'undefined' && sourceUrlOrFile instanceof File) {
-          const check = SecurityUtils.validateImageFile(sourceUrlOrFile, 10);
+          const check = SecurityUtils.validateImageFile(sourceUrlOrFile, 10, true, 50);
           if (!check.valid) {
             reject(new Error(check.error));
             return;
@@ -134,8 +134,19 @@ class CanvasStudio {
 
         const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
         let processBlob = sourceUrlOrFile;
-        const fileName = (sourceUrlOrFile.name || '').toLowerCase();
-        const fileType = (sourceUrlOrFile.type || '').toLowerCase();
+
+        // Auto-compress if size > 10MB
+        if (sourceUrlOrFile.size > 10 * 1024 * 1024 && typeof SecurityUtils !== 'undefined' && SecurityUtils.compressImage) {
+          try {
+            sourceUrlOrFile = await SecurityUtils.compressImage(sourceUrlOrFile, 8, onProgress);
+            processBlob = sourceUrlOrFile;
+          } catch (compErr) {
+            console.warn('Auto compression in setUserPhoto fallback:', compErr);
+          }
+        }
+
+        const fileName = (processBlob.name || sourceUrlOrFile.name || '').toLowerCase();
+        const fileType = (processBlob.type || sourceUrlOrFile.type || '').toLowerCase();
         const isHeic = fileType.includes('heic') || fileType.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif');
 
         const proceedWithBlob = (blobToRead, startPct = 5, spanPct = 80) => {
