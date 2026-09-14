@@ -4369,10 +4369,6 @@ class TwibbonApp {
                 <span class="about-spec-val">${t('aboutSpecCompressVal')}</span>
               </div>
               <div class="about-spec-row">
-                <span class="about-spec-label">☁️ ${t('aboutSpecCloud')}</span>
-                <span class="about-spec-val">${t('aboutSpecCloudVal')}</span>
-              </div>
-              <div class="about-spec-row">
                 <span class="about-spec-label">📅 ${t('aboutSpecDate')}</span>
                 <span class="about-spec-val">${t('aboutSpecDateVal')}</span>
               </div>
