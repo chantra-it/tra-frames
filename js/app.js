@@ -280,6 +280,10 @@ class TwibbonApp {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               <span>${t('accountSettings')}</span>
             </button>
+            <button class="user-dropdown-item" onclick="app.navigateTo('about')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>${t('navAbout')}</span>
+            </button>
             <div style="border-top: 1px solid var(--border-color); margin: 0.25rem 0;"></div>
             <button class="user-dropdown-item danger" onclick="app.handleSignOut()">
               ${Icons.logOut} <span>${t('signOut')}</span>
@@ -1799,6 +1803,8 @@ class TwibbonApp {
       this.loadDesignerView();
     } else if (mainRoute === 'my-campaigns') {
       this.loadMyCampaignsView();
+    } else if (mainRoute === 'about') {
+      this.loadAboutView();
     } else if (mainRoute === 'admin') {
       this.loadAdminView(param);
     } else if (mainRoute === 'profile' || mainRoute === 'settings') {
@@ -4284,6 +4290,259 @@ class TwibbonApp {
     sessionStorage.setItem('tra_announcement_dismissed', 'true');
     const bannerEl = document.getElementById('globalAnnouncementBar');
     if (bannerEl) bannerEl.remove();
+  }
+
+  // ==========================================
+  // VIEW: ABOUT US (PLATFORM & CREATOR INFO)
+  // ==========================================
+  loadAboutView() {
+    this.currentView = 'about';
+    const container = document.getElementById('appContent');
+    const isKm = typeof getLanguage === 'function' && getLanguage() === 'km';
+    document.title = (isKm ? 'អំពីយើង' : 'About Us') + ' — Tra Frames';
+
+    container.innerHTML = `
+      <div class="about-wrapper">
+        <!-- Hero Header -->
+        <section class="about-hero">
+          <div class="about-brand-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+          </div>
+          <div class="about-version-pill">
+            <span class="about-live-dot"></span>
+            <span>${t('aboutHeroBadge')}</span>
+          </div>
+          <h1 class="about-hero-title">
+            Tra <span>Frames</span>
+          </h1>
+          <p class="about-hero-subtitle">
+            ${t('aboutSubtitle')}
+          </p>
+        </section>
+
+        <!-- 2x2 Core Pillars Grid -->
+        <div class="about-grid">
+          <!-- Card 1: What is Tra Frames? -->
+          <article class="about-card">
+            <div class="about-card-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              <span>${t('aboutWhatIsBadge')}</span>
+            </div>
+            <h2 class="about-card-title">
+              ${t('aboutWhatIsTitle')}
+            </h2>
+            <p class="about-card-desc">
+              ${t('aboutWhatIsDesc')}
+            </p>
+            <div class="about-card-highlight">
+              💡 ${t('aboutWhatIsHighlight')}
+            </div>
+          </article>
+
+          <!-- Card 2: Version & System Specs -->
+          <article class="about-card">
+            <div class="about-card-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>${t('aboutVersionBadge')}</span>
+            </div>
+            <h2 class="about-card-title">
+              ${t('aboutVersionTitle')}
+            </h2>
+            <p class="about-card-desc">
+              ${t('aboutVersionDesc')}
+            </p>
+            <div class="about-spec-table">
+              <div class="about-spec-row">
+                <span class="about-spec-label">⚙️ ${t('aboutSpecVersion')}</span>
+                <span class="about-spec-val" style="color: var(--accent-primary);">v2.6.0 Pro (Build 2026)</span>
+              </div>
+              <div class="about-spec-row">
+                <span class="about-spec-label">🎨 ${t('aboutSpecEngine')}</span>
+                <span class="about-spec-val">${t('aboutSpecEngineVal')}</span>
+              </div>
+              <div class="about-spec-row">
+                <span class="about-spec-label">🖼️ ${t('aboutSpecImage')}</span>
+                <span class="about-spec-val">${t('aboutSpecImageVal')}</span>
+              </div>
+              <div class="about-spec-row">
+                <span class="about-spec-label">⚡ ${t('aboutSpecCompress')}</span>
+                <span class="about-spec-val">${t('aboutSpecCompressVal')}</span>
+              </div>
+              <div class="about-spec-row">
+                <span class="about-spec-label">☁️ ${t('aboutSpecCloud')}</span>
+                <span class="about-spec-val">${t('aboutSpecCloudVal')}</span>
+              </div>
+              <div class="about-spec-row">
+                <span class="about-spec-label">📅 ${t('aboutSpecDate')}</span>
+                <span class="about-spec-val">${t('aboutSpecDateVal')}</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 3: Created By -->
+          <article class="about-card">
+            <div class="about-card-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>${t('aboutCreatorBadge')}</span>
+            </div>
+            <h2 class="about-card-title">
+              ${t('aboutCreatorTitle')}
+            </h2>
+            <div class="about-creator-box">
+              <div class="about-creator-header">
+                <div class="about-creator-avatar">
+                  CT
+                </div>
+                <div class="about-creator-meta">
+                  <div class="about-creator-name">${t('aboutCreatorName')}</div>
+                  <div class="about-creator-lead">${t('aboutCreatorLead')}</div>
+                </div>
+              </div>
+              <p class="about-card-desc">
+                ${t('aboutCreatorBio')}
+              </p>
+              <div class="about-creator-links">
+                <a href="https://frame.tra4me.com" target="_blank" rel="noopener noreferrer" class="about-link-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  <span>frame.tra4me.com</span>
+                </a>
+                <a href="https://github.com/chantra-it/tra-frames" target="_blank" rel="noopener noreferrer" class="about-link-btn">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                  <span>GitHub</span>
+                </a>
+                <a href="https://t.me/chantrait" target="_blank" rel="noopener noreferrer" class="about-link-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  <span>Telegram</span>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 4: Purpose & Mission -->
+          <article class="about-card">
+            <div class="about-card-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+              <span>${t('aboutPurposeBadge')}</span>
+            </div>
+            <h2 class="about-card-title">
+              ${t('aboutPurposeTitle')}
+            </h2>
+            <p class="about-card-desc">
+              ${t('aboutPurposeSubtitle')}
+            </p>
+            <div class="about-purpose-grid">
+              <div class="about-purpose-item">
+                <div class="about-purpose-num">1</div>
+                <div class="about-purpose-content">
+                  <div class="about-purpose-heading">${t('aboutPurpose1Title')}</div>
+                  <p class="about-purpose-text">${t('aboutPurpose1Desc')}</p>
+                </div>
+              </div>
+              <div class="about-purpose-item">
+                <div class="about-purpose-num">2</div>
+                <div class="about-purpose-content">
+                  <div class="about-purpose-heading">${t('aboutPurpose2Title')}</div>
+                  <p class="about-purpose-text">${t('aboutPurpose2Desc')}</p>
+                </div>
+              </div>
+              <div class="about-purpose-item">
+                <div class="about-purpose-num">3</div>
+                <div class="about-purpose-content">
+                  <div class="about-purpose-heading">${t('aboutPurpose3Title')}</div>
+                  <p class="about-purpose-text">${t('aboutPurpose3Desc')}</p>
+                </div>
+              </div>
+              <div class="about-purpose-item">
+                <div class="about-purpose-num">4</div>
+                <div class="about-purpose-content">
+                  <div class="about-purpose-heading">${t('aboutPurpose4Title')}</div>
+                  <p class="about-purpose-text">${t('aboutPurpose4Desc')}</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- Features Showcase Grid -->
+        <section class="about-features-section">
+          <div class="about-features-header">
+            <h2>${t('aboutFeaturesTitle')}</h2>
+            <p>${t('aboutFeaturesSubtitle')}</p>
+          </div>
+          <div class="about-features-grid">
+            <div class="about-feat-card">
+              <div class="about-feat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <div class="about-feat-title">${t('aboutFeat1Title')}</div>
+              <p class="about-feat-desc">${t('aboutFeat1Desc')}</p>
+            </div>
+
+            <div class="about-feat-card">
+              <div class="about-feat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+              </div>
+              <div class="about-feat-title">${t('aboutFeat2Title')}</div>
+              <p class="about-feat-desc">${t('aboutFeat2Desc')}</p>
+            </div>
+
+            <div class="about-feat-card">
+              <div class="about-feat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+              </div>
+              <div class="about-feat-title">${t('aboutFeat3Title')}</div>
+              <p class="about-feat-desc">${t('aboutFeat3Desc')}</p>
+            </div>
+
+            <div class="about-feat-card">
+              <div class="about-feat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="1" fill="currentColor"/><circle cx="17.5" cy="10.5" r="1" fill="currentColor"/><circle cx="8.5" cy="7.5" r="1" fill="currentColor"/><circle cx="6.5" cy="12.5" r="1" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.7 1.7-1.7h2c3.1 0 5.6-2.5 5.6-5.6C21.9 6 17.5 2 12 2z"/></svg>
+              </div>
+              <div class="about-feat-title">${t('aboutFeat4Title')}</div>
+              <p class="about-feat-desc">${t('aboutFeat4Desc')}</p>
+            </div>
+
+            <div class="about-feat-card">
+              <div class="about-feat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              </div>
+              <div class="about-feat-title">${t('aboutFeat5Title')}</div>
+              <p class="about-feat-desc">${t('aboutFeat5Desc')}</p>
+            </div>
+
+            <div class="about-feat-card">
+              <div class="about-feat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <div class="about-feat-title">${t('aboutFeat6Title')}</div>
+              <p class="about-feat-desc">${t('aboutFeat6Desc')}</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="about-cta-bar">
+          <h3 class="about-cta-title">${isKm ? 'ចូលរួមជាផ្នែកមួយនៃយុទ្ធនាការសង្គមជាមួយ Tra Frames' : 'Join Social Campaigns with Tra Frames Today'}</h3>
+          <p class="about-cta-desc">
+            ${isKm ? 'មិនថាជាការងារស្ម័គ្រចិត្ត ពិធីបុណ្យជាតិ ឬសកម្មភាពសាលារៀន — ចាប់ផ្តើមរុករក ឬបង្កើតស៊ុមរូបថតផ្ទាល់ខ្លួនឥឡូវនេះដោយឥតគិតថ្លៃ!' : 'Whether for charity, cultural festivals, or community drives — start exploring or create your own custom photo frame for free!'}
+          </p>
+          <div class="about-cta-buttons">
+            <button class="btn-cta-light" onclick="app.navigateTo('explore')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/></svg>
+              <span>${t('aboutBtnExplore')}</span>
+            </button>
+            <button class="btn-cta-glass" onclick="app.navigateTo('create')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+              <span>${t('aboutBtnCreate')}</span>
+            </button>
+            <button class="btn-cta-glass" onclick="app.navigateTo('designer')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="13.5" cy="6.5" r="1" fill="currentColor"/><circle cx="17.5" cy="10.5" r="1" fill="currentColor"/><circle cx="8.5" cy="7.5" r="1" fill="currentColor"/><circle cx="6.5" cy="12.5" r="1" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.7 1.7-1.7h2c3.1 0 5.6-2.5 5.6-5.6C21.9 6 17.5 2 12 2z"/></svg>
+              <span>${t('aboutBtnDesigner')}</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    `;
   }
 
   // =========================================================
